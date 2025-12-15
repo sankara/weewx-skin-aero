@@ -1,0 +1,76 @@
+{
+  "report": {
+    "time": 1701072000
+  },
+  "observations": [
+    {
+      "observation": "outTemp",
+      "label": "Outside Temperature",
+      "unit": "°F",
+      "min": 49.28,
+      "minTime": 1701144625,
+      "max": 56.66,
+      "maxTime": 1701121811,
+      "avg": 51.71,
+      "graph": [[1701102300, 50.900000000000006], [1701121800, 56.66], [1701144600, 49.28], [1701153000, 50.0]]
+    },
+    {
+      "observation": "outHumidity",
+      "label": "Outside Humidity",
+      "unit": "%",
+      "min": 48.0,
+      "minTime": 1701121811,
+      "max": 57.0,
+      "maxTime": 1701144625,
+      "avg": 52.25,
+      "graph": [[1701102300, 50.0], [1701121800, 48.0], [1701144600, 57.0], [1701153000, 54.0]]
+    },
+    {
+      "observation": "windDir",
+      "label": "Wind Direction",
+      "unit": "°",
+      "avg": 108.0,
+      "avgCompass": "ESE",
+      "avgLabel": "steady",
+      "graph": [[1701102300, null], [1701121800, null], [1701144600, null], [1701153000, 108.0]]
+    },
+    {
+      "observation": "windSpeed",
+      "label": "Wind Speed",
+      "unit": " mph",
+      "min": 0.0,
+      "minTime": 1701102598,
+      "max": 2.013247666745374,
+      "maxTime": 1701153300,
+      "avg": 0.5033119166863435,
+      "graph": [[1701102300, 0.0], [1701121800, 0.0], [1701144600, 0.0], [1701153000, 2.013247666745374]]
+    },
+    {
+      "observation": "windGust",
+      "label": "Gust Speed",
+      "unit": " mph",
+      "min": 0.0,
+      "minTime": 1701102598,
+      "max": 2.013247666745374,
+      "maxTime": 1701153012,
+      "avg": 0.5033119166863435,
+      "graph": [[1701102300, 0.0], [1701121800, 0.0], [1701144600, 0.0], [1701153000, 2.013247666745374]]
+    },
+    {
+      "observation": "rainRate",
+      "label": "Rain Rate",
+      "unit": " in/h",
+      "max": 0.0,
+      "maxTime": 1701102598,
+      "graph": [[1701102300, 0.0], [1701121800, 0.0], [1701144600, 0.0], [1701153000, 0.0]]
+    },
+    {
+      "observation": "rain",
+      "label": "Rain",
+      "unit": " in",
+      "sum": 0.0,
+      "graph": [[1701102300, 0.0], [1701121800, 0.0], [1701144600, 0.0], [1701153000, 0.0]]
+    },
+    null
+  ]
+}

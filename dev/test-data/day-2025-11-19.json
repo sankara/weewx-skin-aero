@@ -1,0 +1,73 @@
+{
+  "report": {
+    "time": 1763539200
+  },
+  "observations": [
+    {
+      "observation": "outTemp",
+      "label": "Outside Temperature",
+      "unit": "°F",
+      "min": 49.46,
+      "minTime": 1763623200,
+      "max": 52.879999999999995,
+      "maxTime": 1763592000,
+      "avg": 51.68,
+      "graph": [[1763579700, 52.7], [1763591700, 52.879999999999995], [1763622900, 49.46]]
+    },
+    {
+      "observation": "outHumidity",
+      "label": "Outside Humidity",
+      "unit": "%",
+      "min": 77.5,
+      "minTime": 1763580000,
+      "max": 90.0,
+      "maxTime": 1763623200,
+      "avg": 82.16666666666667,
+      "graph": [[1763579700, 77.5], [1763591700, 79.0], [1763622900, 90.0]]
+    },
+    {
+      "observation": "windDir",
+      "label": "Wind Direction",
+      "unit": "°",
+      "graph": []
+    },
+    {
+      "observation": "windSpeed",
+      "label": "Wind Speed",
+      "unit": " mph",
+      "min": 0.0,
+      "minTime": 1763580000,
+      "max": 0.0,
+      "maxTime": 1763580000,
+      "avg": 0.0,
+      "graph": [[1763579700, 0.0], [1763591700, 0.0], [1763622900, 0.0]]
+    },
+    {
+      "observation": "windGust",
+      "label": "Gust Speed",
+      "unit": " mph",
+      "min": 0.0,
+      "minTime": 1763580000,
+      "max": 0.0,
+      "maxTime": 1763580000,
+      "avg": 0.0,
+      "graph": [[1763579700, 0.0], [1763591700, 0.0], [1763622900, 0.0]]
+    },
+    {
+      "observation": "rainRate",
+      "label": "Rain Rate",
+      "unit": " in/h",
+      "max": 0.0,
+      "maxTime": 1763580000,
+      "graph": [[1763579700, 0.0], [1763591700, 0.0], [1763622900, 0.0]]
+    },
+    {
+      "observation": "rain",
+      "label": "Rain",
+      "unit": " in",
+      "sum": 0.0,
+      "graph": [[1763579700, 0.0], [1763591700, 0.0], [1763622900, 0.0]]
+    },
+    null
+  ]
+}
