@@ -15,14 +15,14 @@ export function renderHeader() {
     els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
 
     // 2. Dials (Live Data)
-    renderCurrentDials();
+    renderCurrentObservations();
 }
 
 /**
- * Renders the Dials in #current-dials using `state.currentData` (Live)
+ * Renders the Dials and Cards in #current-dials using `state.currentData` (Live)
  * and `state.todayData` (for High/Low context).
  */
-function renderCurrentDials() {
+function renderCurrentObservations() {
     const container = document.getElementById('current-dials');
     if (!container) return;
     container.innerHTML = '';
@@ -51,6 +51,7 @@ function renderCurrentDials() {
         pressure: state.units === 'imperial' ? { min: 28, max: 31 } : { min: 950, max: 1050 }
     };
 
+    // 1. Dials
     createDialCard(container, getDialItem('outTemp'), 'Temperature', THEME.outTemp, limits.temp.min, limits.temp.max);
     createDialCard(container, getDialItem('outHumidity'), 'Humidity', THEME.humidity, 0, 100);
     createDialCard(container, getDialItem('barometer') || getDialItem('pressure'), 'Pressure', THEME.pressure, limits.pressure.min, limits.pressure.max);
@@ -60,6 +61,21 @@ function renderCurrentDials() {
     if (uvItem) {
         createDialCard(container, uvItem, 'UV Index', THEME.uv, 0, 15);
     }
+
+    // 2. Simple Cards (Wind & Rain) - Re-added as per review
+    const windItem = getDialItem('windSpeed');
+    createSimpleCard(container, windItem, 'wind', THEME.windSpeed);
+
+    // Rain: For "Current" section, usually "Daily Rain" total is most useful,
+    // but the `current.json` might only have rainRate.
+    // `getDialItem` merges `today.json` so we might have `sum` available if `day` exists.
+    const rainItem = getDialItem('rain');
+    // If we have a sum from today's log, prefer that for "Total Rain" display
+    if (rainItem && rainItem.sum !== undefined) {
+        rainItem.current = rainItem.sum;
+        rainItem.label = "Rain (Total)";
+    }
+    createSimpleCard(container, rainItem, 'rain', THEME.rainRate);
 }
 
 function createDialCard(container, item, title, color, absMin, absMax) {
@@ -83,6 +99,31 @@ function createDialCard(container, item, title, color, absMin, absMax) {
     const dailyMax = item.max !== undefined ? item.max : item.current;
 
     drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title);
+}
+
+function createSimpleCard(container, item, type, color) {
+    if (!item) return;
+
+    let icon = 'activity';
+    if (type === 'wind') { icon = 'wind'; }
+    if (type === 'rain') { icon = 'cloud-rain'; }
+
+    // Fallback label
+    const label = item.label || (type === 'wind' ? 'Wind Speed' : 'Rain');
+    const val = item.current !== undefined ? (+item.current).toFixed(1) : '-';
+
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+        <div class="card-header">
+            <span class="card-label">${label}</span>
+            <i data-lucide="${icon}" style="width:18px; height:18px; color:${color}"></i>
+        </div>
+        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${color}aa); -webkit-background-clip: text;">
+            ${val}<span class="card-unit">${item.unit}</span>
+        </div>
+    `;
+    container.appendChild(div);
 }
 
 
