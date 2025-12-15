@@ -1,0 +1,33 @@
+#errorCatcher Echo
+## current.json.tmpl
+{
+  "title": "$station.location",
+  "time": "$current.dateTime",
+  "conditions": {
+    "outTemp": $current.outTemp.raw,
+    "dewpoint": $current.dewpoint.raw,
+    "humidity": $current.outHumidity.raw,
+    "windSpeed": $current.windSpeed.raw,
+    "windDir": $current.windDir.raw,
+    "windGust": $current.windGust.raw,
+    "pressure": $current.barometer.raw,
+    "rainRate": $current.rainRate.raw,
+    "uv": $current.UV.raw,
+    "radiation": $current.radiation.raw
+  },
+  "day": {
+    "outTemp": {
+      "max": $day.outTemp.max.raw,
+      "min": $day.outTemp.min.raw
+    },
+    "rain": {
+      "sum": $day.rain.sum.raw
+    }
+  },
+  "units": {
+    "group_temperature": "$unit.label.outTemp",
+    "group_pressure": "$unit.label.barometer",
+    "group_rain": "$unit.label.rain",
+    "group_speed": "$unit.label.windSpeed"
+  }
+}

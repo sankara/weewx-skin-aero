@@ -1,0 +1,20 @@
+#errorCatcher Echo
+## trends.json.tmpl
+{
+  "day": {
+    "time": $day.outTemp.series(time_step=300).json,
+    "outTemp": $day.outTemp.series(time_step=300).json,
+    "dewpoint": $day.dewpoint.series(time_step=300).json,
+    "barometer": $day.barometer.series(time_step=300).json,
+    "windSpeed": $day.windSpeed.series(time_step=300).json,
+    "windGust": $day.windGust.series(time_step=300).json,
+    "windDir": $day.windDir.series(time_step=300).json,
+    "rain": $day.rain.series(time_step=300, aggregate_type='sum').json
+  },
+  "week": {
+    "time": $week.outTemp.series(time_step=3600).json,
+    "outTemp": $week.outTemp.series(time_step=3600).json,
+    "barometer": $week.barometer.series(time_step=3600).json,
+    "rain": $week.rain.series(time_step=3600, aggregate_type='sum').json
+  }
+}

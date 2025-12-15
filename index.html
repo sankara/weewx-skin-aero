@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeeWX Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="main-header">
+            <h1 id="station-title">Loading...</h1>
+            <div class="header-controls">
+                <span id="last-updated">Updating...</span>
+                <button id="unit-toggle" class="btn-icon" aria-label="Toggle Units">
+                    <i data-lucide="scale"></i>
+                </button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <div class="nav-tabs">
+                <button class="nav-btn active" data-view="overview">Overview</button>
+                <button class="nav-btn" data-view="day">Day</button>
+                <button class="nav-btn" data-view="week" disabled title="Coming soon">Week</button>
+                <button class="nav-btn" data-view="month" disabled title="Coming soon">Month</button>
+            </div>
+
+            <div class="date-controls" id="date-controls">
+                <button id="date-prev" class="date-btn" aria-label="Previous">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <!-- Simple date display for now, could be a real picker input later -->
+                <span id="current-date-display">Today</span>
+                <input type="date" id="date-picker" style="display:none"> <!-- Hidden picker -->
+                <button id="date-next" class="date-btn" aria-label="Next">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+        </nav>
+
+        <main id="content-area">
+            <!-- Content injected via JS -->
+            <section id="observations-grid" class="grid-container">
+                <!-- Cards will go here -->
+            </section>
+
+            <section id="graphs-container" class="graphs-section">
+                <!-- Graphs will go here -->
+            </section>
+
+            <section id="rain-graph-section" class="graphs-section" style="margin-top: 2rem;">
+                <!-- Rain graph handles separately or appended by JS? Let's keep it generic -->
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

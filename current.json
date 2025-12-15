@@ -1,0 +1,31 @@
+{
+  "title": "Mock Station",
+  "time": "2025-12-13 18:18:28",
+  "conditions": {
+    "outTemp": 19.5,
+    "dewpoint": 12.5,
+    "humidity": 65,
+    "windSpeed": 12.3,
+    "windDir": 3,
+    "windGust": 11.7,
+    "pressure": 1013.2,
+    "rainRate": 0.0,
+    "uv": 4,
+    "radiation": 400
+  },
+  "day": {
+    "outTemp": {
+      "max": 26.5,
+      "min": 14.2
+    },
+    "rain": {
+      "sum": 0.2
+    }
+  },
+  "units": {
+    "group_temperature": "\u00b0C",
+    "group_pressure": "hPa",
+    "group_rain": "mm",
+    "group_speed": "km/h"
+  }
+}
