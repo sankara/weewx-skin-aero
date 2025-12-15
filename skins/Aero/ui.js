@@ -170,10 +170,14 @@ export function renderHistorySummary() {
 
 function createSummaryCard(container, label, value, unit, color) {
     const div = document.createElement('div');
-    div.className = 'summary-card';
+    div.className = 'card';
     div.innerHTML = `
-        <div class="label" style="color:${color}">${label}</div>
-        <div class="value">${(+value).toFixed(1)} <span class="unit">${unit}</span></div>
+        <div class="card-header">
+             <span class="card-label" style="color:${color}">${label}</span>
+        </div>
+        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${color}aa); -webkit-background-clip: text;">
+            ${(+value).toFixed(1)}<span class="card-unit">${unit}</span>
+        </div>
     `;
     container.appendChild(div);
 }
