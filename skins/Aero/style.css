@@ -279,3 +279,68 @@ body {
         grid-column: span 2;
     }
 }
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1; /* Slate 300 */
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+input:checked + .slider {
+  background-color: var(--accent-color);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--accent-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* Metric Label Styling */
+.unit-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Adjust Nav layout */
+.nav-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+}

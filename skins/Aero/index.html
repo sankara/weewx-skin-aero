@@ -20,12 +20,12 @@
             <div class="header-controls">
                 <span id="last-updated">Updating...</span>
                 <div class="unit-toggle-container">
-                    <span class="unit-label">°C</span>
+                    <span class="unit-label">Metric</span>
                     <label class="switch">
                         <input type="checkbox" id="unit-toggle">
                         <span class="slider round"></span>
                     </label>
-                    <span class="unit-label">°F</span>
+                    <span class="unit-label">Imperial</span>
                 </div>
             </div>
         </header>
@@ -33,6 +33,8 @@
         <nav class="main-nav">
             <div class="nav-tabs">
                 <button class="nav-btn active" data-view="overview">Overview</button>
+                <button class="nav-btn" data-view="month">Month</button>
+                <button class="nav-btn" data-view="year">Year</button>
                 <button id="date-prev" class="date-btn" aria-label="Previous">
                     <i data-lucide="chevron-left"></i>
                 </button>
@@ -61,7 +63,7 @@
         </main>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
     <script>
         lucide.createIcons();
     </script>

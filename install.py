@@ -7,35 +7,33 @@ def loader():
 class AeroInstaller(ExtensionInstaller):
     def __init__(self):
         super(AeroInstaller, self).__init__(
-            version="2.0.3",
+            version="2.0.4",
             name='aero',
             description='A premium modern skin for WeeWX with Canvas-based visualizations.',
             author="Sankara",
             text="Installs the Aero skin.",
             config={
                 'StdReport': {
-                    'Aero': {
-                        'skin': 'Aero',
+                    'aero': {
+                        'skin': 'aero',
                         'HTML_ROOT': 'aero'
                     }
                 }
             },
             files=[
                 ('skins/Aero', [
-                    'skin.conf',
-                    'index.html',
-                    'style.css',
-                    'app.js',
+                    'skins/Aero/skin.conf',
+                    'skins/Aero/index.html',
+                    'skins/Aero/style.css',
+                    'skins/Aero/app.js',
                     'README.md',
                     'LICENSE',
-                    'VERSION'
-                ]),
-                ('skins/Aero/templates', [
-                    'templates/current.json.tmpl',
-                    'templates/daily.json.tmpl',
-                    'templates/week.json.tmpl',
-                    'templates/month.json.tmpl',
-                    'templates/trends.json.tmpl'
+                    'skins/Aero/VERSION',
+                    'skins/Aero/templates/current.json.tmpl',
+                    'skins/Aero/templates/daily.json.tmpl',
+                    'skins/Aero/templates/week.json.tmpl',
+                    'skins/Aero/templates/month.json.tmpl',
+                    'skins/Aero/templates/trends.json.tmpl'
                 ]),
             ]
         )

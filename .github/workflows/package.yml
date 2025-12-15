@@ -35,11 +35,11 @@ jobs:
           # Create a staging directory 'aero' (this will be the root in the zip)
           mkdir -p aero
           
-          # Copy essential files
-          cp skin.conf index.html style.css app.js LICENSE README.md VERSION install.py aero/
+          # Copy essential files from root
+          cp install.py README.md LICENSE aero/
           
-          # Copy templates directory
-          cp -r templates aero/
+          # Copy skins directory (which contains Aero/skin.conf etc)
+          cp -r skins aero/
           
           # Zip the folder
           zip -r $FILENAME aero

@@ -1,3 +1,3 @@
-data/
-var/
+test-data/
+debug_server.py
 .DS_Store
