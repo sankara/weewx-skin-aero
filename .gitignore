@@ -1,2 +1,4 @@
-
-.DS_Store
+dev/db/weewx.sdb
+dev/www/
+__pycache__/
+*.pyc
