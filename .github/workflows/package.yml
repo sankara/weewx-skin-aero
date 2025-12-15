@@ -1,23 +1,39 @@
-name: Package WeeWX Skin
+name: Build and Release Aero Skin
 
 on:
   push:
-    branches: [ "main", "master", "trunk" ]
-  pull_request:
-    branches: [ "main", "master", "trunk" ]
+    branches: [ "main" ]
+    tags: [ "v*" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
-      - name: Create Extension Archive
+      - name: Get Version
+        id: version
         run: |
-          # Create a zip file excluding development and system files
-          zip -r weewx-modern-skin.zip . -x \
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "IS_RELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=trunk" >> $GITHUB_OUTPUT
+            echo "IS_RELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Skin Archive
+        run: |
+          # Aero Skin - weewx-aero-{version}.zip
+          VERSION=${{ steps.version.outputs.VERSION }}
+          FILENAME="weewx-aero-${VERSION}.zip"
+          
+          # Create zip excluding dev files
+          zip -r $FILENAME . -x \
             "data/*" \
             ".git/*" \
             ".github/*" \
@@ -26,9 +42,31 @@ jobs:
             ".gitignore" \
             ".DS_Store" \
             "*.zip"
+          
+          echo "ASSET_NAME=$FILENAME" >> $GITHUB_ENV
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+      # 1. TRUNK RELEASE (Rolling)
+      - name: Update Trunk Release
+        if: steps.version.outputs.IS_RELEASE == 'false'
+        uses: ncipollo/release-action@v1
         with:
-          name: weewx-modern-skin
-          path: weewx-modern-skin.zip
+          tag: trunk
+          name: Aero Skin - Trunk
+          body: "Rolling release of the latest development version."
+          allowUpdates: true
+          prerelease: true
+          artifacts: ${{ env.ASSET_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          removeArtifacts: true
+
+      # 2. VERSIONED RELEASE (Tags)
+      - name: Create Versioned Release
+        if: steps.version.outputs.IS_RELEASE == 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.VERSION }}
+          name: Aero Skin ${{ steps.version.outputs.VERSION }}
+          body: "Release of Aero Skin version ${{ steps.version.outputs.VERSION }}."
+          artifacts: ${{ env.ASSET_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+

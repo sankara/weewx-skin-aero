@@ -102,7 +102,7 @@ async function loadDate(date) {
 
 function renderHeader() {
     if (!state.currentData) return;
-    els.title.textContent = "Weather Station";
+    els.title.textContent = "Aero Weather";
     const date = new Date(state.currentData.meta.time * 1000);
     els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
 }
