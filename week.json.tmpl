@@ -1,0 +1,48 @@
+#errorCatcher Echo
+## week.json.tmpl
+{
+  "meta": {
+    "time": $current.dateTime.raw
+  },
+  "obs": {
+    "outTemp": {
+      "min": $week.outTemp.min.raw,
+      "max": $week.outTemp.max.raw,
+      "unit": "$unit.label.outTemp",
+      "graph": $week.outTemp.series(time_type='unix_epoch_s', aggregating_interval=3600)
+    },
+    "outHumidity": {
+      "min": $week.outHumidity.min.raw,
+      "max": $week.outHumidity.max.raw,
+      "unit": "$unit.label.outHumidity",
+      "graph": $week.outHumidity.series(time_type='unix_epoch_s', aggregating_interval=3600)
+    },
+    "barometer": {
+      "min": $week.barometer.min.raw,
+      "max": $week.barometer.max.raw,
+      "unit": "$unit.label.barometer",
+      "graph": $week.barometer.series(time_type='unix_epoch_s', aggregating_interval=3600)
+    },
+    "windSpeed": {
+      "min": $week.windSpeed.min.raw,
+      "max": $week.windSpeed.max.raw,
+      "unit": "$unit.label.windSpeed",
+      "graph": $week.windSpeed.series(time_type='unix_epoch_s', aggregating_interval=3600)
+    },
+    "windDir": {
+      "graph": $week.windDir.series(time_type='unix_epoch_s', aggregating_interval=3600)
+    },
+    "rain": {
+      "sum": $week.rain.sum.raw,
+      "unit": "$unit.label.rain",
+      "graph": $week.rain.series(time_type='unix_epoch_s', aggregating_interval=3600)
+    },
+    "rainRate": {
+      "max": $week.rainRate.max.raw
+    },
+    "UV": {
+      "max": $week.UV.max.raw,
+      "unit": ""
+    }
+  }
+}

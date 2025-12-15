@@ -72,30 +72,54 @@ function parseWeeWXData(json) {
 }
 
 async function loadDate(date) {
+    state.currentDate = date;
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
-    const filename = `day-${yyyy}-${mm}-${dd}.json`;
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const isToday = isSameDay(date, new Date());
 
-    els.dateDisplay.textContent = date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    let activeFile, summaryFile;
 
+    if (state.viewScope === 'week') {
+        activeFile = 'week.json';
+        els.dateDisplay.textContent = "Current Week";
+        // Disable date nav for simplicity in this version
+    } else if (state.viewScope === 'month') {
+        activeFile = 'month.json';
+        els.dateDisplay.textContent = "Current Month";
+    } else {
+        // DAY View
+        activeFile = isToday ? 'today.json' : `day-${dateStr}.json`;
+        els.dateDisplay.textContent = date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    // Fetch Data
     try {
-        const res = await fetch(state.basePath + filename);
-        if (!res.ok) throw new Error('No data');
-        const json = await res.json();
-        state.activeData = parseWeeWXData(json);
+        if (isToday && state.viewScope === 'day') {
+            const [cur, today] = await Promise.all([
+                fetch(state.basePath + 'current.json').then(r => r.json()),
+                fetch(state.basePath + 'today.json').then(r => r.json()).catch(() => null)
+            ]);
+            state.currentData = parseWeeWXData(cur);
+            state.activeData = parseWeeWXData(today || cur);
+        } else {
+            // For Week/Month, we treat the loaded file as both current (overview source) and active (graph source)
+            // In a real app, you might want a distinct 'current' for the header.
+            const data = await fetch(state.basePath + activeFile).then(r => r.json());
+            state.currentData = parseWeeWXData(data);
+            state.activeData = parseWeeWXData(data);
+        }
 
-        // Re-render Overview using the loaded daily stats (min/max)
+        // Re-render
         if (state.view === 'overview') {
             renderOverview();
-            renderGraphs(); // Overview also shows graphs usually
-        } else if (state.view === 'day') {
             renderGraphs();
         }
     } catch (e) {
-        console.warn("No data for date", filename);
+        console.warn("No data", activeFile);
         if (state.view !== 'overview') {
-            els.graphs.innerHTML = `<div class="card" style="text-align:center; padding:2rem;">No data available for ${filename}</div>`;
+            els.graphs.innerHTML = `<div class="card" style="text-align:center; padding:2rem;">No data available for ${activeFile}</div>`;
         }
     }
 }
@@ -456,7 +480,25 @@ function renderGraphs() {
             options: {
                 ...getChartOptions(),
                 scales: {
-                    x: { ...commonScales.x },
+                    x: {
+                        type: 'category',
+                        grid: { display: false },
+                        ticks: {
+                            maxTicksLimit: state.viewScope === 'day' ? 8 : 7,
+                            callback: function (val, index) {
+                                // Only show some ticks
+                                // data[index].x is unix timestamp * 1000
+                                const ts = this.getLabelForValue(val);
+                                const d = new Date(ts);
+                                if (state.viewScope === 'day') {
+                                    return index % 3 === 0 ? d.toLocaleTimeString([], { hour: 'numeric' }) : '';
+                                } else {
+                                    // Week/Month: Show Date
+                                    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                }
+                            }
+                        }
+                    },
                     y: {
                         display: false,
                         min: -40, max: 40
@@ -720,14 +762,43 @@ function setupNav() {
 }
 
 function setupDateControls() {
-    els.datePrev.addEventListener('click', () => {
-        state.currentDate.setDate(state.currentDate.getDate() - 1);
-        loadDate(state.currentDate);
-    });
+    els.datePrev.onclick = () => {
+        if (state.viewScope !== 'day') return;
+        const d = new Date(state.currentDate);
+        d.setDate(d.getDate() - 1);
+        loadDate(d);
+    };
+    els.dateNext.onclick = () => {
+        if (state.viewScope !== 'day') return;
+        const d = new Date(state.currentDate);
+        d.setDate(d.getDate() + 1);
+        if (d > new Date()) return; // Future
+        loadDate(d);
+    };
 
-    els.dateNext.addEventListener('click', () => {
-        state.currentDate.setDate(state.currentDate.getDate() + 1);
-        loadDate(state.currentDate);
+    // Scope Selectors
+    ['day', 'week', 'month'].forEach(scope => {
+        const btn = document.getElementById(`scope-${scope}`);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                // Update active state
+                document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('btn-active'));
+                btn.classList.add('btn-active');
+
+                // Update State
+                state.viewScope = scope;
+
+                // Disable/Enable Nav buttons
+                const isDay = scope === 'day';
+                els.datePrev.disabled = !isDay;
+                els.dateNext.disabled = !isDay;
+                els.datePrev.style.opacity = isDay ? 1 : 0.5;
+                els.dateNext.style.opacity = isDay ? 1 : 0.5;
+
+                // Reload data
+                loadDate(state.currentDate);
+            });
+        }
     });
 }
 

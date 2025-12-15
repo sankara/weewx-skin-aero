@@ -19,21 +19,20 @@
             <h1 id="station-title">Loading...</h1>
             <div class="header-controls">
                 <span id="last-updated">Updating...</span>
-                <button id="unit-toggle" class="btn-icon" aria-label="Toggle Units">
-                    <i data-lucide="scale"></i>
-                </button>
+                <div class="unit-toggle-container">
+                    <span class="unit-label">°C</span>
+                    <label class="switch">
+                        <input type="checkbox" id="unit-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="unit-label">°F</span>
+                </div>
             </div>
         </header>
 
         <nav class="main-nav">
             <div class="nav-tabs">
                 <button class="nav-btn active" data-view="overview">Overview</button>
-                <button class="nav-btn" data-view="day">Day</button>
-                <button class="nav-btn" data-view="week" disabled title="Coming soon">Week</button>
-                <button class="nav-btn" data-view="month" disabled title="Coming soon">Month</button>
-            </div>
-
-            <div class="date-controls" id="date-controls">
                 <button id="date-prev" class="date-btn" aria-label="Previous">
                     <i data-lucide="chevron-left"></i>
                 </button>

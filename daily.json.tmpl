@@ -1,0 +1,48 @@
+#errorCatcher Echo
+## daily.json.tmpl
+{
+  "meta": {
+    "time": $current.dateTime.raw
+  },
+  "obs": {
+    "outTemp": {
+      "min": $day.outTemp.min.raw,
+      "max": $day.outTemp.max.raw,
+      "unit": "$unit.label.outTemp",
+      "graph": $day.outTemp.series(time_type='unix_epoch_s', aggregating_interval=None)
+    },
+    "outHumidity": {
+      "min": $day.outHumidity.min.raw,
+      "max": $day.outHumidity.max.raw,
+      "unit": "$unit.label.outHumidity",
+      "graph": $day.outHumidity.series(time_type='unix_epoch_s', aggregating_interval=None)
+    },
+    "barometer": {
+      "min": $day.barometer.min.raw,
+      "max": $day.barometer.max.raw,
+      "unit": "$unit.label.barometer",
+      "graph": $day.barometer.series(time_type='unix_epoch_s', aggregating_interval=None)
+    },
+    "windSpeed": {
+      "min": $day.windSpeed.min.raw,
+      "max": $day.windSpeed.max.raw,
+      "unit": "$unit.label.windSpeed",
+      "graph": $day.windSpeed.series(time_type='unix_epoch_s', aggregating_interval=None)
+    },
+    "windDir": {
+      "graph": $day.windDir.series(time_type='unix_epoch_s', aggregating_interval=None)
+    },
+    "rain": {
+      "sum": $day.rain.sum.raw,
+      "unit": "$unit.label.rain",
+      "graph": $day.rain.series(time_type='unix_epoch_s', aggregating_interval=None)
+    },
+    "rainRate": {
+      "max": $day.rainRate.max.raw
+    },
+    "UV": {
+      "max": $day.UV.max.raw,
+      "unit": ""
+    }
+  }
+}
