@@ -9,18 +9,40 @@ async function init() {
         console.log("Init...");
         // 1. Fetch "Current" (Live) data AND "Today" data (for context)
         // We need 'today.json' for the Min/Max ranges on the current dials
-        const [curRes, todayRes] = await Promise.all([
-            fetch(state.basePath + 'current.json'),
-            fetch(state.basePath + 'today.json').catch(e => null) // Optional fail-safe
-        ]);
-
+        const curRes = await fetch(state.basePath + 'current.json');
         if (!curRes.ok) throw new Error(`HTTP ${curRes.status} loading current.json`);
 
         const curJson = await curRes.json();
         state.currentData = parseWeeWXData(curJson);
 
-        if (todayRes && todayRes.ok) {
-            const todayJson = await todayRes.json();
+        // Fetch Today's data with fallback
+        let todayJson = null;
+        try {
+            const res = await fetch(state.basePath + 'today.json');
+            if (res.ok) {
+                todayJson = await res.json();
+            } else {
+                throw new Error("today.json not found");
+            }
+        } catch (e) {
+            // Fallback to dated file (e.g., day-YYYY-MM-DD.json)
+            // Use current report time as reference for "Today"
+            const reportDate = new Date(state.currentData.meta.time * 1000);
+            const yyyy = reportDate.getFullYear();
+            const mm = String(reportDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(reportDate.getDate()).padStart(2, '0');
+            const fallbackFile = `day-${yyyy}-${mm}-${dd}.json`;
+            console.warn(`today.json failed, trying fallback: ${fallbackFile}`);
+
+            try {
+                const res = await fetch(state.basePath + fallbackFile);
+                if (res.ok) todayJson = await res.json();
+            } catch (err) {
+                console.warn("Fallback failed", err);
+            }
+        }
+
+        if (todayJson) {
             state.todayData = parseWeeWXData(todayJson);
         }
 
@@ -102,7 +124,15 @@ async function loadDate(date) {
         if (state.viewScope === 'day' && isToday && state.todayData) {
             state.activeData = state.todayData;
         } else {
-            const res = await fetch(state.basePath + activeFile);
+            let res = await fetch(state.basePath + activeFile);
+
+            // Fallback for 'today.json' 404 in day view
+            if (!res.ok && activeFile === 'today.json') {
+                 const fallbackFile = `day-${dateStr}.json`;
+                 console.warn(`today.json failed in loadDate, trying ${fallbackFile}`);
+                 res = await fetch(state.basePath + fallbackFile);
+            }
+
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             state.activeData = parseWeeWXData(data);

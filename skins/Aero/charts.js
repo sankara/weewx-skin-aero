@@ -104,18 +104,40 @@ function renderTempChart(commonScales, isDayView) {
             avg: d.avg // Store avg for tooltip
         }));
 
+        const avgDataPoints = aggData.map(d => ({ x: d.x, y: d.avg }));
+
         charts.temp = new Chart(ctx, {
             type: 'bar',
             data: {
-                datasets: [{
-                    label: `Temperature Range (${tempItem.unit})`,
-                    data: dataPoints,
-                    backgroundColor: THEME.outTemp,
-                    borderColor: THEME.outTemp,
-                    borderRadius: 4,
-                    barThickness: 'flex',
-                    maxBarThickness: 30
-                }]
+                datasets: [
+                    {
+                        label: `Temperature Range (${tempItem.unit})`,
+                        data: dataPoints,
+                        backgroundColor: THEME.outTemp,
+                        borderColor: THEME.outTemp,
+                        borderRadius: 4,
+                        barThickness: 'flex',
+                        maxBarThickness: 30,
+                        order: 2
+                    },
+                    {
+                        label: `Average Temp (${tempItem.unit})`,
+                        data: avgDataPoints,
+                        type: 'line',
+                        borderColor: '#ea580c', // Darker orange
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        tension: 0.3,
+                        order: 1,
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    return `Avg: ${ctx.parsed.y.toFixed(1)} ${tempItem.unit}`;
+                                }
+                            }
+                        }
+                    }
+                ]
             },
             options: {
                 ...getChartOptions(false),
@@ -123,9 +145,15 @@ function renderTempChart(commonScales, isDayView) {
                 plugins: {
                     ...getChartOptions(false).plugins,
                     tooltip: {
+                        ...getChartOptions(false).plugins.tooltip,
                         callbacks: {
+                            ...getChartOptions(false).plugins.tooltip.callbacks,
                             label: (ctx) => {
                                 const raw = ctx.raw;
+                                // If it's the average line
+                                if (ctx.dataset.type === 'line') {
+                                     return `Avg: ${ctx.parsed.y.toFixed(1)} ${tempItem.unit}`;
+                                }
                                 // raw.y is [min, max]
                                 const min = raw.y[0].toFixed(1);
                                 const max = raw.y[1].toFixed(1);

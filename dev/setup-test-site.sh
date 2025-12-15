@@ -30,12 +30,15 @@ for file in "$DATA_SRC_DIR"/*.json; do
 done
 
 # Ensure we have a today.json (copy or link a specific day for testing)
-# Using Aug 1, 2023 as 'today' for the test context if not present
+# Ensure we have a today.json (copy or link a specific day for testing)
 if [ ! -f "$SITE_DIR/data/today.json" ]; then
-    # Link a sample day as today.json
-    # Check if day-2023-08-01.json exists in source
-    if [ -f "$DATA_SRC_DIR/day-2023-08-01.json" ]; then
-        ln -sf "$DATA_SRC_DIR/day-2023-08-01.json" "$SITE_DIR/data/today.json"
+    # Link the first available day file as today.json
+    FIRST_DAY_FILE=$(find "$DATA_SRC_DIR" -name "day-*.json" | head -n 1)
+    if [ -n "$FIRST_DAY_FILE" ]; then
+        ln -sf "$FIRST_DAY_FILE" "$SITE_DIR/data/today.json"
+        echo "Linked $(basename "$FIRST_DAY_FILE") as today.json"
+    else
+        echo "Warning: No day-*.json files found in $DATA_SRC_DIR"
     fi
 fi
 
