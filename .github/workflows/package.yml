@@ -1,0 +1,34 @@
+name: Package WeeWX Skin
+
+on:
+  push:
+    branches: [ "main", "master", "trunk" ]
+  pull_request:
+    branches: [ "main", "master", "trunk" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create Extension Archive
+        run: |
+          # Create a zip file excluding development and system files
+          zip -r weewx-modern-skin.zip . -x \
+            "data/*" \
+            ".git/*" \
+            ".github/*" \
+            "var/*" \
+            "mock_weewx.py" \
+            ".gitignore" \
+            ".DS_Store" \
+            "*.zip"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: weewx-modern-skin
+          path: weewx-modern-skin.zip
