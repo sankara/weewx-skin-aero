@@ -139,3 +139,70 @@ export function sampleData(data, minutes) {
     });
     return result;
 }
+
+/**
+ * Aggregates high-res data for longer time periods (Month/Year).
+ * @param {Array} graphData - [[ts, val], ...]
+ * @param {String} scope - 'month', 'year', 'week'
+ * @returns {Array} - [{x: ts, min, max, avg, sum}, ...]
+ */
+export function aggregate(graphData, scope) {
+    if (!graphData || !graphData.length) return [];
+
+    const grouped = new Map();
+
+    graphData.forEach(([ts, val]) => {
+        if (val === null || val === undefined) return;
+
+        const date = new Date(ts * 1000);
+        let key; // Bucket key (timestamp of start of bucket)
+
+        if (scope === 'year') {
+            // Group by Month
+            // Set to 1st of month
+            date.setDate(1);
+            date.setHours(0, 0, 0, 0);
+            key = date.getTime();
+        } else {
+            // Group by Day (for Month/Week view)
+            date.setHours(0, 0, 0, 0);
+            key = date.getTime();
+        }
+
+        if (!grouped.has(key)) {
+            grouped.set(key, { values: [] });
+        }
+        grouped.get(key).values.push(val);
+    });
+
+    // Process groups
+    const result = [];
+    // Sort keys
+    const sortedKeys = Array.from(grouped.keys()).sort((a, b) => a - b);
+
+    sortedKeys.forEach(key => {
+        const values = grouped.get(key).values;
+        let sum = 0;
+        let min = Infinity;
+        let max = -Infinity;
+
+        values.forEach(v => {
+            sum += v;
+            if (v < min) min = v;
+            if (v > max) max = v;
+        });
+
+        const avg = sum / values.length;
+
+        result.push({
+            x: key,
+            min: min,
+            max: max,
+            avg: avg,
+            sum: sum,
+            count: values.length
+        });
+    });
+
+    return result;
+}

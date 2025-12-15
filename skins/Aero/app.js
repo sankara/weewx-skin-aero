@@ -1,5 +1,5 @@
 // app.js
-import { renderOverview, renderHeader } from './ui.js';
+import { renderHeader, renderHistorySummary } from './ui.js';
 import { renderGraphs } from './charts.js';
 import { isSameDay } from './utils.js';
 import { state, els } from './state.js';
@@ -7,20 +7,31 @@ import { state, els } from './state.js';
 async function init() {
     try {
         console.log("Init...");
-        // 1. Fetch "Current" (Live) data
-        const res = await fetch(state.basePath + 'current.json');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // 1. Fetch "Current" (Live) data AND "Today" data (for context)
+        // We need 'today.json' for the Min/Max ranges on the current dials
+        const [curRes, todayRes] = await Promise.all([
+            fetch(state.basePath + 'current.json'),
+            fetch(state.basePath + 'today.json').catch(e => null) // Optional fail-safe
+        ]);
 
-        const json = await res.json();
-        state.currentData = parseWeeWXData(json);
+        if (!curRes.ok) throw new Error(`HTTP ${curRes.status} loading current.json`);
+
+        const curJson = await curRes.json();
+        state.currentData = parseWeeWXData(curJson);
+
+        if (todayRes && todayRes.ok) {
+            const todayJson = await todayRes.json();
+            state.todayData = parseWeeWXData(todayJson);
+        }
 
         // Default to latest report time
         const reportTime = new Date(state.currentData.meta.time * 1000);
         state.currentDate = reportTime;
 
+        // Render Fixed Top Section
         renderHeader();
 
-        // 2. Load "Active" data (Default: Today)
+        // 2. Load "Active" data (Default: Day)
         await loadDate(state.currentDate);
 
         setupNav();
@@ -29,15 +40,19 @@ async function init() {
 
     } catch (e) {
         console.error("Failed to init", e);
-        els.grid.innerHTML = `<div class="error" style="grid-column: 1/-1; text-align:center">
-            <h3>Error loading weather data</h3>
-            <p>Could not load ${state.basePath}current.json</p>
-            <p><small>${e.message}</small></p>
-        </div>`;
+        // Fallback error UI
+        if(els.graphs) {
+            els.graphs.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:2rem; color:red">
+                <h3>Error loading weather data</h3>
+                <p>Could not load initial data.</p>
+                <p><small>${e.message}</small></p>
+            </div>`;
+        }
     }
 }
 
 function parseWeeWXData(json) {
+    if(!json) return null;
     const map = {
         meta: json.report || {},
         obs: {}
@@ -67,44 +82,25 @@ async function loadDate(date) {
     // Map viewScope to filenames
     const fileMap = {
         'day': isToday ? 'today.json' : `day-${dateStr}.json`,
-        'week': isToday ? 'week.json' : 'week.json',   // WeeWX standard skin usually doesn't have hist week files easily. 
-        // We will fallback to week.json for now unless we want to disable prev/next for weeks.
-
+        'week': 'week-to-date.json', // As per plan, use week-to-date
         'month': `month-${yyyy}-${mm}.json`,
         'year': `year-${yyyy}.json`
     };
 
     activeFile = fileMap[state.viewScope] || 'today.json';
 
-    // Update Header Text based on Scope
-    if (state.viewScope === 'day') {
-        els.dateDisplay.textContent = date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-    } else if (state.viewScope === 'month') {
-        els.dateDisplay.textContent = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-    } else if (state.viewScope === 'year') {
-        els.dateDisplay.textContent = date.getFullYear();
-    } else {
-        els.dateDisplay.textContent = "Current Week"; // Dynamic week text is complex without start/end
-    }
+    // Update Date Display Text
+    updateDateDisplay(date);
 
-    // Enable/Disable Nav buttons (Allow browsing for Month/Year now)
-    if (state.viewScope === 'week') {
-        els.datePrev.disabled = true; // Historical week files not standard
-        els.dateNext.disabled = true;
-    } else {
-        els.datePrev.disabled = false;
-        els.dateNext.disabled = false;
-    }
+    // Enable/Disable Nav buttons
+    updateNavControls(date, isToday);
 
     // Fetch Data
     try {
-        if (state.viewScope === 'day' && isToday) {
-            const [cur, today] = await Promise.all([
-                fetch(state.basePath + 'current.json').then(r => r.json()),
-                fetch(state.basePath + 'today.json').then(r => r.json())
-            ]);
-            state.currentData = parseWeeWXData(cur);
-            state.activeData = parseWeeWXData(today);
+        // If we already have todayData and we are viewing today, reuse it?
+        // Better to re-fetch if we want to support refresh, but for static file logic:
+        if (state.viewScope === 'day' && isToday && state.todayData) {
+            state.activeData = state.todayData;
         } else {
             const res = await fetch(state.basePath + activeFile);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -112,44 +108,79 @@ async function loadDate(date) {
             state.activeData = parseWeeWXData(data);
         }
 
-        renderOverview();
+        renderHistorySummary();
         renderGraphs();
 
     } catch (e) {
         console.warn("No data for", activeFile, e);
-        els.graphs.innerHTML = `<div class="card" style="text-align:center; padding:2rem;">
-            No data available for ${activeFile} <br>
-            <small>${e.message}</small>
-        </div>`;
+        if(els.graphs) {
+            els.graphs.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:2rem;">
+                No data available for ${activeFile} <br>
+                <small>${e.message}</small>
+            </div>`;
+        }
+        // Clear summary if no data
+        if(document.getElementById('history-summary')) {
+            document.getElementById('history-summary').innerHTML = '';
+        }
+    }
+}
+
+function updateDateDisplay(date) {
+    if (state.viewScope === 'day') {
+        els.dateDisplay.textContent = date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    } else if (state.viewScope === 'month') {
+        els.dateDisplay.textContent = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    } else if (state.viewScope === 'year') {
+        els.dateDisplay.textContent = date.getFullYear();
+    } else if (state.viewScope === 'week') {
+        els.dateDisplay.textContent = "Current Week";
+    }
+}
+
+function updateNavControls(date, isToday) {
+    // Week view doesn't support historical nav yet
+    if (state.viewScope === 'week') {
+        els.datePrev.disabled = true;
+        els.dateNext.disabled = true;
+    } else {
+        els.datePrev.disabled = false;
+        // Disable Next if future?
+        // Simple logic handled in click handler, but visual disable:
+        // We can't easily know if 'next month' is future without checking current date vs today
+        const now = new Date();
+        // Loose check
+        els.dateNext.disabled = (date > now);
+        if(state.viewScope === 'day' && isToday) els.dateNext.disabled = true;
     }
 }
 
 function setupNav() {
     els.navBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            if (btn.disabled) return;
             els.navBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const view = btn.dataset.view;
-            if (view === 'overview') {
-                state.viewScope = 'day';
-                const d = state.currentData ? new Date(state.currentData.meta.time * 1000) : new Date();
-                loadDate(d);
-            } else {
-                state.viewScope = view; // week, month, year
-                loadDate(state.currentDate);
-            }
+            const view = btn.dataset.view; // day, week, month, year
+            state.viewScope = view;
+
+            // Reset date to 'latest' when switching views?
+            // Usually good UX to jump to "Current Month" if switching Day -> Month
+            const d = state.currentData ? new Date(state.currentData.meta.time * 1000) : new Date();
+            loadDate(d);
         });
     });
 }
 
 function setupUnits() {
+    if(!els.unitToggle) return;
     els.unitToggle.addEventListener('change', (e) => {
         state.units = e.target.checked ? 'imperial' : 'metric';
-        renderOverview();
+        renderHeader();
+        renderHistorySummary();
         renderGraphs();
     });
+    // Set initial state
     els.unitToggle.checked = (state.units === 'imperial');
 }
 
@@ -168,10 +199,9 @@ function setupDateControls() {
         if (state.viewScope === 'month') d.setMonth(d.getMonth() + 1);
         if (state.viewScope === 'year') d.setFullYear(d.getFullYear() + 1);
 
-        // Prevent going into future
+        // Basic future check
         const now = new Date();
-        // Simple future check: month/year > now
-        if (d > now) return;
+        if (d > now && state.viewScope !== 'year') return; // Allow year if current year?
 
         loadDate(d);
     });

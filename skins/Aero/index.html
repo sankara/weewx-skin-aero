@@ -15,52 +15,64 @@
 
 <body>
     <div class="app-container">
-        <header class="main-header">
-            <h1 id="station-title">Loading...</h1>
-            <div class="header-controls">
-                <span id="last-updated">Updating...</span>
-                <div class="unit-toggle-container">
-                    <span class="unit-label">Metric</span>
-                    <label class="switch">
-                        <input type="checkbox" id="unit-toggle">
-                        <span class="slider round"></span>
-                    </label>
-                    <span class="unit-label">Imperial</span>
+        <!-- FIXED TOP SECTION: Current Conditions -->
+        <section id="current-section" class="section-current">
+            <header class="main-header">
+                <div class="header-left">
+                    <h1 id="station-title">Loading...</h1>
+                    <span id="last-updated" class="subtitle">Updating...</span>
                 </div>
+                <div class="header-controls">
+                    <div class="unit-toggle-container">
+                        <span class="unit-label">Metric</span>
+                        <label class="switch">
+                            <input type="checkbox" id="unit-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="unit-label">Imperial</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dials Grid for Current Live Data -->
+            <div id="current-dials" class="dials-container">
+                <!-- Dials injected here -->
             </div>
-        </header>
+        </section>
 
-        <nav class="main-nav">
-            <div class="nav-tabs">
-                <button class="nav-btn active" data-view="overview">Overview</button>
-                <button class="nav-btn" data-view="month">Month</button>
-                <button class="nav-btn" data-view="year">Year</button>
-                <button id="date-prev" class="date-btn" aria-label="Previous">
-                    <i data-lucide="chevron-left"></i>
-                </button>
-                <!-- Simple date display for now, could be a real picker input later -->
-                <span id="current-date-display">Today</span>
-                <input type="date" id="date-picker" style="display:none"> <!-- Hidden picker -->
-                <button id="date-next" class="date-btn" aria-label="Next">
-                    <i data-lucide="chevron-right"></i>
-                </button>
-            </div>
-        </nav>
+        <!-- SCROLLABLE BOTTOM SECTION: History Explorer -->
+        <section id="history-section" class="section-history">
+            <nav class="history-nav">
+                <div class="nav-tabs">
+                    <button class="nav-btn active" data-view="day">Day</button>
+                    <button class="nav-btn" data-view="week">Week</button>
+                    <button class="nav-btn" data-view="month">Month</button>
+                    <button class="nav-btn" data-view="year">Year</button>
+                </div>
 
-        <main id="content-area">
-            <!-- Content injected via JS -->
-            <section id="observations-grid" class="grid-container">
-                <!-- Cards will go here -->
-            </section>
+                <div class="date-controls">
+                    <button id="date-prev" class="date-btn" aria-label="Previous">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <span id="current-date-display">Today</span>
+                    <button id="date-next" class="date-btn" aria-label="Next">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                </div>
+            </nav>
 
-            <section id="graphs-container" class="graphs-section">
-                <!-- Graphs will go here -->
-            </section>
+            <main id="content-area">
+                <!-- Summary of Selected History Period -->
+                <div id="history-summary" class="summary-grid">
+                    <!-- Summary Cards injected here -->
+                </div>
 
-            <section id="rain-graph-section" class="graphs-section" style="margin-top: 2rem;">
-                <!-- Rain graph handles separately or appended by JS? Let's keep it generic -->
-            </section>
-        </main>
+                <!-- Graphs -->
+                <div id="graphs-container" class="graphs-section">
+                    <!-- Graphs injected here -->
+                </div>
+            </main>
+        </section>
     </div>
 
     <script type="module" src="app.js"></script>

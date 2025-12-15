@@ -1,89 +1,84 @@
 // ui.js
 import { els, state } from './state.js';
-import { THEME, convertItem, getAverage, isSameDay } from './utils.js';
+import { THEME, convertItem, getAverage } from './utils.js';
 import { drawDial } from './charts.js';
 
+/**
+ * Renders the Fixed Top Section (Current Conditions)
+ */
 export function renderHeader() {
     if (!state.currentData) return;
+
+    // 1. Title & Time
     els.title.textContent = "Aero Weather";
     const date = new Date(state.currentData.meta.time * 1000);
     els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
+
+    // 2. Dials (Live Data)
+    renderCurrentObservations();
 }
 
-export function renderOverview() {
-    els.grid.innerHTML = '';
+/**
+ * Renders the Dials and Cards in #current-dials using `state.currentData` (Live)
+ * and `state.todayData` (for High/Low context).
+ */
+function renderCurrentObservations() {
+    const container = document.getElementById('current-dials');
+    if (!container) return;
+    container.innerHTML = '';
 
-    // Determine if we are viewing the "latest" day (Today)
-    const reportDate = new Date(state.currentData.meta.time * 1000);
-    const isToday = isSameDay(state.currentDate, reportDate);
-
-    // activeData is the log for the period (Day, Week, Month)
-    // currentData is the LIVE point-in-time data
-    const activeObs = state.activeData.obs;
     const currentObs = state.currentData.obs;
+    const todayObs = state.todayData ? state.todayData.obs : {};
 
-    // Helper to prepare display item
-    const getDisplayItem = (key) => {
-        const activeItem = activeObs[key];
-        const currentItem = currentObs[key];
+    // Helper: Mix Live Value with Today's Min/Max
+    const getDialItem = (key) => {
+        const live = currentObs[key];
+        const day = todayObs[key];
 
-        if (!activeItem) return convertItem(currentItem, state.units);
+        if (!live) return null;
 
-        // LOGIC FIX:
-        // Use activeItem (historical log) for min/max/avg logic base.
-        // If "Today", show Current value as main number.
-        // If Past/Week/Month, show Average (or Sum for rain) as main number.
-
-        let displayVal;
-        let labelSuffix = '';
-
-        if (isToday && state.viewScope === 'day') {
-            displayVal = currentItem ? currentItem.current : activeItem.current;
-        } else {
-            // Historical or Wide View
-            displayVal = getAverage(activeItem);
-            labelSuffix = 'Avg';
+        const item = { ...live }; // Start with live
+        // Inject min/max from today if available
+        if (day) {
+            item.min = day.min;
+            item.max = day.max;
         }
-
-        // Create a synthetic item 
-        const synthetic = {
-            ...activeItem, // Inherit min, max, unit
-            current: displayVal,
-            label: (currentItem ? currentItem.label : activeItem.label) + (labelSuffix ? ` (${labelSuffix})` : '')
-        };
-
-        return convertItem(synthetic, state.units);
+        return convertItem(item, state.units);
     };
 
-    // Dials: Temp, Humidity, Pressure, UV
     const limits = {
         temp: state.units === 'imperial' ? { min: 0, max: 120 } : { min: -20, max: 50 },
         pressure: state.units === 'imperial' ? { min: 28, max: 31 } : { min: 950, max: 1050 }
     };
 
-    createDialCard(getDisplayItem('outTemp'), 'Temperature', THEME.outTemp, limits.temp.min, limits.temp.max);
-    createDialCard(getDisplayItem('outHumidity'), 'Humidity', THEME.humidity, 0, 100);
-    createDialCard(getDisplayItem('barometer') || getDisplayItem('pressure'), 'Pressure', THEME.pressure, limits.pressure.min, limits.pressure.max);
-    createDialCard(getDisplayItem('UV'), 'UV Index', THEME.uv, 0, 15);
+    // 1. Dials
+    createDialCard(container, getDialItem('outTemp'), 'Temperature', THEME.outTemp, limits.temp.min, limits.temp.max);
+    createDialCard(container, getDialItem('outHumidity'), 'Humidity', THEME.humidity, 0, 100);
+    createDialCard(container, getDialItem('barometer') || getDialItem('pressure'), 'Pressure', THEME.pressure, limits.pressure.min, limits.pressure.max);
 
-    // Text Cards: Wind, Rain
-    const windItem = getDisplayItem('windSpeed');
-    // If not today, wind might be average? Or max gust? 
-    // Standard practice for summary is Avg Speed. 
-    createCard(windItem, 'wind', THEME.windSpeed, '');
+    // UV is often missing in simulation/test data, handle gracefully
+    const uvItem = getDialItem('UV');
+    if (uvItem) {
+        createDialCard(container, uvItem, 'UV Index', THEME.uv, 0, 15);
+    }
 
-    // Rain: (Total)
-    // Always show Sum for Rain
-    const rainItem = convertItem(activeObs.rain, state.units);
-    // Ensure display value is sum if available
-    if (rainItem.sum !== undefined) rainItem.current = rainItem.sum;
+    // 2. Simple Cards (Wind & Rain) - Re-added as per review
+    const windItem = getDialItem('windSpeed');
+    createSimpleCard(container, windItem, 'wind', THEME.windSpeed);
 
-    createCard(rainItem, 'rain', THEME.rainRate, 'Total');
-
-    if (window.lucide) window.lucide.createIcons();
+    // Rain: For "Current" section, usually "Daily Rain" total is most useful,
+    // but the `current.json` might only have rainRate.
+    // `getDialItem` merges `today.json` so we might have `sum` available if `day` exists.
+    const rainItem = getDialItem('rain');
+    // If we have a sum from today's log, prefer that for "Total Rain" display
+    if (rainItem && rainItem.sum !== undefined) {
+        rainItem.current = rainItem.sum;
+        rainItem.label = "Rain (Total)";
+    }
+    createSimpleCard(container, rainItem, 'rain', THEME.rainRate);
 }
 
-export function createDialCard(item, title, color, absMin, absMax) {
+function createDialCard(container, item, title, color, absMin, absMax) {
     if (!item || item.current === undefined) return;
 
     const div = document.createElement('div');
@@ -96,26 +91,26 @@ export function createDialCard(item, title, color, absMin, absMax) {
         </div>
         <canvas width="200" height="150"></canvas>
     `;
-    els.grid.appendChild(div);
+    container.appendChild(div);
 
     const canvas = div.querySelector('canvas');
-    // Ensure min/max exist
+    // Ensure min/max exist for the dial range visualization
     const dailyMin = item.min !== undefined ? item.min : item.current;
     const dailyMax = item.max !== undefined ? item.max : item.current;
 
     drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title);
 }
 
-export function createCard(item, type, color, labelSuffix = '') {
+function createSimpleCard(container, item, type, color) {
     if (!item) return;
 
     let icon = 'activity';
     if (type === 'wind') { icon = 'wind'; }
     if (type === 'rain') { icon = 'cloud-rain'; }
 
+    // Fallback label
+    const label = item.label || (type === 'wind' ? 'Wind Speed' : 'Rain');
     const val = item.current !== undefined ? (+item.current).toFixed(1) : '-';
-    // Label handled by getDisplayItem mostly, but redundancy is safe
-    const label = (item.label || item.observation || type) + (labelSuffix ? ` (${labelSuffix})` : '');
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -128,5 +123,57 @@ export function createCard(item, type, color, labelSuffix = '') {
             ${val}<span class="card-unit">${item.unit}</span>
         </div>
     `;
-    els.grid.appendChild(div);
+    container.appendChild(div);
+}
+
+
+/**
+ * Renders the Middle Section (History Summary)
+ * Uses `state.activeData` (History File)
+ */
+export function renderHistorySummary() {
+    const container = document.getElementById('history-summary');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!state.activeData || !state.activeData.obs) return;
+
+    const obs = state.activeData.obs;
+
+    // Helper to extract nice summary values
+    // We want: Max Temp, Min Temp, Total Rain, Max Wind
+
+    // 1. Max Temp
+    const temp = convertItem(obs.outTemp, state.units);
+    if (temp) {
+        if (temp.max !== undefined) createSummaryCard(container, 'High Temp', temp.max, temp.unit, THEME.outTemp);
+        if (temp.min !== undefined) createSummaryCard(container, 'Low Temp', temp.min, temp.unit, THEME.outTemp); // Or cooler color?
+    }
+
+    // 2. Rain
+    const rain = convertItem(obs.rain, state.units);
+    if (rain && rain.sum !== undefined) {
+        createSummaryCard(container, 'Total Rain', rain.sum, rain.unit, THEME.rainRate);
+    }
+
+    // 3. Wind
+    const wind = convertItem(obs.windSpeed, state.units);
+    if (wind) {
+        if (wind.max !== undefined) createSummaryCard(container, 'Max Gust', wind.max, wind.unit, THEME.windSpeed);
+        // Avg wind?
+        const avg = getAverage(wind);
+        if (avg !== undefined) createSummaryCard(container, 'Avg Wind', avg, wind.unit, THEME.windSpeed);
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function createSummaryCard(container, label, value, unit, color) {
+    const div = document.createElement('div');
+    div.className = 'summary-card';
+    div.innerHTML = `
+        <div class="label" style="color:${color}">${label}</div>
+        <div class="value">${(+value).toFixed(1)} <span class="unit">${unit}</span></div>
+    `;
+    container.appendChild(div);
 }

@@ -1,6 +1,6 @@
 // charts.js
 import { els, state } from './state.js';
-import { THEME, convertItem, hexToRgbA, sampleData, degToCompass } from './utils.js';
+import { THEME, convertItem, hexToRgbA, sampleData, degToCompass, aggregate } from './utils.js';
 
 let charts = {};
 
@@ -11,15 +11,15 @@ export function renderGraphs() {
 
     if (!state.activeData) return;
 
-    // Common Time scale settings
+    // Determine Chart Type/Grouping based on View Scope
+    const isDayView = (state.viewScope === 'day');
+
+    // Scale Configuration
     const commonScales = {
         x: {
             type: 'time',
             grid: { display: false },
-            ticks: {
-                maxTicksLimit: 9,
-                font: { weight: 'bold' }
-            }
+            ticks: { maxTicksLimit: 9, font: { weight: 'bold' } }
         },
         y: {
             grid: { color: 'rgba(0,0,0,0.05)' },
@@ -27,23 +27,26 @@ export function renderGraphs() {
         }
     };
 
-    // Adjust X-axis based on view scope
+    // Configure X-Axis unit/format
     const sDate = new Date(state.currentDate);
-    if (state.viewScope === 'day') {
+    if (isDayView) {
         sDate.setHours(0, 0, 0, 0);
         commonScales.x.min = sDate.getTime();
         commonScales.x.max = sDate.getTime() + 24 * 60 * 60 * 1000;
         commonScales.x.time = { unit: 'hour', displayFormats: { hour: 'h a' } };
+    } else if (state.viewScope === 'week') {
+         // Week View: X-axis days
+         commonScales.x.time = { unit: 'day', displayFormats: { day: 'EEE d' } };
+         // Auto range based on data
     } else if (state.viewScope === 'month') {
-        sDate.setDate(1); sDate.setHours(0, 0, 0, 0);
+        sDate.setDate(1); sDate.setHours(0,0,0,0);
         commonScales.x.min = sDate.getTime();
-        // End of month
         const eDate = new Date(sDate);
         eDate.setMonth(eDate.getMonth() + 1);
         commonScales.x.max = eDate.getTime();
         commonScales.x.time = { unit: 'day', displayFormats: { day: 'd' } };
     } else if (state.viewScope === 'year') {
-        sDate.setMonth(0, 1); sDate.setHours(0, 0, 0, 0);
+        sDate.setMonth(0, 1); sDate.setHours(0,0,0,0);
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setFullYear(eDate.getFullYear() + 1);
@@ -51,13 +54,30 @@ export function renderGraphs() {
         commonScales.x.time = { unit: 'month', displayFormats: { month: 'MMM' } };
     }
 
-    // 1. Temperature
-    const tempItem = convertItem(state.activeData.obs.outTemp, state.units);
-    if (tempItem && tempItem.graph) {
-        createGraphContainer('graph-temp', 'Temperature', 'graphs-container', true);
-        const dataPoints = tempItem.graph.map(p => ({ x: p[0] * 1000, y: p[1] }));
+    // 1. Temperature Chart
+    renderTempChart(commonScales, isDayView);
 
-        charts.temp = new Chart(document.getElementById('graph-temp').getContext('2d'), {
+    // 2. Wind Chart
+    renderWindChart(commonScales, isDayView);
+
+    // 3. Rain Chart
+    renderRainChart(commonScales, isDayView);
+}
+
+function renderTempChart(commonScales, isDayView) {
+    const tempItem = convertItem(state.activeData.obs.outTemp, state.units);
+    if (!tempItem || !tempItem.graph) {
+        createNoDataContainer('Temperature');
+        return;
+    }
+
+    createGraphContainer('graph-temp', 'Temperature', 'graphs-container', true);
+    const ctx = document.getElementById('graph-temp').getContext('2d');
+
+    if (isDayView) {
+        // Line Chart for Day
+        const dataPoints = tempItem.graph.map(p => ({ x: p[0] * 1000, y: p[1] }));
+        charts.temp = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [{
@@ -71,21 +91,71 @@ export function renderGraphs() {
                     hitRadius: 10
                 }]
             },
-            options: { ...getChartOptions(), scales: commonScales }
+            options: { ...getChartOptions(isDayView), scales: commonScales }
         });
     } else {
-        createNoDataContainer('Temperature');
-    }
+        // Floating Bar Chart (Min/Max) for History
+        const aggData = aggregate(tempItem.graph, state.viewScope);
 
-    // 2. Wind Barb Chart
+        // Data format for floating bar: [min, max]
+        const dataPoints = aggData.map(d => ({
+            x: d.x,
+            y: [d.min, d.max],
+            avg: d.avg // Store avg for tooltip
+        }));
+
+        charts.temp = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                datasets: [{
+                    label: `Temperature Range (${tempItem.unit})`,
+                    data: dataPoints,
+                    backgroundColor: THEME.outTemp,
+                    borderColor: THEME.outTemp,
+                    borderRadius: 4,
+                    barThickness: 'flex',
+                    maxBarThickness: 30
+                }]
+            },
+            options: {
+                ...getChartOptions(false),
+                scales: commonScales,
+                plugins: {
+                    ...getChartOptions(false).plugins,
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const raw = ctx.raw;
+                                // raw.y is [min, max]
+                                const min = raw.y[0].toFixed(1);
+                                const max = raw.y[1].toFixed(1);
+                                const avg = raw.avg ? raw.avg.toFixed(1) : '-';
+                                return `High: ${max} | Low: ${min} | Avg: ${avg} ${tempItem.unit}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function renderWindChart(commonScales, isDayView) {
     const windSpeed = convertItem(state.activeData.obs.windSpeed, state.units);
     const windDir = state.activeData.obs.windDir;
 
-    if (windSpeed && windDir && windSpeed.graph && windDir.graph) {
-        createGraphContainer('graph-wind', 'Wind Barbs', 'graphs-container', true);
+    // Wind requires both speed and direction for scatter, or just speed for aggregate
+    if (!windSpeed || !windSpeed.graph) {
+        createNoDataContainer('Wind');
+        return;
+    }
 
+    createGraphContainer('graph-wind', isDayView ? 'Wind' : 'Wind (Max/Avg)', 'graphs-container', true);
+    const ctx = document.getElementById('graph-wind').getContext('2d');
+
+    if (isDayView && windDir && windDir.graph) {
+        // Scatter with Barbs
         const dirMap = new Map(windDir.graph.map(p => [p[0], p[1]]));
-
         let vectorData = windSpeed.graph.map(p => {
             const ts = p[0];
             const speed = p[1];
@@ -102,7 +172,7 @@ export function renderGraphs() {
 
         vectorData = sampleData(vectorData, 60);
 
-        charts.wind = new Chart(document.getElementById('graph-wind').getContext('2d'), {
+        charts.wind = new Chart(ctx, {
             type: 'scatter',
             data: {
                 datasets: [{
@@ -110,20 +180,14 @@ export function renderGraphs() {
                     data: vectorData,
                     borderColor: THEME.windSpeed,
                     backgroundColor: THEME.windSpeed,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: THEME.windSpeed,
-                    showLine: false
+                    pointRadius: 4
                 }]
             },
             options: {
-                ...getChartOptions(),
+                ...getChartOptions(true),
                 scales: {
                     x: commonScales.x,
-                    y: {
-                        display: false,
-                        min: -40, max: 40
-                    }
+                    y: { display: false, min: -40, max: 40 }
                 },
                 plugins: {
                     legend: { display: false },
@@ -143,12 +207,10 @@ export function renderGraphs() {
                     const { ctx, data } = chart;
                     const dataset = data.datasets[0];
                     const meta = chart.getDatasetMeta(0);
-
                     ctx.save();
                     ctx.strokeStyle = THEME.windSpeed;
                     ctx.fillStyle = THEME.windSpeed;
                     ctx.lineWidth = 2;
-
                     meta.data.forEach((point, index) => {
                         const raw = dataset.data[index];
                         if (!raw) return;
@@ -158,39 +220,84 @@ export function renderGraphs() {
                 }
             }]
         });
+
     } else {
-        createNoDataContainer('Wind Barbs');
-    }
+        // Aggregate Wind (Max Gust and Avg)
+        const aggData = aggregate(windSpeed.graph, state.viewScope);
 
-    // 3. Rain Graph
-    const rainSum = convertItem(state.activeData.obs.rain, state.units);
-    if (rainSum && rainSum.graph) {
-        createGraphContainer('graph-rain', 'Precipitation', 'graphs-container', true);
-        const rainData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: p[1] }));
+        // We can show two datasets: Max (Bar) and Avg (Line)
+        const maxData = aggData.map(d => ({ x: d.x, y: d.max }));
+        const avgData = aggData.map(d => ({ x: d.x, y: d.avg }));
 
-        charts.rain = new Chart(document.getElementById('graph-rain').getContext('2d'), {
+        charts.wind = new Chart(ctx, {
             type: 'bar',
             data: {
-                datasets: [{
-                    label: `Rain (${rainSum.unit})`,
-                    data: rainData,
-                    backgroundColor: THEME.rainRate,
-                    borderColor: THEME.rainRate,
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Max Gust',
+                        data: maxData,
+                        backgroundColor: THEME.windSpeed,
+                        order: 2
+                    },
+                    {
+                        label: 'Avg Speed',
+                        data: avgData,
+                        type: 'line',
+                        borderColor: '#064e3b', // darker green
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        tension: 0.3,
+                        order: 1
+                    }
+                ]
             },
             options: {
-                ...getChartOptions(),
-                scales: {
-                    ...commonScales,
-                    y: { beginAtZero: true }
-                }
+                ...getChartOptions(false),
+                scales: commonScales
             }
         });
-    } else {
-        createNoDataContainer('Precipitation');
     }
 }
+
+function renderRainChart(commonScales, isDayView) {
+    const rainSum = convertItem(state.activeData.obs.rain, state.units);
+    if (!rainSum || !rainSum.graph) {
+        createNoDataContainer('Precipitation');
+        return;
+    }
+
+    createGraphContainer('graph-rain', 'Precipitation', 'graphs-container', true);
+    const ctx = document.getElementById('graph-rain').getContext('2d');
+
+    let chartData;
+    if (isDayView) {
+        chartData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: p[1] }));
+    } else {
+        const aggData = aggregate(rainSum.graph, state.viewScope);
+        chartData = aggData.map(d => ({ x: d.x, y: d.sum }));
+    }
+
+    charts.rain = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            datasets: [{
+                label: `Rain (${rainSum.unit})`,
+                data: chartData,
+                backgroundColor: THEME.rainRate,
+                borderColor: THEME.rainRate,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            ...getChartOptions(isDayView),
+            scales: {
+                ...commonScales,
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
 
 export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, color, title) {
     const ctx = canvas.getContext('2d');
@@ -313,8 +420,8 @@ function createNoDataContainer(title) {
     section.appendChild(div);
 }
 
-function getChartOptions() {
-    return {
+function getChartOptions(isDayView) {
+    const opts = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -335,6 +442,12 @@ function getChartOptions() {
                     title: (items) => {
                         if (!items.length) return '';
                         const d = new Date(items[0].parsed.x);
+
+                        // Different Date format for Month/Year tooltip vs Day
+                        if (!isDayView) {
+                             return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                        }
+
                         return d.toLocaleString(undefined, {
                             weekday: 'short',
                             month: 'short',
@@ -352,6 +465,7 @@ function getChartOptions() {
             intersect: false
         }
     };
+    return opts;
 }
 
 function drawWindBarb(ctx, x, y, speed, dir) {
@@ -408,9 +522,3 @@ function drawBarbLine(ctx, x, type) {
     ctx.lineTo(endX, endY);
     ctx.stroke();
 }
-
-// Adding sampleData from utils if not exported? 
-// No, sampleData was an internal function in original app.js. 
-// I should define it here or import it if I put it in utils. 
-// I'll assume I didn't verify it was in utils yet... wait, I did write utils.js but I don't recall seeing sampleData in my write call.
-// Checking utils.js content...
