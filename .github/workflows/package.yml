@@ -32,16 +32,18 @@ jobs:
           VERSION=${{ steps.version.outputs.VERSION }}
           FILENAME="weewx-aero-${VERSION}.zip"
           
-          # Create zip excluding dev files
-          zip -r $FILENAME . -x \
-            "data/*" \
-            ".git/*" \
-            ".github/*" \
-            "var/*" \
-            "mock_weewx.py" \
-            ".gitignore" \
-            ".DS_Store" \
-            "*.zip"
+          # Create a staging directory 'aero' (this will be the root in the zip)
+          mkdir -p aero
+          
+          # Copy essential files
+          cp skin.conf index.html style.css app.js LICENSE README.md VERSION aero/
+          cp *.tmpl aero/
+          
+          # Copy icons if they exist
+          if [ -d "icons" ]; then cp -r icons aero/; fi
+          
+          # Zip the folder
+          zip -r $FILENAME aero
           
           echo "ASSET_NAME=$FILENAME" >> $GITHUB_ENV
 
