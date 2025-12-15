@@ -27,6 +27,7 @@ jobs:
           fi
 
       - name: Create Skin Archive
+        id: package
         run: |
           # Aero Skin - weewx-aero-{version}.zip
           VERSION=${{ steps.version.outputs.VERSION }}
@@ -44,7 +45,7 @@ jobs:
           # Zip the folder
           zip -r $FILENAME aero
           
-          echo "ASSET_NAME=$FILENAME" >> $GITHUB_ENV
+          echo "asset_name=$FILENAME" >> $GITHUB_OUTPUT
 
       # 1. TRUNK RELEASE (Rolling)
       - name: Update Trunk Release
@@ -56,7 +57,7 @@ jobs:
           body: "Rolling release of the latest development version."
           allowUpdates: true
           prerelease: true
-          artifacts: ${{ env.ASSET_NAME }}
+          artifacts: ${{ steps.package.outputs.asset_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           removeArtifacts: true
 
@@ -68,6 +69,6 @@ jobs:
           tag: ${{ steps.version.outputs.VERSION }}
           name: Aero Skin ${{ steps.version.outputs.VERSION }}
           body: "Release of Aero Skin version ${{ steps.version.outputs.VERSION }}."
-          artifacts: ${{ env.ASSET_NAME }}
+          artifacts: ${{ steps.package.outputs.asset_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
