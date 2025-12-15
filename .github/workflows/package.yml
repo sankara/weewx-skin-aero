@@ -36,7 +36,7 @@ jobs:
           mkdir -p aero
           
           # Copy essential files
-          cp skin.conf index.html style.css app.js LICENSE README.md VERSION aero/
+          cp skin.conf index.html style.css app.js LICENSE README.md VERSION install.py aero/
           cp *.tmpl aero/
           
           # Copy icons if they exist
