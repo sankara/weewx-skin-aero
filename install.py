@@ -7,7 +7,7 @@ def loader():
 class AeroInstaller(ExtensionInstaller):
     def __init__(self):
         super(AeroInstaller, self).__init__(
-            version="1.2.1",
+            version="2.0.0",
             name='aero',
             description='A premium modern skin for WeeWX with Canvas-based visualizations.',
             author="Sankara",
@@ -26,14 +26,12 @@ class AeroInstaller(ExtensionInstaller):
                     'index.html',
                     'style.css',
                     'app.js',
-                    'current.json.tmpl',
-                    'daily.json.tmpl',
-                    'week.json.tmpl',
-                    'month.json.tmpl',
-                    'trends.json.tmpl',
                     'README.md',
                     'LICENSE',
                     'VERSION'
+                ]),
+                ('skins/Aero/templates', [
+                    'templates/*.tmpl'
                 ]),
             ]
         )
