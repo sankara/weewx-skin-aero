@@ -2,7 +2,7 @@ name: Build and Release Aero Skin
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "trunk" ]
     tags: [ "v*" ]
   workflow_dispatch:
 
