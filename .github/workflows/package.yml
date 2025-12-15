@@ -37,10 +37,9 @@ jobs:
           
           # Copy essential files
           cp skin.conf index.html style.css app.js LICENSE README.md VERSION install.py aero/
-          cp *.tmpl aero/
           
-          # Copy icons if they exist
-          if [ -d "icons" ]; then cp -r icons aero/; fi
+          # Copy templates directory
+          cp -r templates aero/
           
           # Zip the folder
           zip -r $FILENAME aero
