@@ -22,30 +22,20 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
             echo "IS_RELEASE=true" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=trunk" >> $GITHUB_OUTPUT
+            # Generate version: yy-wk.hash
+            YEAR=$(date +'%y')
+            WEEK=$(date +'%V')
+            HASH=$(git rev-parse --short HEAD)
+            echo "VERSION=${YEAR}-${WEEK}.${HASH}" >> $GITHUB_OUTPUT
             echo "IS_RELEASE=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Create Skin Archive
         id: package
         run: |
-          # Aero Skin - weewx-aero-{version}.zip
           VERSION=${{ steps.version.outputs.VERSION }}
-          FILENAME="weewx-aero-${VERSION}.zip"
-          
-          # Create a staging directory 'aero' (this will be the root in the zip)
-          mkdir -p aero
-          
-          # Copy essential files from root
-          cp install.py README.md LICENSE aero/
-          
-          # Copy skins directory (which contains Aero/skin.conf etc)
-          cp -r skins aero/
-          
-          # Zip the folder
-          zip -r $FILENAME aero
-          
-          echo "asset_name=$FILENAME" >> $GITHUB_OUTPUT
+          ./dev/package.sh "$VERSION"
+          echo "asset_name=weewx-aero-${VERSION}.zip" >> $GITHUB_OUTPUT
 
       # 1. TRUNK RELEASE (Rolling)
       - name: Update Trunk Release
@@ -71,4 +61,3 @@ jobs:
           body: "Release of Aero Skin version ${{ steps.version.outputs.VERSION }}."
           artifacts: ${{ steps.package.outputs.asset_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
