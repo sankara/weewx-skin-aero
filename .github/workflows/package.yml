@@ -57,8 +57,9 @@ jobs:
         working-directory: dev
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
-          # Run package tool from dev directory, outputting to ../dist relative to dev (so repo root/dist)
-          uv run aero-package --version "$VERSION" --output-dir "../dist"
+          # Run package tool from dev directory.
+          # Script resolves repo root internally, so passing "dist" creates it at repo_root/dist
+          uv run aero-package --version "$VERSION" --output-dir "dist"
           echo "asset_name=weewx-aero-${VERSION}.zip" >> $GITHUB_OUTPUT
 
       # 1. TRUNK RELEASE (Rolling)
