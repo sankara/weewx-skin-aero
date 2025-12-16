@@ -1,3 +1,15 @@
 
 .DS_Store
 dev/test-site/
+dev/public_html/
+dev/weewx.sdb
+dev/.venv/
+dev/dist/
+screenshots/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+dev/uv.lock
