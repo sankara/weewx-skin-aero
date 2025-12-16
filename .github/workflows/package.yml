@@ -13,7 +13,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: dev
+        run: uv sync
+
+      - name: Install Playwright browsers
+        working-directory: dev
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run Tests
+        working-directory: dev
+        run: uv run pytest
 
       - name: Get Version
         id: version
@@ -32,22 +54,24 @@ jobs:
 
       - name: Create Skin Archive
         id: package
+        working-directory: dev
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
-          ./dev/package.sh "$VERSION"
-          echo "asset_name=weewx-aero-${VERSION}.zip" >> $GITHUB_OUTPUT
+          uv run aero-package --version "$VERSION"
+          # Artifact is generated in repo_root/dist
+          echo "asset_path=dist/weewx-aero-${VERSION}.zip" >> $GITHUB_OUTPUT
 
       # 1. TRUNK RELEASE (Rolling)
       - name: Update Trunk Release
         if: steps.version.outputs.IS_RELEASE == 'false'
         uses: ncipollo/release-action@v1
         with:
-          tag: trunk
+          tag: "trunk"
           name: Aero Skin - Trunk
           body: "Rolling release of the latest development version."
           allowUpdates: true
           prerelease: true
-          artifacts: ${{ steps.package.outputs.asset_name }}
+          artifacts: ${{ steps.package.outputs.asset_path }}
           token: ${{ secrets.GITHUB_TOKEN }}
           removeArtifacts: true
 
@@ -59,5 +83,5 @@ jobs:
           tag: ${{ steps.version.outputs.VERSION }}
           name: Aero Skin ${{ steps.version.outputs.VERSION }}
           body: "Release of Aero Skin version ${{ steps.version.outputs.VERSION }}."
-          artifacts: ${{ steps.package.outputs.asset_name }}
+          artifacts: ${{ steps.package.outputs.asset_path }}
           token: ${{ secrets.GITHUB_TOKEN }}
