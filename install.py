@@ -22,6 +22,8 @@ class AeroInstaller(ExtensionInstaller):
             },
             files=[
                 ('skins/Aero', [
+                    'LICENSE',
+                    'README.md',
                     'skins/Aero/VERSION',
                     'skins/Aero/app.js',
                     'skins/Aero/charts.js',

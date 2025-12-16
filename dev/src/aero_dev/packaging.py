@@ -98,12 +98,24 @@ def main():
 
     # Gather files
     file_list = []
+    # Add files from skins/Aero
     for root, dirs, files in os.walk(skin_dir):
         for file in files:
             if file.startswith('.'): continue
             abs_path = os.path.join(root, file)
             rel_path = os.path.relpath(abs_path, repo_root) # e.g. skins/Aero/index.html
             file_list.append(rel_path)
+
+    # Add root files (README.md, LICENSE) to the list for install.py
+    # These should be copied into the skins/Aero destination during install, or just kept in root.
+    # The install.py tuple is ('skins/Aero', [list of files]).
+    # If we put 'README.md' here, the installer will try to copy it.
+    # Usually extensions verify these files exist.
+
+    extra_files = ['README.md', 'LICENSE']
+    for extra in extra_files:
+        if os.path.exists(os.path.join(repo_root, extra)):
+            file_list.append(extra)
 
     # Update install.py
     update_install_py(repo_root, file_list)
@@ -122,6 +134,14 @@ def main():
         # Add skin files
         for rel_path in file_list:
              abs_path = os.path.join(repo_root, rel_path)
+             # If it's a root file like README.md, usually we want it in the zip root or skin root?
+             # Standard weewx extension zip:
+             # /
+             #   install.py
+             #   skins/
+             #     Aero/
+             #       ...
+
              zf.write(abs_path, rel_path)
              with open(abs_path, 'rb') as f:
                  hasher.update(f.read())
