@@ -15,6 +15,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: dev
+        run: uv sync
+
+      - name: Install Playwright browsers
+        working-directory: dev
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run tests
+        working-directory: dev
+        run: uv run pytest
+
       - name: Get Version
         id: version
         run: |
@@ -32,9 +54,11 @@ jobs:
 
       - name: Create Skin Archive
         id: package
+        working-directory: dev
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
-          ./dev/package.sh "$VERSION"
+          # Run package tool from dev directory, outputting to ../dist relative to dev (so repo root/dist)
+          uv run aero-package --version "$VERSION" --output-dir "../dist"
           echo "asset_name=weewx-aero-${VERSION}.zip" >> $GITHUB_OUTPUT
 
       # 1. TRUNK RELEASE (Rolling)
@@ -47,7 +71,7 @@ jobs:
           body: "Rolling release of the latest development version."
           allowUpdates: true
           prerelease: true
-          artifacts: ${{ steps.package.outputs.asset_name }}
+          artifacts: dist/${{ steps.package.outputs.asset_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           removeArtifacts: true
 
@@ -59,5 +83,5 @@ jobs:
           tag: ${{ steps.version.outputs.VERSION }}
           name: Aero Skin ${{ steps.version.outputs.VERSION }}
           body: "Release of Aero Skin version ${{ steps.version.outputs.VERSION }}."
-          artifacts: ${{ steps.package.outputs.asset_name }}
+          artifacts: dist/${{ steps.package.outputs.asset_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
