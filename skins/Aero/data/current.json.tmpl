@@ -1,0 +1,44 @@
+#errorCatcher Echo
+## current.json.tmpl
+{
+  "title": "$station.location",
+  "time": $current.dateTime.raw,
+  "observations": [
+    {
+      "observation": "outTemp",
+      "current": $current.outTemp.raw,
+      "unit": "$unit.label.outTemp",
+      "label": "Temperature"
+    },
+    {
+      "observation": "outHumidity",
+      "current": $current.outHumidity.raw,
+      "unit": "$unit.label.outHumidity",
+      "label": "Humidity"
+    },
+    {
+      "observation": "barometer",
+      "current": $current.barometer.raw,
+      "unit": "$unit.label.barometer",
+      "label": "Pressure"
+    },
+    {
+      "observation": "windSpeed",
+      "current": $current.windSpeed.raw,
+      "unit": "$unit.label.windSpeed",
+      "label": "Wind Speed"
+    },
+    {
+      "observation": "rain",
+      "sum": $day.rain.sum.raw,
+      "unit": "$unit.label.rain",
+      "label": "Rain"
+    },
+    {
+      "observation": "UV",
+      "current": $current.UV.raw,
+      "unit": "",
+      "label": "UV Index"
+    }
+  ]
+}
