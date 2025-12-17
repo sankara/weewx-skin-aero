@@ -1,15 +1,12 @@
 import argparse
 import os
 import zipfile
-import re
+import shutil
 import hashlib
-import time
-from datetime import datetime
 
-def update_install_py(repo_root, file_list):
-    install_py_path = os.path.join(repo_root, "install.py")
+def update_install_py(install_py_path, file_list):
     if not os.path.exists(install_py_path):
-        print("Warning: install.py not found, skipping update.")
+        print(f"Warning: {install_py_path} not found, skipping update.")
         return
 
     with open(install_py_path, "r") as f:
@@ -55,7 +52,7 @@ def update_install_py(repo_root, file_list):
 
     with open(install_py_path, "w") as f:
         f.write(new_content)
-    print("Updated install.py with new file list.")
+    print(f"Updated {install_py_path} with new file list.")
 
 def main():
     parser = argparse.ArgumentParser(description="Package Aero Skin")
@@ -64,99 +61,104 @@ def main():
     args = parser.parse_args()
 
     # Determine repo root
-    # Assumption: script is in dev/src/aero_dev/ or similar, but run from ?
-    # Let's find 'skins' directory to anchor.
     cw = os.getcwd()
     repo_root = cw
     while not os.path.exists(os.path.join(repo_root, "skins")) and repo_root != "/":
         repo_root = os.path.dirname(repo_root)
 
     if not os.path.exists(os.path.join(repo_root, "skins")):
-        # Fallback if not found (e.g. strange execution context), assume CWD or one level up
         if os.path.exists("skins"):
             repo_root = "."
         else:
-            repo_root = ".." # classic dev/ execution
+            repo_root = ".."
 
     repo_root = os.path.abspath(repo_root)
     skin_dir = os.path.join(repo_root, "skins/Aero")
     output_dir = os.path.join(repo_root, args.output_dir)
 
+    # Define build directory
+    build_dir = os.path.join(repo_root, "build/package")
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+
+    # Clean and recreate build directory
+    if os.path.exists(build_dir):
+        shutil.rmtree(build_dir)
+    os.makedirs(build_dir)
+
+    print(f"Preparing package in {build_dir}...")
+
+    # Copy skins/Aero
+    target_skin_dir = os.path.join(build_dir, "skins/Aero")
+    shutil.copytree(skin_dir, target_skin_dir, ignore=shutil.ignore_patterns('.*'))
+
+    # Copy root files (README, LICENSE) to skins/Aero
+    extra_files = ['README.md', 'LICENSE']
+    for extra in extra_files:
+        src = os.path.join(repo_root, extra)
+        if os.path.exists(src):
+            shutil.copy(src, target_skin_dir)
+
+    # Copy install.py to root of build dir
+    src_install = os.path.join(repo_root, "install.py")
+    dst_install = os.path.join(build_dir, "install.py")
+    if os.path.exists(src_install):
+        shutil.copy(src_install, dst_install)
+    else:
+        print("Error: install.py not found in repo root.")
+        return
 
     # Determine version
     if args.version:
         version = args.version
     else:
-        version_file = os.path.join(skin_dir, "VERSION")
+        version_file = os.path.join(target_skin_dir, "VERSION")
         if os.path.exists(version_file):
             with open(version_file, "r") as f:
                 version = f.read().strip()
         else:
             version = "0.0.0"
 
-    # Gather files
+    # Gather files for install.py list
+    # We want to list all files in skins/Aero relative to the package root
     file_list = []
-    # Add files from skins/Aero
-    for root, dirs, files in os.walk(skin_dir):
+    for root, dirs, files in os.walk(target_skin_dir):
         for file in files:
             if file.startswith('.'): continue
             abs_path = os.path.join(root, file)
-            rel_path = os.path.relpath(abs_path, repo_root) # e.g. skins/Aero/index.html
+            rel_path = os.path.relpath(abs_path, build_dir) # e.g. skins/Aero/index.html
             file_list.append(rel_path)
 
-    # Add root files (README.md, LICENSE) to the list for install.py
-    # These should be copied into the skins/Aero destination during install, or just kept in root.
-    # The install.py tuple is ('skins/Aero', [list of files]).
-    # If we put 'README.md' here, the installer will try to copy it.
-    # Usually extensions verify these files exist.
-
-    extra_files = ['README.md', 'LICENSE']
-    for extra in extra_files:
-        if os.path.exists(os.path.join(repo_root, extra)):
-            file_list.append(extra)
-
-    # Update install.py
-    update_install_py(repo_root, file_list)
+    # Update install.py in the build dir
+    update_install_py(dst_install, file_list)
 
     # Create Zip
     zip_filename = f"weewx-aero-{version}.zip"
     zip_path = os.path.join(output_dir, zip_filename)
 
     print(f"Packaging {zip_filename}...")
-    print(f"Repo root: {repo_root}")
-    print(f"Skin dir: {skin_dir}")
 
     hasher = hashlib.sha256()
 
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-        # Add skin files
-        for rel_path in file_list:
-             abs_path = os.path.join(repo_root, rel_path)
-             # If it's a root file like README.md, usually we want it in the zip root or skin root?
-             # Standard weewx extension zip:
-             # /
-             #   install.py
-             #   skins/
-             #     Aero/
-             #       ...
+        # Walk the build directory and add everything to zip
+        for root, dirs, files in os.walk(build_dir):
+            for file in files:
+                if file.startswith('.'): continue
+                abs_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_path, build_dir)
 
-             zf.write(abs_path, rel_path)
-             with open(abs_path, 'rb') as f:
-                 hasher.update(f.read())
+                zf.write(abs_path, rel_path)
 
-        # Add install.py
-        install_py = os.path.join(repo_root, "install.py")
-        if os.path.exists(install_py):
-            zf.write(install_py, "install.py")
-            with open(install_py, 'rb') as f:
-                hasher.update(f.read())
-        else:
-            print("Warning: install.py not found for zipping!")
+                with open(abs_path, 'rb') as f:
+                    hasher.update(f.read())
 
     print(f"Package created at {zip_path}")
     print(f"SHA256: {hasher.hexdigest()}")
+
+    # Cleanup (optional, but good for local dev)
+    # shutil.rmtree(build_dir)
 
 if __name__ == "__main__":
     main()
