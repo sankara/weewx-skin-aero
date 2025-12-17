@@ -10,6 +10,25 @@ export const THEME = {
     gray: 'var(--text-secondary)'
 };
 
+/**
+ * Resolves a CSS variable to a Hex color string.
+ * Falls back to hardcoded defaults if CSS variable resolution fails (e.g., initial load or missing style).
+ *
+ * @param {string} varName - CSS Variable name (e.g. '--color-temp')
+ * @param {string} lightHex - Fallback for Light Mode
+ * @param {string} darkHex - Fallback for Dark Mode
+ * @returns {string} - The resolved Hex color
+ */
+export function resolveThemeColor(varName, lightHex, darkHex) {
+    const style = getComputedStyle(document.documentElement);
+    const val = style.getPropertyValue(varName).trim();
+    if (val && val !== '') return val;
+
+    // Fallback logic
+    const isDark = document.documentElement.classList.contains('dark');
+    return isDark ? darkHex : lightHex;
+}
+
 const CONVERSIONS = {
     '°F': { target: '°C', func: v => (v - 32) * 5 / 9, type: 'temp' },
     'F': { target: '°C', func: v => (v - 32) * 5 / 9, type: 'temp' },
