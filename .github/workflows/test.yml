@@ -24,13 +24,10 @@ jobs:
         python-version: "3.12"
 
     - name: Install dependencies
-      working-directory: dev
       run: uv sync
 
     - name: Install Playwright browsers
-      working-directory: dev
       run: uv run playwright install --with-deps chromium
 
     - name: Run tests
-      working-directory: dev
       run: uv run pytest

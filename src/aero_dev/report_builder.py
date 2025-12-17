@@ -27,17 +27,20 @@ def main():
 
     parser = argparse.ArgumentParser(description="Build Aero Skin Report")
     parser.add_argument("--db", default="weewx.sdb", help="Path to sqlite database")
-    parser.add_argument("--skin", default="../skins/Aero", help="Path to Aero skin directory (relative to repo root)")
+    parser.add_argument("--skin", default="skins/Aero", help="Path to Aero skin directory (relative to repo root)")
     parser.add_argument("--output", default="public_html", help="Output directory")
     args = parser.parse_args()
 
     # Resolve paths
     repo_root = os.getcwd()
-    if os.path.basename(repo_root) == "dev":
-        repo_root = os.path.dirname(repo_root)
-
     db_path = os.path.abspath(args.db)
-    skin_dir = os.path.abspath(os.path.join(repo_root, "skins/Aero"))
+
+    # Allow overriding skin location if needed, but default to repo structure
+    if os.path.isabs(args.skin):
+        skin_dir = args.skin
+    else:
+        skin_dir = os.path.abspath(os.path.join(repo_root, args.skin))
+
     skin_root = os.path.dirname(skin_dir)
     output_dir = os.path.abspath(args.output)
 
