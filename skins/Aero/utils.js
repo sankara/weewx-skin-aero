@@ -1,13 +1,13 @@
 // utils.js
 
 export const THEME = {
-    outTemp: '#f59e0b',
-    humidity: '#0ea5e9',
-    windSpeed: '#10b981',
-    pressure: '#8b5cf6',
-    rainRate: '#2563eb',
-    uv: '#f43f5e',
-    gray: '#94a3b8'
+    outTemp: 'var(--color-temp)',
+    humidity: 'var(--color-humidity)',
+    windSpeed: 'var(--color-wind)',
+    pressure: 'var(--color-pressure)',
+    rainRate: 'var(--color-rain)',
+    uv: 'var(--color-uv)',
+    gray: 'var(--text-secondary)'
 };
 
 const CONVERSIONS = {

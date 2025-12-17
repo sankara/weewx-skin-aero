@@ -402,18 +402,29 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     // 4. Text
     ctx.textAlign = 'center';
 
+    const isDark = document.documentElement.classList.contains('dark');
+    const textPrimary = isDark ? '#f8fafc' : '#1e293b';
+    const textSecondary = isDark ? '#94a3b8' : '#64748b';
+
     // Value
     ctx.font = 'bold 36px Inter, sans-serif';
-    ctx.fillStyle = (title === 'Temperature') ? '#1e293b' : color;
+    // Use the theme text color if it's temperature, or if it's dark mode and we want high contrast
+    if (title === 'Temperature') {
+        ctx.fillStyle = textPrimary;
+    } else {
+        ctx.fillStyle = color;
+    }
+
     ctx.fillText((+current).toFixed(1), cx, cy - radius * 0.3);
 
     // Unit
     ctx.font = '500 14px Inter, sans-serif';
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = textSecondary;
     ctx.fillText(unit, cx, cy - radius * 0.3 + 20);
 
     // L/H
     ctx.font = '500 12px Inter, sans-serif';
+    ctx.fillStyle = textSecondary;
     ctx.fillText(`L: ${(+rangeMin).toFixed(1)}`, cx - 50, cy + 20);
     ctx.fillText(`H: ${(+rangeMax).toFixed(1)}`, cx + 50, cy + 20);
 }

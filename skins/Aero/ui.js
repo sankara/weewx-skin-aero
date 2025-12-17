@@ -52,14 +52,22 @@ function renderCurrentObservations() {
     };
 
     // 1. Dials
-    createDialCard(container, getDialItem('outTemp'), 'Temperature', THEME.outTemp, limits.temp.min, limits.temp.max);
-    createDialCard(container, getDialItem('outHumidity'), 'Humidity', THEME.humidity, 0, 100);
-    createDialCard(container, getDialItem('barometer') || getDialItem('pressure'), 'Pressure', THEME.pressure, limits.pressure.min, limits.pressure.max);
+    // Canvas requires resolved colors (hex/rgb), not CSS variables.
+    // We resolve them here before passing to createDialCard.
+    const style = getComputedStyle(document.documentElement);
+    const cTemp = style.getPropertyValue('--color-temp').trim() || '#f59e0b';
+    const cHum = style.getPropertyValue('--color-humidity').trim() || '#0ea5e9';
+    const cPress = style.getPropertyValue('--color-pressure').trim() || '#8b5cf6';
+    const cUV = style.getPropertyValue('--color-uv').trim() || '#f43f5e';
+
+    createDialCard(container, getDialItem('outTemp'), 'Temperature', cTemp, limits.temp.min, limits.temp.max);
+    createDialCard(container, getDialItem('outHumidity'), 'Humidity', cHum, 0, 100);
+    createDialCard(container, getDialItem('barometer') || getDialItem('pressure'), 'Pressure', cPress, limits.pressure.min, limits.pressure.max);
 
     // UV is often missing in simulation/test data, handle gracefully
     const uvItem = getDialItem('UV');
     if (uvItem) {
-        createDialCard(container, uvItem, 'UV Index', THEME.uv, 0, 15);
+        createDialCard(container, uvItem, 'UV Index', cUV, 0, 15);
     }
 
     // 2. Simple Cards (Wind & Rain) - Re-added as per review

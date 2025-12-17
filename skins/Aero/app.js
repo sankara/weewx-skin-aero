@@ -266,6 +266,11 @@ function setupTheme() {
             localStorage.setItem('theme', 'light');
         }
         updateIcon(nextState);
+
+        // Re-render UI to update Canvas elements (Dials) with new colors
+        renderHeader();
+        renderHistorySummary();
+        renderGraphs();
     });
 }
 
