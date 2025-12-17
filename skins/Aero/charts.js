@@ -11,6 +11,25 @@ export function renderGraphs() {
 
     if (!state.activeData) return;
 
+    // Resolve Theme Colors for Charts (needed for Alpha/Fill)
+    const style = getComputedStyle(document.documentElement);
+    const isDark = document.documentElement.classList.contains('dark');
+
+    const resolve = (varName, lightHex, darkHex) => {
+        const val = style.getPropertyValue(varName).trim();
+        if (val) return val;
+        return isDark ? darkHex : lightHex;
+    };
+
+    const CHART_THEME = {
+        outTemp: resolve('--color-temp', '#f59e0b', '#fbbf24'),
+        humidity: resolve('--color-humidity', '#0ea5e9', '#0ea5e9'),
+        windSpeed: resolve('--color-wind', '#10b981', '#10b981'),
+        pressure: resolve('--color-pressure', '#8b5cf6', '#8b5cf6'),
+        rainRate: resolve('--color-rain', '#2563eb', '#2563eb'),
+        uv: resolve('--color-uv', '#f43f5e', '#f43f5e')
+    };
+
     // Determine Chart Type/Grouping based on View Scope
     const isDayView = (state.viewScope === 'day');
 
@@ -55,16 +74,16 @@ export function renderGraphs() {
     }
 
     // 1. Temperature Chart
-    renderTempChart(commonScales, isDayView);
+    renderTempChart(commonScales, isDayView, CHART_THEME);
 
     // 2. Wind Chart
-    renderWindChart(commonScales, isDayView);
+    renderWindChart(commonScales, isDayView, CHART_THEME);
 
     // 3. Rain Chart
-    renderRainChart(commonScales, isDayView);
+    renderRainChart(commonScales, isDayView, CHART_THEME);
 }
 
-function renderTempChart(commonScales, isDayView) {
+function renderTempChart(commonScales, isDayView, chartTheme) {
     const tempItem = convertItem(state.activeData.obs.outTemp, state.units);
     if (!tempItem || !tempItem.graph) {
         createNoDataContainer('Temperature');
@@ -83,8 +102,8 @@ function renderTempChart(commonScales, isDayView) {
                 datasets: [{
                     label: `Temperature (${tempItem.unit})`,
                     data: dataPoints,
-                    borderColor: THEME.outTemp,
-                    backgroundColor: hexToRgbA(THEME.outTemp, 0.1),
+                    borderColor: chartTheme.outTemp,
+                    backgroundColor: hexToRgbA(chartTheme.outTemp, 0.1),
                     fill: true,
                     tension: 0.4,
                     pointRadius: 0,
@@ -113,8 +132,8 @@ function renderTempChart(commonScales, isDayView) {
                     {
                         label: `Temperature Range (${tempItem.unit})`,
                         data: dataPoints,
-                        backgroundColor: THEME.outTemp,
-                        borderColor: THEME.outTemp,
+                        backgroundColor: chartTheme.outTemp,
+                        borderColor: chartTheme.outTemp,
                         borderRadius: 4,
                         barThickness: 'flex',
                         maxBarThickness: 30,
@@ -168,7 +187,7 @@ function renderTempChart(commonScales, isDayView) {
     }
 }
 
-function renderWindChart(commonScales, isDayView) {
+function renderWindChart(commonScales, isDayView, chartTheme) {
     const windSpeed = convertItem(state.activeData.obs.windSpeed, state.units);
     const windDir = state.activeData.obs.windDir;
 
@@ -206,8 +225,8 @@ function renderWindChart(commonScales, isDayView) {
                 datasets: [{
                     label: 'Wind',
                     data: vectorData,
-                    borderColor: THEME.windSpeed,
-                    backgroundColor: THEME.windSpeed,
+                    borderColor: chartTheme.windSpeed,
+                    backgroundColor: chartTheme.windSpeed,
                     pointRadius: 4
                 }]
             },
@@ -236,8 +255,8 @@ function renderWindChart(commonScales, isDayView) {
                     const dataset = data.datasets[0];
                     const meta = chart.getDatasetMeta(0);
                     ctx.save();
-                    ctx.strokeStyle = THEME.windSpeed;
-                    ctx.fillStyle = THEME.windSpeed;
+                    ctx.strokeStyle = chartTheme.windSpeed;
+                    ctx.fillStyle = chartTheme.windSpeed;
                     ctx.lineWidth = 2;
                     meta.data.forEach((point, index) => {
                         const raw = dataset.data[index];
@@ -264,7 +283,7 @@ function renderWindChart(commonScales, isDayView) {
                     {
                         label: 'Max Gust',
                         data: maxData,
-                        backgroundColor: THEME.windSpeed,
+                        backgroundColor: chartTheme.windSpeed,
                         order: 2
                     },
                     {
@@ -287,7 +306,7 @@ function renderWindChart(commonScales, isDayView) {
     }
 }
 
-function renderRainChart(commonScales, isDayView) {
+function renderRainChart(commonScales, isDayView, chartTheme) {
     const rainSum = convertItem(state.activeData.obs.rain, state.units);
     if (!rainSum || !rainSum.graph) {
         createNoDataContainer('Precipitation');
@@ -311,8 +330,8 @@ function renderRainChart(commonScales, isDayView) {
             datasets: [{
                 label: `Rain (${rainSum.unit})`,
                 data: chartData,
-                backgroundColor: THEME.rainRate,
-                borderColor: THEME.rainRate,
+                backgroundColor: chartTheme.rainRate,
+                borderColor: chartTheme.rainRate,
                 borderWidth: 1
             }]
         },
@@ -327,7 +346,7 @@ function renderRainChart(commonScales, isDayView) {
 }
 
 
-export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, color, title) {
+export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, color, title, textPrimary, textSecondary) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
     const h = canvas.height;
@@ -402,15 +421,15 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     // 4. Text
     ctx.textAlign = 'center';
 
-    const isDark = document.documentElement.classList.contains('dark');
-    const textPrimary = isDark ? '#f8fafc' : '#1e293b';
-    const textSecondary = isDark ? '#94a3b8' : '#64748b';
+    // Default fallbacks if arguments are missing (e.g. initial render before update)
+    const tPrimary = textPrimary || '#1e293b';
+    const tSecondary = textSecondary || '#64748b';
 
     // Value
     ctx.font = 'bold 36px Inter, sans-serif';
-    // Use the theme text color if it's temperature, or if it's dark mode and we want high contrast
+    // Use the passed textPrimary color if it's temperature (ensures high contrast in dark mode)
     if (title === 'Temperature') {
-        ctx.fillStyle = textPrimary;
+        ctx.fillStyle = tPrimary;
     } else {
         ctx.fillStyle = color;
     }
@@ -419,12 +438,12 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
 
     // Unit
     ctx.font = '500 14px Inter, sans-serif';
-    ctx.fillStyle = textSecondary;
+    ctx.fillStyle = tSecondary;
     ctx.fillText(unit, cx, cy - radius * 0.3 + 20);
 
     // L/H
     ctx.font = '500 12px Inter, sans-serif';
-    ctx.fillStyle = textSecondary;
+    ctx.fillStyle = tSecondary;
     ctx.fillText(`L: ${(+rangeMin).toFixed(1)}`, cx - 50, cy + 20);
     ctx.fillText(`H: ${(+rangeMax).toFixed(1)}`, cx + 50, cy + 20);
 }

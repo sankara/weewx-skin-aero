@@ -55,19 +55,32 @@ function renderCurrentObservations() {
     // Canvas requires resolved colors (hex/rgb), not CSS variables.
     // We resolve them here before passing to createDialCard.
     const style = getComputedStyle(document.documentElement);
-    const cTemp = style.getPropertyValue('--color-temp').trim() || '#f59e0b';
-    const cHum = style.getPropertyValue('--color-humidity').trim() || '#0ea5e9';
-    const cPress = style.getPropertyValue('--color-pressure').trim() || '#8b5cf6';
-    const cUV = style.getPropertyValue('--color-uv').trim() || '#f43f5e';
+    const isDark = document.documentElement.classList.contains('dark');
 
-    createDialCard(container, getDialItem('outTemp'), 'Temperature', cTemp, limits.temp.min, limits.temp.max);
-    createDialCard(container, getDialItem('outHumidity'), 'Humidity', cHum, 0, 100);
-    createDialCard(container, getDialItem('barometer') || getDialItem('pressure'), 'Pressure', cPress, limits.pressure.min, limits.pressure.max);
+    const resolve = (varName, lightHex, darkHex) => {
+        const val = style.getPropertyValue(varName).trim();
+        if (val) return val;
+        // Fallback if getComputedStyle fails or hasn't updated yet
+        return isDark ? darkHex : lightHex;
+    };
+
+    const cTemp = resolve('--color-temp', '#f59e0b', '#fbbf24');
+    const cHum = resolve('--color-humidity', '#0ea5e9', '#0ea5e9');
+    const cPress = resolve('--color-pressure', '#8b5cf6', '#8b5cf6');
+    const cUV = resolve('--color-uv', '#f43f5e', '#f43f5e');
+
+    // Also resolve text colors for dial content
+    const cTextPrimary = resolve('--text-primary', '#1e293b', '#f8fafc');
+    const cTextSecondary = resolve('--text-secondary', '#64748b', '#94a3b8');
+
+    createDialCard(container, getDialItem('outTemp'), 'Temperature', cTemp, limits.temp.min, limits.temp.max, cTextPrimary, cTextSecondary);
+    createDialCard(container, getDialItem('outHumidity'), 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
+    createDialCard(container, getDialItem('barometer') || getDialItem('pressure'), 'Pressure', cPress, limits.pressure.min, limits.pressure.max, cTextPrimary, cTextSecondary);
 
     // UV is often missing in simulation/test data, handle gracefully
     const uvItem = getDialItem('UV');
     if (uvItem) {
-        createDialCard(container, uvItem, 'UV Index', cUV, 0, 15);
+        createDialCard(container, uvItem, 'UV Index', cUV, 0, 15, cTextPrimary, cTextSecondary);
     }
 
     // 2. Simple Cards (Wind & Rain) - Re-added as per review
@@ -86,7 +99,7 @@ function renderCurrentObservations() {
     createSimpleCard(container, rainItem, 'rain', THEME.rainRate);
 }
 
-function createDialCard(container, item, title, color, absMin, absMax) {
+function createDialCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
     if (!item || item.current === undefined) return;
 
     const div = document.createElement('div');
@@ -106,7 +119,7 @@ function createDialCard(container, item, title, color, absMin, absMax) {
     const dailyMin = item.min !== undefined ? item.min : item.current;
     const dailyMax = item.max !== undefined ? item.max : item.current;
 
-    drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title);
+    drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title, textPrimary, textSecondary);
 }
 
 function createSimpleCard(container, item, type, color) {
