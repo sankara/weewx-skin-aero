@@ -26,15 +26,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        working-directory: dev
         run: uv sync
 
       - name: Install Playwright browsers
-        working-directory: dev
         run: uv run playwright install --with-deps chromium
 
       - name: Run tests
-        working-directory: dev
         run: uv run pytest
 
       - name: Get Version
@@ -54,11 +51,9 @@ jobs:
 
       - name: Create Skin Archive
         id: package
-        working-directory: dev
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
-          # Run package tool from dev directory.
-          # Script resolves repo root internally, so passing "dist" creates it at repo_root/dist
+          # Run package tool from root directory.
           uv run aero-package --version "$VERSION" --output-dir "dist"
           echo "asset_name=weewx-aero-${VERSION}.zip" >> $GITHUB_OUTPUT
 

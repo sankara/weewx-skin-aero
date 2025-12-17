@@ -1,12 +1,11 @@
 
 .DS_Store
-dev/test-site/
-dev/public_html/
-dev/weewx.sdb
-dev/.venv/
-dev/dist/
-screenshots/
+build/
 dist/
+weewx.sdb
+public_html/
+.venv/
+screenshots/
 __pycache__/
 *.pyc
 .pytest_cache/
