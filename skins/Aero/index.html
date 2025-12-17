@@ -5,6 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aero - WeeWX</title>
+    <script>
+        // Inline script to prevent FOUC
+        (function() {
+            try {
+                var local = localStorage.getItem('theme');
+                var sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (local === 'dark' || (!local && sys)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="stylesheet" href="style.css">
     <!-- Chart.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,6 +37,9 @@
                     <span id="last-updated" class="subtitle">Updating...</span>
                 </div>
                 <div class="header-controls">
+                    <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme">
+                        <i data-lucide="moon"></i>
+                    </button>
                     <div class="unit-toggle-container">
                         <span class="unit-label">Metric</span>
                         <label class="switch">
