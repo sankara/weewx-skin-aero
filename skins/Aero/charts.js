@@ -1,6 +1,6 @@
 // charts.js
 import { els, state } from './state.js';
-import { THEME, convertItem, hexToRgbA, sampleData, degToCompass, aggregate } from './utils.js';
+import { THEME, convertItem, hexToRgbA, sampleData, degToCompass, aggregate, resolveThemeColor } from './utils.js';
 
 let charts = {};
 
@@ -12,22 +12,13 @@ export function renderGraphs() {
     if (!state.activeData) return;
 
     // Resolve Theme Colors for Charts (needed for Alpha/Fill)
-    const style = getComputedStyle(document.documentElement);
-    const isDark = document.documentElement.classList.contains('dark');
-
-    const resolve = (varName, lightHex, darkHex) => {
-        const val = style.getPropertyValue(varName).trim();
-        if (val) return val;
-        return isDark ? darkHex : lightHex;
-    };
-
     const CHART_THEME = {
-        outTemp: resolve('--color-temp', '#f59e0b', '#fbbf24'),
-        humidity: resolve('--color-humidity', '#0ea5e9', '#0ea5e9'),
-        windSpeed: resolve('--color-wind', '#10b981', '#10b981'),
-        pressure: resolve('--color-pressure', '#8b5cf6', '#8b5cf6'),
-        rainRate: resolve('--color-rain', '#2563eb', '#2563eb'),
-        uv: resolve('--color-uv', '#f43f5e', '#f43f5e')
+        outTemp: resolveThemeColor('--color-temp', '#f59e0b', '#fbbf24'),
+        humidity: resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9'),
+        windSpeed: resolveThemeColor('--color-wind', '#10b981', '#10b981'),
+        pressure: resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6'),
+        rainRate: resolveThemeColor('--color-rain', '#2563eb', '#2563eb'),
+        uv: resolveThemeColor('--color-uv', '#f43f5e', '#f43f5e')
     };
 
     // Determine Chart Type/Grouping based on View Scope

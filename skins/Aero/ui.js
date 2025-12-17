@@ -1,6 +1,6 @@
 // ui.js
 import { els, state } from './state.js';
-import { THEME, convertItem, getAverage } from './utils.js';
+import { THEME, convertItem, getAverage, resolveThemeColor } from './utils.js';
 import { drawDial } from './charts.js';
 
 /**
@@ -54,24 +54,14 @@ function renderCurrentObservations() {
     // 1. Dials
     // Canvas requires resolved colors (hex/rgb), not CSS variables.
     // We resolve them here before passing to createDialCard.
-    const style = getComputedStyle(document.documentElement);
-    const isDark = document.documentElement.classList.contains('dark');
-
-    const resolve = (varName, lightHex, darkHex) => {
-        const val = style.getPropertyValue(varName).trim();
-        if (val) return val;
-        // Fallback if getComputedStyle fails or hasn't updated yet
-        return isDark ? darkHex : lightHex;
-    };
-
-    const cTemp = resolve('--color-temp', '#f59e0b', '#fbbf24');
-    const cHum = resolve('--color-humidity', '#0ea5e9', '#0ea5e9');
-    const cPress = resolve('--color-pressure', '#8b5cf6', '#8b5cf6');
-    const cUV = resolve('--color-uv', '#f43f5e', '#f43f5e');
+    const cTemp = resolveThemeColor('--color-temp', '#f59e0b', '#fbbf24');
+    const cHum = resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9');
+    const cPress = resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6');
+    const cUV = resolveThemeColor('--color-uv', '#f43f5e', '#f43f5e');
 
     // Also resolve text colors for dial content
-    const cTextPrimary = resolve('--text-primary', '#1e293b', '#f8fafc');
-    const cTextSecondary = resolve('--text-secondary', '#64748b', '#94a3b8');
+    const cTextPrimary = resolveThemeColor('--text-primary', '#1e293b', '#f8fafc');
+    const cTextSecondary = resolveThemeColor('--text-secondary', '#64748b', '#94a3b8');
 
     createDialCard(container, getDialItem('outTemp'), 'Temperature', cTemp, limits.temp.min, limits.temp.max, cTextPrimary, cTextSecondary);
     createDialCard(container, getDialItem('outHumidity'), 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
