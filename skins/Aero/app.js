@@ -237,5 +237,38 @@ function setupDateControls() {
     });
 }
 
+function setupTheme() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+
+    const updateIcon = (isDark) => {
+        // Icon should represent what you will switch TO, or the current state?
+        // Usually: if dark, show Sun (to switch to light). If light, show Moon.
+        // Or show current state. Let's do: Show Sun if currently Dark (so click -> light).
+        const iconName = isDark ? 'sun' : 'moon';
+        btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        lucide.createIcons();
+    };
+
+    // Initial State Check
+    const isDark = document.documentElement.classList.contains('dark');
+    updateIcon(isDark);
+
+    btn.addEventListener('click', () => {
+        const isDarkNow = document.documentElement.classList.contains('dark');
+        const nextState = !isDarkNow;
+
+        if (nextState) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+        updateIcon(nextState);
+    });
+}
+
 // Start
+setupTheme(); // Initialize theme immediately, independent of data loading
 init();
