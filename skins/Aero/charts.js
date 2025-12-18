@@ -592,3 +592,91 @@ function drawBarbLine(ctx, x, type) {
     ctx.lineTo(endX, endY);
     ctx.stroke();
 }
+
+export function drawCompass(canvas, speed, gust, direction, unit, color, title, textPrimary, textSecondary) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    // Center Y: usually card canvases are 200x150.
+    // Move up slightly to fit "Gust" text at bottom
+    const cy = h / 2 - 5;
+    // Reduce radius slightly
+    const radius = Math.min(w, h) * 0.3;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Outer Ring (Compass Rose)
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#e2e8f0'; // Light gray ring
+    ctx.stroke();
+
+    // N/E/S/W Labels
+    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.fillStyle = textSecondary || '#64748b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Positions relative to center
+    // N (Top)
+    ctx.fillText('N', cx, cy - radius - 15);
+    // S (Bottom)
+    ctx.fillText('S', cx, cy + radius + 15);
+    // E (Right)
+    ctx.fillText('E', cx + radius + 15, cy);
+    // W (Left)
+    ctx.fillText('W', cx - radius - 15, cy);
+
+    // 2. Direction Arrow
+    if (direction !== null && direction !== undefined) {
+        const rad = (direction - 90) * (Math.PI / 180);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rad);
+
+        // Arrow Triangle
+        // Pointing to right (0 deg in canvas) is really pointing 'Up' relative to rotation?
+        // No, we rotated by (direction - 90). So 0 deg in rotated space aligns with direction.
+        // Wait, standard canvas 0 is East.
+        // If direction is 0 (North), rad = -90. Rotation -90 makes the positive X axis point North.
+        // So we draw the arrow pointing along positive X axis.
+
+        const arrowDist = radius - 5; // Tip just inside ring
+
+        ctx.beginPath();
+        ctx.moveTo(arrowDist, 0); // Tip
+        ctx.lineTo(-10, 6);
+        ctx.lineTo(-6, 0);
+        ctx.lineTo(-10, -6);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // 3. Center Text (Speed)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Speed Value
+    ctx.font = 'bold 24px Inter, sans-serif';
+    ctx.fillStyle = textPrimary || '#1e293b';
+    ctx.fillText((+speed).toFixed(1), cx, cy - 5);
+
+    // Unit
+    ctx.font = '500 12px Inter, sans-serif';
+    ctx.fillStyle = textSecondary || '#64748b';
+    ctx.fillText(unit, cx, cy + 15);
+
+    // 4. Gust (Bottom overlay or just below unit?)
+    // Space is tight in center. Let's put Gust near the bottom of canvas or below unit.
+    if (gust !== null && gust !== undefined) {
+        ctx.font = '500 11px Inter, sans-serif';
+        ctx.fillStyle = color;
+        // render near bottom
+        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, h - 10);
+    }
+}
