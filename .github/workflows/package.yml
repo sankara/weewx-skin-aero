@@ -62,8 +62,8 @@ jobs:
         if: steps.version.outputs.IS_RELEASE == 'false'
         uses: ncipollo/release-action@v1
         with:
-          tag: trunk
-          name: Aero Skin - Trunk
+          tag: latest
+          name: Aero Skin - Latest
           body: "Rolling release of the latest development version."
           allowUpdates: true
           prerelease: true
