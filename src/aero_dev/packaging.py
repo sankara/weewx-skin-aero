@@ -78,6 +78,8 @@ def main():
 
     # Define build directory
     build_dir = os.path.join(repo_root, "build/package")
+    # Define package root inside build directory to satisfy "common path" requirement
+    pkg_root = os.path.join(build_dir, "aero")
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -85,12 +87,12 @@ def main():
     # Clean and recreate build directory
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
-    os.makedirs(build_dir)
+    os.makedirs(pkg_root)
 
-    print(f"Preparing package in {build_dir}...")
+    print(f"Preparing package in {pkg_root}...")
 
     # Copy skins/Aero
-    target_skin_dir = os.path.join(build_dir, "skins/Aero")
+    target_skin_dir = os.path.join(pkg_root, "skins/Aero")
     shutil.copytree(skin_dir, target_skin_dir, ignore=shutil.ignore_patterns('.*'))
 
     # Copy root files (README, LICENSE) to skins/Aero
@@ -100,9 +102,9 @@ def main():
         if os.path.exists(src):
             shutil.copy(src, target_skin_dir)
 
-    # Copy install.py to root of build dir
+    # Copy install.py to root of pkg_root
     src_install = os.path.join(repo_root, "install.py")
-    dst_install = os.path.join(build_dir, "install.py")
+    dst_install = os.path.join(pkg_root, "install.py")
     if os.path.exists(src_install):
         shutil.copy(src_install, dst_install)
     else:
@@ -121,16 +123,16 @@ def main():
             version = "0.0.0"
 
     # Gather files for install.py list
-    # We want to list all files in skins/Aero relative to the package root
+    # We want to list all files in skins/Aero relative to the package root (inside the zip root)
     file_list = []
     for root, dirs, files in os.walk(target_skin_dir):
         for file in files:
             if file.startswith('.'): continue
             abs_path = os.path.join(root, file)
-            rel_path = os.path.relpath(abs_path, build_dir) # e.g. skins/Aero/index.html
+            rel_path = os.path.relpath(abs_path, pkg_root) # e.g. skins/Aero/index.html
             file_list.append(rel_path)
 
-    # Update install.py in the build dir
+    # Update install.py in the pkg_root
     update_install_py(dst_install, file_list)
 
     # Create Zip
