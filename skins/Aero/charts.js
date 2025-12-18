@@ -45,18 +45,18 @@ export function renderGraphs() {
         commonScales.x.max = sDate.getTime() + 24 * 60 * 60 * 1000;
         commonScales.x.time = { unit: 'hour', displayFormats: { hour: 'h a' } };
     } else if (state.viewScope === 'week') {
-         // Week View: X-axis days
-         commonScales.x.time = { unit: 'day', displayFormats: { day: 'EEE d' } };
-         // Auto range based on data
+        // Week View: X-axis days
+        commonScales.x.time = { unit: 'day', displayFormats: { day: 'EEE d' } };
+        // Auto range based on data
     } else if (state.viewScope === 'month') {
-        sDate.setDate(1); sDate.setHours(0,0,0,0);
+        sDate.setDate(1); sDate.setHours(0, 0, 0, 0);
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setMonth(eDate.getMonth() + 1);
         commonScales.x.max = eDate.getTime();
         commonScales.x.time = { unit: 'day', displayFormats: { day: 'd' } };
     } else if (state.viewScope === 'year') {
-        sDate.setMonth(0, 1); sDate.setHours(0,0,0,0);
+        sDate.setMonth(0, 1); sDate.setHours(0, 0, 0, 0);
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setFullYear(eDate.getFullYear() + 1);
@@ -86,7 +86,7 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
 
     if (isDayView) {
         // Line Chart for Day
-        const dataPoints = tempItem.graph.map(p => ({ x: p[0] * 1000, y: p[1] }));
+        const dataPoints = tempItem.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
         charts.temp = new Chart(ctx, {
             type: 'line',
             data: {
@@ -162,7 +162,7 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
                                 const raw = ctx.raw;
                                 // If it's the average line
                                 if (ctx.dataset.type === 'line') {
-                                     return `Avg: ${ctx.parsed.y.toFixed(1)} ${tempItem.unit}`;
+                                    return `Avg: ${ctx.parsed.y.toFixed(1)} ${tempItem.unit}`;
                                 }
                                 // raw.y is [min, max]
                                 const min = raw.y[0].toFixed(1);
@@ -193,10 +193,10 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
 
     if (isDayView && windDir && windDir.graph) {
         // Scatter with Barbs
-        const dirMap = new Map(windDir.graph.map(p => [p[0], p[1]]));
+        const dirMap = new Map(windDir.graph.map(p => [p[0], (p.length >= 3) ? p[2] : p[1]]));
         let vectorData = windSpeed.graph.map(p => {
             const ts = p[0];
-            const speed = p[1];
+            const speed = (p.length >= 3) ? p[2] : p[1];
             const dir = dirMap.get(ts);
             if (dir === undefined || dir === null) return null;
             return {
@@ -259,6 +259,27 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
             }]
         });
 
+    } else if (isDayView) {
+        // Fallback: Day View but NO Wind Direction -> Simple Line Chart for Speed
+        const dataPoints = windSpeed.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+
+        charts.wind = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: `Wind Speed (${windSpeed.unit})`,
+                    data: dataPoints,
+                    borderColor: chartTheme.windSpeed,
+                    backgroundColor: hexToRgbA(chartTheme.windSpeed, 0.2),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    hitRadius: 10
+                }]
+            },
+            options: { ...getChartOptions(true), scales: commonScales }
+        });
+
     } else {
         // Aggregate Wind (Max Gust and Avg)
         const aggData = aggregate(windSpeed.graph, state.viewScope);
@@ -309,7 +330,7 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
 
     let chartData;
     if (isDayView) {
-        chartData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: p[1] }));
+        chartData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
     } else {
         const aggData = aggregate(rainSum.graph, state.viewScope);
         chartData = aggData.map(d => ({ x: d.x, y: d.sum }));
@@ -494,7 +515,7 @@ function getChartOptions(isDayView) {
 
                         // Different Date format for Month/Year tooltip vs Day
                         if (!isDayView) {
-                             return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                            return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                         }
 
                         return d.toLocaleString(undefined, {

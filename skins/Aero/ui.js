@@ -1,6 +1,6 @@
 // ui.js
 import { els, state } from './state.js';
-import { THEME, convertItem, getAverage, resolveThemeColor } from './utils.js';
+import { THEME, convertItem, getAverage, resolveThemeColor, hexToRgbA } from './utils.js';
 import { drawDial } from './charts.js';
 
 /**
@@ -58,6 +58,8 @@ function renderCurrentObservations() {
     const cHum = resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9');
     const cPress = resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6');
     const cUV = resolveThemeColor('--color-uv', '#f43f5e', '#f43f5e');
+    const cWind = resolveThemeColor('--color-wind', '#10b981', '#10b981');
+    const cRain = resolveThemeColor('--color-rain', '#2563eb', '#2563eb');
 
     // Also resolve text colors for dial content
     const cTextPrimary = resolveThemeColor('--text-primary', '#1e293b', '#f8fafc');
@@ -75,7 +77,7 @@ function renderCurrentObservations() {
 
     // 2. Simple Cards (Wind & Rain) - Re-added as per review
     const windItem = getDialItem('windSpeed');
-    createSimpleCard(container, windItem, 'wind', THEME.windSpeed);
+    createSimpleCard(container, windItem, 'wind', cWind);
 
     // Rain: For "Current" section, usually "Daily Rain" total is most useful,
     // but the `current.json` might only have rainRate.
@@ -86,7 +88,7 @@ function renderCurrentObservations() {
         rainItem.current = rainItem.sum;
         rainItem.label = "Rain (Total)";
     }
-    createSimpleCard(container, rainItem, 'rain', THEME.rainRate);
+    createSimpleCard(container, rainItem, 'rain', cRain);
 }
 
 function createDialCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
@@ -130,7 +132,7 @@ function createSimpleCard(container, item, type, color) {
             <span class="card-label">${label}</span>
             <i data-lucide="${icon}" style="width:18px; height:18px; color:${color}"></i>
         </div>
-        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${color}aa); -webkit-background-clip: text;">
+        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text;">
             ${val}<span class="card-unit">${item.unit}</span>
         </div>
     `;
@@ -151,29 +153,34 @@ export function renderHistorySummary() {
 
     const obs = state.activeData.obs;
 
+    // Resolve Colors properly for the cards
+    const cTemp = resolveThemeColor('--color-temp', '#f59e0b', '#fbbf24');
+    const cRain = resolveThemeColor('--color-rain', '#2563eb', '#2563eb');
+    const cWind = resolveThemeColor('--color-wind', '#10b981', '#10b981');
+
     // Helper to extract nice summary values
     // We want: Max Temp, Min Temp, Total Rain, Max Wind
 
     // 1. Max Temp
     const temp = convertItem(obs.outTemp, state.units);
     if (temp) {
-        if (temp.max !== undefined) createSummaryCard(container, 'High Temp', temp.max, temp.unit, THEME.outTemp);
-        if (temp.min !== undefined) createSummaryCard(container, 'Low Temp', temp.min, temp.unit, THEME.outTemp); // Or cooler color?
+        if (temp.max !== undefined) createSummaryCard(container, 'High Temp', temp.max, temp.unit, cTemp);
+        if (temp.min !== undefined) createSummaryCard(container, 'Low Temp', temp.min, temp.unit, cTemp); // Or cooler color?
     }
 
     // 2. Rain
     const rain = convertItem(obs.rain, state.units);
     if (rain && rain.sum !== undefined) {
-        createSummaryCard(container, 'Total Rain', rain.sum, rain.unit, THEME.rainRate);
+        createSummaryCard(container, 'Total Rain', rain.sum, rain.unit, cRain);
     }
 
     // 3. Wind
     const wind = convertItem(obs.windSpeed, state.units);
     if (wind) {
-        if (wind.max !== undefined) createSummaryCard(container, 'Max Gust', wind.max, wind.unit, THEME.windSpeed);
+        if (wind.max !== undefined) createSummaryCard(container, 'Max Gust', wind.max, wind.unit, cWind);
         // Avg wind?
         const avg = getAverage(wind);
-        if (avg !== undefined) createSummaryCard(container, 'Avg Wind', avg, wind.unit, THEME.windSpeed);
+        if (avg !== undefined) createSummaryCard(container, 'Avg Wind', avg, wind.unit, cWind);
     }
 
     if (window.lucide) window.lucide.createIcons();
@@ -186,7 +193,7 @@ function createSummaryCard(container, label, value, unit, color) {
         <div class="card-header">
              <span class="card-label" style="color:${color}">${label}</span>
         </div>
-        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${color}aa); -webkit-background-clip: text;">
+        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text;">
             ${(+value).toFixed(1)}<span class="card-unit">${unit}</span>
         </div>
     `;

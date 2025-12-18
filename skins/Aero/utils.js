@@ -96,7 +96,14 @@ export function convertItem(item, unitSystem) {
     });
 
     if (newItem.graph) {
-        newItem.graph = newItem.graph.map(p => [p[0], convert(p[1])]);
+        newItem.graph = newItem.graph.map(p => {
+            if (p.length >= 3) {
+                // [start, end, val]
+                return [p[0], p[1], convert(p[2])];
+            }
+            // [time, val]
+            return [p[0], convert(p[1])];
+        });
     }
 
     return newItem;
@@ -113,7 +120,10 @@ export function getAverage(item) {
     if (item.sum !== undefined && item.count) return item.sum / item.count;
 
     if (item.graph && item.graph.length > 0) {
-        const sum = item.graph.reduce((acc, p) => acc + p[1], 0);
+        const sum = item.graph.reduce((acc, p) => {
+            const val = (p.length >= 3) ? p[2] : p[1];
+            return acc + val;
+        }, 0);
         return sum / item.graph.length;
     }
     if (item.min !== undefined && item.max !== undefined) {
@@ -170,7 +180,9 @@ export function aggregate(graphData, scope) {
 
     const grouped = new Map();
 
-    graphData.forEach(([ts, val]) => {
+    graphData.forEach((p) => {
+        const ts = p[0];
+        const val = (p.length >= 3) ? p[2] : p[1];
         if (val === null || val === undefined) return;
 
         const date = new Date(ts * 1000);

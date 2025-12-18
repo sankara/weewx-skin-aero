@@ -2,40 +2,40 @@
 ## week.json.tmpl
 {
   "meta": {
-    "time": $current.dateTime.raw
+    "time": $current.dateTime.json
   },
   "observations": [
     {
       "observation": "outTemp",
-      "min": $week.outTemp.min.raw,
-      "max": $week.outTemp.max.raw,
+      "min": $week.outTemp.min.json,
+      "max": $week.outTemp.max.json,
       "unit": "$unit.label.outTemp",
       "graph": $week.outTemp.series(time_unit='unix_epoch', aggregate_interval=3600).json
     },
     {
       "observation": "outHumidity",
-      "min": $week.outHumidity.min.raw,
-      "max": $week.outHumidity.max.raw,
+      "min": $week.outHumidity.min.json,
+      "max": $week.outHumidity.max.json,
       "unit": "$unit.label.outHumidity",
       "graph": $week.outHumidity.series(time_unit='unix_epoch', aggregate_interval=3600).json
     },
     {
       "observation": "barometer",
-      "min": $week.barometer.min.raw,
-      "max": $week.barometer.max.raw,
+      "min": $week.barometer.min.json,
+      "max": $week.barometer.max.json,
       "unit": "$unit.label.barometer",
       "graph": $week.barometer.series(time_unit='unix_epoch', aggregate_interval=3600).json
     },
     {
       "observation": "windSpeed",
-      "min": $week.windSpeed.min.raw,
-      "max": $week.windSpeed.max.raw,
+      "min": $week.windSpeed.min.json,
+      "max": $week.windSpeed.max.json,
       "unit": "$unit.label.windSpeed",
       "graph": $week.windSpeed.series(time_unit='unix_epoch', aggregate_interval=3600).json
     },
     {
       "observation": "rain",
-      "sum": $week.rain.sum.raw,
+      "sum": $week.rain.sum.json,
       "unit": "$unit.label.rain",
       "graph": $week.rain.series(time_unit='unix_epoch', aggregate_interval=3600).json
     }

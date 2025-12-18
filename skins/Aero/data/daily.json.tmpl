@@ -2,28 +2,39 @@
 ## daily.json.tmpl
 {
   "meta": {
-    "time": $current.dateTime.raw
+    "time": $current.dateTime.json
   },
   "observations": [
     {
       "observation": "outTemp",
-      "min": $day.outTemp.min.raw,
-      "max": $day.outTemp.max.raw,
+      "min": $day.outTemp.min.json,
+      "max": $day.outTemp.max.json,
       "unit": "$unit.label.outTemp",
       "graph": $day.outTemp.series(time_unit='unix_epoch', aggregate_interval=None).json
     },
     {
       "observation": "outHumidity",
-      "min": $day.outHumidity.min.raw,
-      "max": $day.outHumidity.max.raw,
+      "min": $day.outHumidity.min.json,
+      "max": $day.outHumidity.max.json,
       "unit": "$unit.label.outHumidity",
       "graph": $day.outHumidity.series(time_unit='unix_epoch', aggregate_interval=None).json
     },
     {
       "observation": "rain",
-      "sum": $day.rain.sum.raw,
+      "sum": $day.rain.sum.json,
       "unit": "$unit.label.rain",
       "graph": $day.rain.series(time_unit='unix_epoch', aggregate_interval=None).json
+    },
+    {
+      "observation": "windSpeed",
+      "max": $day.windSpeed.max.json,
+      "avg": $day.windSpeed.avg.json,
+      "unit": "$unit.label.windSpeed",
+      "graph": $day.windSpeed.series(time_unit='unix_epoch', aggregate_interval=None).json
+    },
+    {
+      "observation": "windDir",
+      "graph": $day.windDir.series(time_unit='unix_epoch', aggregate_interval=None).json
     }
   ]
 }
