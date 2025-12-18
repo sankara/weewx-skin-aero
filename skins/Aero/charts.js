@@ -418,17 +418,20 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     }
 
     // 3. Indicator
-    const currentAngle = getAngle(current);
-    const px = cx + radius * Math.cos(currentAngle);
-    const py = cy + radius * Math.sin(currentAngle);
+    // Only draw needle if we have a valid number
+    if (current !== null && current !== undefined) {
+        const currentAngle = getAngle(current);
+        const px = cx + radius * Math.cos(currentAngle);
+        const py = cy + radius * Math.sin(currentAngle);
 
-    ctx.beginPath();
-    ctx.arc(px, py, 12, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = (title === 'Temperature') ? '#f59e0b' : color;
-    ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(px, py, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = (title === 'Temperature') ? '#f59e0b' : color;
+        ctx.stroke();
+    }
 
     // 4. Text
     ctx.textAlign = 'center';
@@ -446,7 +449,8 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
         ctx.fillStyle = color;
     }
 
-    ctx.fillText((+current).toFixed(1), cx, cy - radius * 0.3);
+    const valStr = (current !== null && current !== undefined) ? (+current).toFixed(1) : '--';
+    ctx.fillText(valStr, cx, cy - radius * 0.3);
 
     // Unit
     ctx.font = '500 14px Inter, sans-serif';
@@ -593,25 +597,61 @@ function drawBarbLine(ctx, x, type) {
     ctx.stroke();
 }
 
-export function drawCompass(canvas, speed, gust, direction, unit, color, title, textPrimary, textSecondary) {
+export function drawCompass(canvas, speed, gust, direction, unit, color, title, textPrimary, textSecondary, theme) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
     // Center Y: usually card canvases are 200x150.
     // Move up slightly to fit "Gust" text at bottom
-    const cy = h / 2 - 5;
+    const cy = h / 2 - 12;
     // Reduce radius slightly
-    const radius = Math.min(w, h) * 0.3;
+    const radius = Math.min(w, h) * 0.32;
+
+    const t = theme || {};
+    // Fallback colors if theme not provided
+    const colTickC = t.tickCardinal || '#94a3b8';
+    const colTickM = t.tickMajor || '#cbd5e1';
+    const colTickm = t.tickMinor || '#e2e8f0';
+    const colArrow = t.arrow || '#64748b';
 
     ctx.clearRect(0, 0, w, h);
 
-    // 1. Outer Ring (Compass Rose)
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#e2e8f0'; // Light gray ring
-    ctx.stroke();
+    // 1. Tick Marks (Compass Rose)
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#e2e8f0'; // Light tick color
+
+    // "Second hands" - denser ticks. Let's do every 10 degrees.
+    for (let i = 0; i < 360; i += 10) {
+        ctx.save();
+        ctx.rotate((i * Math.PI) / 180);
+
+        ctx.beginPath();
+        if (i % 90 === 0) {
+            // Cardinal (N/E/S/W) - Longest, Darker
+            ctx.strokeStyle = colTickC;
+            ctx.lineWidth = 2.5;
+            ctx.moveTo(0, -radius + 4);
+            ctx.lineTo(0, -radius - 4);
+        } else if (i % 30 === 0) {
+            // Major (30, 60...) - Medium
+            ctx.strokeStyle = colTickM;
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, -radius + 2);
+            ctx.lineTo(0, -radius - 2);
+        } else {
+            // Minor (10, 20...) - Small, subtle
+            ctx.strokeStyle = colTickm;
+            ctx.lineWidth = 1.5;
+            ctx.moveTo(0, -radius);
+            ctx.lineTo(0, -radius - 2);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+    ctx.restore();
 
     // N/E/S/W Labels
     ctx.font = 'bold 12px Inter, sans-serif';
@@ -619,40 +659,45 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     // Positions relative to center
+    const labelDist = radius + 22;
+
     // N (Top)
-    ctx.fillText('N', cx, cy - radius - 15);
+    ctx.fillText('N', cx, cy - labelDist);
     // S (Bottom)
-    ctx.fillText('S', cx, cy + radius + 15);
+    ctx.fillText('S', cx, cy + labelDist);
     // E (Right)
-    ctx.fillText('E', cx + radius + 15, cy);
+    ctx.fillText('E', cx + labelDist, cy);
     // W (Left)
-    ctx.fillText('W', cx - radius - 15, cy);
+    ctx.fillText('W', cx - labelDist, cy);
 
     // 2. Direction Arrow
     if (direction !== null && direction !== undefined) {
-        const rad = (direction - 90) * (Math.PI / 180);
+        // Standard: 0=N, 90=E.
+        // Canvas: 0=E, 90=S.
+        // Angle to rotate = direction - 90
+        const angle = direction - 90;
+        const rad = angle * (Math.PI / 180);
 
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(rad);
 
-        // Arrow Triangle
-        // Pointing to right (0 deg in canvas) is really pointing 'Up' relative to rotation?
-        // No, we rotated by (direction - 90). So 0 deg in rotated space aligns with direction.
-        // Wait, standard canvas 0 is East.
-        // If direction is 0 (North), rad = -90. Rotation -90 makes the positive X axis point North.
-        // So we draw the arrow pointing along positive X axis.
+        // Draw Triangle Marker on the rim
+        const markerDist = radius;
 
-        const arrowDist = radius - 5; // Tip just inside ring
-
+        // Simple Triangle
         ctx.beginPath();
-        ctx.moveTo(arrowDist, 0); // Tip
-        ctx.lineTo(-10, 6);
-        ctx.lineTo(-6, 0);
-        ctx.lineTo(-10, -6);
+        // Pointing IN (Tip on ring)
+        ctx.moveTo(markerDist - 2, 0);     // Tip slightly inside ring
+        ctx.lineTo(markerDist + 8, 5);     // Base outside
+        ctx.lineTo(markerDist + 8, -5);    // Base outside
         ctx.closePath();
-        ctx.fillStyle = color;
+
+        // Neutral Color (Gray)
+        ctx.fillStyle = colArrow;
         ctx.fill();
+
+        // Removed ring accent as per "simple triangle" request
 
         ctx.restore();
     }
@@ -677,6 +722,6 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
         ctx.font = '500 11px Inter, sans-serif';
         ctx.fillStyle = color;
         // render near bottom
-        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, h - 10);
+        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, h - 5);
     }
 }

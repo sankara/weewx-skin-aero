@@ -22,6 +22,16 @@
     --color-uv: #f43f5e;
     /* Rose */
 
+    /* Compass Colors */
+    --color-compass-tick-cardinal: #94a3b8;
+    /* Slate 400 */
+    --color-compass-tick-major: #cbd5e1;
+    /* Slate 300 */
+    --color-compass-tick-minor: #e2e8f0;
+    /* Slate 200 */
+    --color-compass-arrow: #64748b;
+    /* Slate 500 */
+
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
@@ -40,6 +50,16 @@ html.dark {
 
     /* Adjusted for contrast */
     --color-temp: #fbbf24;
+
+    /* Compass Colors (Dark Mode) - Lighter for contrast */
+    --color-compass-tick-cardinal: #cbd5e1;
+    /* Slate 300 */
+    --color-compass-tick-major: #94a3b8;
+    /* Slate 400 */
+    --color-compass-tick-minor: #64748b;
+    /* Slate 500 */
+    --color-compass-arrow: #e2e8f0;
+    /* Slate 200 (Bright for visibility) */
 }
 
 * {
@@ -84,6 +104,7 @@ body {
     /* Extra bold for premium feel */
     background: linear-gradient(90deg, var(--accent-color), #8b5cf6);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -139,6 +160,26 @@ body {
     color: #fff;
     background-color: var(--accent-color);
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.nav-extra {
+    display: none;
+    /* Hidden on desktop, mobile only */
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobile-select {
+    display: none;
+    /* Hidden on desktop */
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 /* Date Controls */
@@ -225,6 +266,7 @@ body {
     line-height: 1.1;
     background: linear-gradient(180deg, var(--text-primary), var(--text-secondary));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -280,55 +322,57 @@ body {
         grid-column: span 2;
     }
 }
+
 /* Toggle Switch */
 .switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 24px;
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
 }
 
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
 .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #cbd5e1; /* Slate 300 */
-  transition: .4s;
-  border-radius: 34px;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    /* Slate 300 */
+    transition: .4s;
+    border-radius: 34px;
 }
 
 .slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-input:checked + .slider {
-  background-color: var(--accent-color);
+input:checked+.slider {
+    background-color: var(--accent-color);
 }
 
-input:focus + .slider {
-  box-shadow: 0 0 1px var(--accent-color);
+input:focus+.slider {
+    box-shadow: 0 0 1px var(--accent-color);
 }
 
-input:checked + .slider:before {
-  transform: translateX(24px);
+input:checked+.slider:before {
+    transform: translateX(24px);
 }
 
 /* Metric Label Styling */
@@ -340,11 +384,7 @@ input:checked + .slider:before {
     font-weight: 600;
 }
 
-/* Adjust Nav layout */
-.nav-tabs {
-    flex-wrap: wrap;
-    justify-content: center;
-}
+
 
 /* CURRENT SECTION STYLES */
 .section-current {
@@ -413,8 +453,51 @@ input:checked + .slider:before {
 
 @media (max-width: 640px) {
     .history-nav {
-        flex-direction: column;
+        flex-direction: row;
+        /* Row layout on mobile */
+        justify-content: space-between;
         align-items: center;
-        gap: 1.5rem;
+        width: 100%;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        /* Prevent wrapping */
+    }
+
+    /* Make date controls compact on mobile */
+    .date-controls {
+        flex: 1;
+        /* Allow it to take available space */
+        justify-content: space-between;
+        min-width: 0;
+        /* Allow shrinking */
+        padding: 0.25rem 0.5rem;
+    }
+
+    #current-date-display {
+        font-size: 0.9rem;
+        min-width: unset;
+        /* Allow text to determine width */
+        white-space: nowrap;
+    }
+
+    .nav-tabs {
+        display: none;
+        /* Hide toggle buttons on mobile */
+    }
+
+    .mobile-select {
+        display: block;
+        /* Show dropdown */
+    }
+
+    .nav-extra {
+        display: flex;
+        /* Show container on mobile */
+    }
+
+    .nav-icon {
+        color: var(--accent-color);
+        width: 20px;
+        height: 20px;
     }
 }

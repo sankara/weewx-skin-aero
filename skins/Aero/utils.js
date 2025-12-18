@@ -92,7 +92,7 @@ export function convertItem(item, unitSystem) {
     newItem.unit = targetUnit;
 
     ['current', 'min', 'max', 'avg', 'sum'].forEach(k => {
-        if (newItem[k] !== undefined) newItem[k] = convert(newItem[k]);
+        if (newItem[k] !== undefined && newItem[k] !== null) newItem[k] = convert(newItem[k]);
     });
 
     if (newItem.graph) {

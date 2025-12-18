@@ -10,7 +10,7 @@ export function renderHeader() {
     if (!state.currentData) return;
 
     // 1. Title & Time
-    els.title.textContent = "Aero Weather";
+    els.title.textContent = state.currentData.title || "Aero Weather";
     const date = new Date(state.currentData.meta.time * 1000);
     els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
 
@@ -75,7 +75,21 @@ function renderCurrentObservations() {
     const wSpeed = getDialItem('windSpeed');
     const wGust = getDialItem('windGust');
     const wDir = getDialItem('windDir');
-    createCompassCard(container, wSpeed, wGust, wDir, cWind, cTextPrimary, cTextSecondary);
+
+    // Resolve Compass Theme Colors
+    const cTickC = resolveThemeColor('--color-compass-tick-cardinal', '#94a3b8', '#94a3b8');
+    const cTickM = resolveThemeColor('--color-compass-tick-major', '#cbd5e1', '#cbd5e1');
+    const cTickm = resolveThemeColor('--color-compass-tick-minor', '#e2e8f0', '#e2e8f0');
+    const cArrow = resolveThemeColor('--color-compass-arrow', '#64748b', '#64748b');
+
+    const compassTheme = {
+        tickCardinal: cTickC,
+        tickMajor: cTickM,
+        tickMinor: cTickm,
+        arrow: cArrow
+    };
+
+    createCompassCard(container, wSpeed, wGust, wDir, cWind, cTextPrimary, cTextSecondary, compassTheme);
 
     // 4. Rain (Simple Card)
     const rainItem = getDialItem('rain');
@@ -100,8 +114,8 @@ function renderCurrentObservations() {
 function createDialCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
     if (!item) return;
     // Check for explicit null for differentiation
-    const hasData = item.current !== null && item.current !== undefined;
-    if (!hasData) return;
+    // const hasData = item.current !== null && item.current !== undefined;
+    // if (!hasData) return; // Allow rendering even if null (shows --)
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -123,7 +137,7 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
     drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title, textPrimary, textSecondary);
 }
 
-function createCompassCard(container, speedItem, gustItem, dirItem, color, textPrimary, textSecondary) {
+function createCompassCard(container, speedItem, gustItem, dirItem, color, textPrimary, textSecondary, theme) {
     if (!speedItem) return;
 
     const div = document.createElement('div');
@@ -146,7 +160,7 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
     const dir = dirItem ? dirItem.current : null;
     const unit = speedItem.unit;
 
-    drawCompass(canvas, speed, gust, dir, unit, color, 'Wind', textPrimary, textSecondary);
+    drawCompass(canvas, speed, gust, dir, unit, color, 'Wind', textPrimary, textSecondary, theme);
 }
 
 function createSimpleCard(container, item, type, color) {

@@ -18,6 +18,7 @@ aero-build = "aero_dev.report_builder:main"
 aero-package = "aero_dev.packaging:main"
 aero-bump = "aero_dev.versioning:main"
 aero-snap = "aero_dev.screenshots:main"
+aero-watch = "aero_dev.watch:main"
 
 [build-system]
 requires = ["hatchling"]

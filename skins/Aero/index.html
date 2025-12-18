@@ -60,6 +60,15 @@
         <!-- SCROLLABLE BOTTOM SECTION: History Explorer -->
         <section id="history-section" class="section-history">
             <nav class="history-nav">
+                <div class="nav-extra">
+                    <i data-lucide="calendar" class="nav-icon"></i>
+                    <select id="mobile-view-select" class="mobile-select">
+                        <option value="day">Day</option>
+                        <option value="week">Week</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                    </select>
+                </div>
                 <div class="nav-tabs">
                     <button class="nav-btn active" data-view="day">Day</button>
                     <button class="nav-btn" data-view="week">Week</button>

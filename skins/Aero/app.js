@@ -63,7 +63,7 @@ async function init() {
     } catch (e) {
         console.error("Failed to init", e);
         // Fallback error UI
-        if(els.graphs) {
+        if (els.graphs) {
             els.graphs.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:2rem; color:red">
                 <h3>Error loading weather data</h3>
                 <p>Could not load initial data.</p>
@@ -74,10 +74,11 @@ async function init() {
 }
 
 function parseWeeWXData(json) {
-    if(!json) return null;
+    if (!json) return null;
     const map = {
         meta: json.report || {},
-        obs: {}
+        obs: {},
+        title: json.title
     };
     if (!map.meta.time && json.time) map.meta.time = json.time;
 
@@ -128,9 +129,9 @@ async function loadDate(date) {
 
             // Fallback for 'today.json' 404 in day view
             if (!res.ok && activeFile === 'today.json') {
-                 const fallbackFile = `day-${dateStr}.json`;
-                 console.warn(`today.json failed in loadDate, trying ${fallbackFile}`);
-                 res = await fetch(state.basePath + fallbackFile);
+                const fallbackFile = `day-${dateStr}.json`;
+                console.warn(`today.json failed in loadDate, trying ${fallbackFile}`);
+                res = await fetch(state.basePath + fallbackFile);
             }
 
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -143,14 +144,14 @@ async function loadDate(date) {
 
     } catch (e) {
         console.warn("No data for", activeFile, e);
-        if(els.graphs) {
+        if (els.graphs) {
             els.graphs.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:2rem;">
                 No data available for ${activeFile} <br>
                 <small>${e.message}</small>
             </div>`;
         }
         // Clear summary if no data
-        if(document.getElementById('history-summary')) {
+        if (document.getElementById('history-summary')) {
             document.getElementById('history-summary').innerHTML = '';
         }
     }
@@ -181,11 +182,14 @@ function updateNavControls(date, isToday) {
         const now = new Date();
         // Loose check
         els.dateNext.disabled = (date > now);
-        if(state.viewScope === 'day' && isToday) els.dateNext.disabled = true;
+        if (state.viewScope === 'day' && isToday) els.dateNext.disabled = true;
     }
 }
 
 function setupNav() {
+    const mobileSelect = document.getElementById('mobile-view-select');
+
+    // Desktop Buttons
     els.navBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             els.navBtns.forEach(b => b.classList.remove('active'));
@@ -194,16 +198,35 @@ function setupNav() {
             const view = btn.dataset.view; // day, week, month, year
             state.viewScope = view;
 
+            // Sync mobile select
+            if (mobileSelect) mobileSelect.value = view;
+
             // Reset date to 'latest' when switching views?
-            // Usually good UX to jump to "Current Month" if switching Day -> Month
             const d = state.currentData ? new Date(state.currentData.meta.time * 1000) : new Date();
             loadDate(d);
         });
     });
+
+    // Mobile Select
+    if (mobileSelect) {
+        mobileSelect.addEventListener('change', (e) => {
+            const view = e.target.value;
+            state.viewScope = view;
+
+            // Sync desktop buttons
+            els.navBtns.forEach(b => {
+                if (b.dataset.view === view) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            const d = state.currentData ? new Date(state.currentData.meta.time * 1000) : new Date();
+            loadDate(d);
+        });
+    }
 }
 
 function setupUnits() {
-    if(!els.unitToggle) return;
+    if (!els.unitToggle) return;
     els.unitToggle.addEventListener('change', (e) => {
         state.units = e.target.checked ? 'imperial' : 'metric';
         renderHeader();
