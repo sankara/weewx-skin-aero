@@ -102,10 +102,15 @@ async function loadDate(date) {
     const isToday = isSameDay(date, new Date());
 
     let activeFile;
-    // Map viewScope to filenames
+    // For historical week, we need to handle it differently (aggregation)
+    if (state.viewScope === 'week' && !isToday) {
+        loadWeeklyData(date);
+        return;
+    }
+
     const fileMap = {
         'day': isToday ? 'today.json' : `day-${dateStr}.json`,
-        'week': 'week-to-date.json',
+        'week': 'week-to-date.json', // Only used for current week now
         'month': isToday ? 'month.json' : `month-${yyyy}-${mm}.json`,
         'year': isToday ? 'year.json' : `year-${yyyy}.json`
     };
@@ -179,38 +184,121 @@ function updateDateDisplay(date) {
 }
 
 function updateNavControls(date, isToday) {
+    els.datePrev.disabled = false;
+    els.datePrev.style.opacity = '1';
+
+    const now = new Date();
+    const isFuture = (date > now);
+
     if (state.viewScope === 'week') {
-        els.datePrev.disabled = true;
-        els.dateNext.disabled = true;
-        els.datePrev.style.opacity = '0.3';
-        els.dateNext.style.opacity = '0.3';
-    } else {
-        els.datePrev.disabled = false;
-        els.datePrev.style.opacity = '1';
+        const lastSunday = new Date(now);
+        lastSunday.setDate(now.getDate() - now.getDay());
+        lastSunday.setHours(0, 0, 0, 0);
 
-        const now = new Date();
-        const isFuture = (date > now);
+        const currentInWeek = new Date(date);
+        currentInWeek.setHours(0, 0, 0, 0);
 
-        // Month view "future" check
-        if (state.viewScope === 'month') {
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-            if (date.getFullYear() > currentYear || (date.getFullYear() === currentYear && date.getMonth() >= currentMonth)) {
-                els.dateNext.disabled = true;
-            } else {
-                els.dateNext.disabled = false;
-            }
-        } else if (state.viewScope === 'year') {
-            if (date.getFullYear() >= now.getFullYear()) {
-                els.dateNext.disabled = true;
-            } else {
-                els.dateNext.disabled = false;
-            }
+        // Disable next if we are in the current week
+        els.dateNext.disabled = (currentInWeek >= lastSunday);
+    } else if (state.viewScope === 'month') {
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        if (date.getFullYear() > currentYear || (date.getFullYear() === currentYear && date.getMonth() >= currentMonth)) {
+            els.dateNext.disabled = true;
         } else {
-            els.dateNext.disabled = (isToday || isFuture);
+            els.dateNext.disabled = false;
         }
+    } else if (state.viewScope === 'year') {
+        if (date.getFullYear() >= now.getFullYear()) {
+            els.dateNext.disabled = true;
+        } else {
+            els.dateNext.disabled = false;
+        }
+    } else {
+        els.dateNext.disabled = (isToday || isFuture);
+    }
 
-        els.dateNext.style.opacity = els.dateNext.disabled ? '0.3' : '1';
+    els.dateNext.style.opacity = els.dateNext.disabled ? '0.3' : '1';
+}
+
+async function loadWeeklyData(targetDate) {
+    // 1. Determine Monday-Sunday for this targetDate
+    const d = new Date(targetDate);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
+    const monday = new Date(d.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+
+    const promises = [];
+    for (let i = 0; i < 7; i++) {
+        const temp = new Date(monday);
+        temp.setDate(monday.getDate() + i);
+        const y = temp.getFullYear();
+        const m = String(temp.getMonth() + 1).padStart(2, '0');
+        const dt = String(temp.getDate()).padStart(2, '0');
+        const fname = `day-${y}-${m}-${dt}.json`;
+        promises.push(fetch(`${state.basePath}${fname}`).then(r => r.ok ? r.json() : null));
+    }
+
+    try {
+        const results = await Promise.all(promises);
+        // Aggregate
+        const weekData = {
+            meta: {
+                // Approximate timestamps from first and last
+                startTimestamp: monday.getTime() / 1000,
+                endTimestamp: (monday.getTime() + 7 * 24 * 3600 * 1000) / 1000,
+                time: targetDate.toLocaleDateString()
+            },
+            observations: []
+        };
+
+        // Helper to merge series
+        const mergeSeries = (obsName) => {
+            let combined = [];
+            results.forEach(day => {
+                if (!day) return;
+                const obs = day.observations.find(o => o.observation === obsName);
+                if (obs && obs.graph) combined = combined.concat(obs.graph);
+            });
+            return combined;
+        };
+
+        // Observations to reconstruct
+        const obsList = ['outTemp', 'outHumidity', 'barometer', 'windSpeed', 'windDir', 'rain'];
+        obsList.forEach(name => {
+            const series = mergeSeries(name);
+            const entry = { observation: name, graph: series };
+            // Simple aggregations for min/max/sum
+            // extracting from series is safer/easier than summing daily stats if daily stats are missing
+            if (name === 'rain') {
+                entry.sum = results.reduce((acc, r) => {
+                    const o = r ? r.observations.find(x => x.observation === 'rain') : null;
+                    return acc + (o ? (parseFloat(o.sum) || 0) : 0);
+                }, 0);
+            }
+            // For others, min/max could be calculated from series or day stats. 
+            // Leaving simplified for now as charts rely on series mainly.
+            weekData.observations.push(entry);
+        });
+
+        const parsed = parseWeeWXData(weekData);
+        state.activeData = parsed.meta; // Fix: parseWeeWXData return structure
+
+        // Wait, parseWeeWXData returns { meta:..., obs:... }
+        // We need to match that structure manually or reuse it.
+        // Let's just manually shape state.activeData for renderGraphs
+        // Actually renderGraphs expects state.activeData to be the full object with .obs and .meta
+        state.activeData = parsed;
+
+        renderHeader(parsed);
+        renderGraphs(parsed);
+        // renderHistorySummary(parsed); // Optional, might need more stats
+        updateDateDisplay(targetDate);
+        updateNavControls(targetDate, false);
+
+    } catch (e) {
+        console.error("Failed to load weekly data", e);
     }
 }
 
@@ -269,6 +357,7 @@ function setupDateControls() {
     els.datePrev.addEventListener('click', () => {
         const d = new Date(state.currentDate);
         if (state.viewScope === 'day') d.setDate(d.getDate() - 1);
+        if (state.viewScope === 'week') d.setDate(d.getDate() - 7);
         if (state.viewScope === 'month') d.setMonth(d.getMonth() - 1);
         if (state.viewScope === 'year') d.setFullYear(d.getFullYear() - 1);
         loadDate(d);
@@ -277,6 +366,7 @@ function setupDateControls() {
     els.dateNext.addEventListener('click', () => {
         const d = new Date(state.currentDate);
         if (state.viewScope === 'day') d.setDate(d.getDate() + 1);
+        if (state.viewScope === 'week') d.setDate(d.getDate() + 7);
         if (state.viewScope === 'month') d.setMonth(d.getMonth() + 1);
         if (state.viewScope === 'year') d.setFullYear(d.getFullYear() + 1);
 

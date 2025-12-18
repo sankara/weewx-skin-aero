@@ -99,7 +99,15 @@ export function renderGraphs() {
         // Let's trust the Server for week since Weewx knows its own week configuration (Sunday vs Monday start).
         if (state.viewScope === 'week') {
             commonScales.x.min = state.activeData.meta.startTimestamp * 1000;
-            commonScales.x.max = state.activeData.meta.endTimestamp * 1000 - 1;
+            // End exactly at the last second of the 7th day
+            commonScales.x.max = state.activeData.meta.endTimestamp * 1000 - 1000;
+
+            // Enforce 7 labels
+            commonScales.x.ticks = {
+                ...commonScales.x.ticks,
+                maxTicksLimit: 7,
+                autoSkip: false
+            };
         }
     }
 
