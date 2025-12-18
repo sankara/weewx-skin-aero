@@ -2,7 +2,9 @@
 ## daily.json.tmpl
 {
   "meta": {
-    "time": $current.dateTime.json
+    "time": $current.dateTime.json,
+    "startTimestamp": $day.start.raw,
+    "endTimestamp": $day.end.raw
   },
   "observations": [
     {

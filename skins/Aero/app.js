@@ -76,7 +76,7 @@ async function init() {
 function parseWeeWXData(json) {
     if (!json) return null;
     const map = {
-        meta: json.report || {},
+        meta: json.meta || json.report || {},
         obs: {},
         title: json.title
     };
@@ -105,9 +105,9 @@ async function loadDate(date) {
     // Map viewScope to filenames
     const fileMap = {
         'day': isToday ? 'today.json' : `day-${dateStr}.json`,
-        'week': 'week-to-date.json', // As per plan, use week-to-date
-        'month': `month-${yyyy}-${mm}.json`,
-        'year': `year-${yyyy}.json`
+        'week': 'week-to-date.json',
+        'month': isToday ? 'month.json' : `month-${yyyy}-${mm}.json`,
+        'year': isToday ? 'year.json' : `year-${yyyy}.json`
     };
 
     activeFile = fileMap[state.viewScope] || 'today.json';
@@ -141,6 +141,7 @@ async function loadDate(date) {
 
         renderHistorySummary();
         renderGraphs();
+        updateDateDisplay(date);
 
     } catch (e) {
         console.warn("No data for", activeFile, e);
@@ -165,24 +166,51 @@ function updateDateDisplay(date) {
     } else if (state.viewScope === 'year') {
         els.dateDisplay.textContent = date.getFullYear();
     } else if (state.viewScope === 'week') {
-        els.dateDisplay.textContent = "Current Week";
+        if (state.activeData && state.activeData.meta && state.activeData.meta.startTimestamp) {
+            const start = new Date(state.activeData.meta.startTimestamp * 1000);
+            const end = new Date(state.activeData.meta.endTimestamp * 1000);
+            const startStr = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const endStr = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            els.dateDisplay.textContent = `${startStr} - ${endStr}`;
+        } else {
+            els.dateDisplay.textContent = "Current Week";
+        }
     }
 }
 
 function updateNavControls(date, isToday) {
-    // Week view doesn't support historical nav yet
     if (state.viewScope === 'week') {
         els.datePrev.disabled = true;
         els.dateNext.disabled = true;
+        els.datePrev.style.opacity = '0.3';
+        els.dateNext.style.opacity = '0.3';
     } else {
         els.datePrev.disabled = false;
-        // Disable Next if future?
-        // Simple logic handled in click handler, but visual disable:
-        // We can't easily know if 'next month' is future without checking current date vs today
+        els.datePrev.style.opacity = '1';
+
         const now = new Date();
-        // Loose check
-        els.dateNext.disabled = (date > now);
-        if (state.viewScope === 'day' && isToday) els.dateNext.disabled = true;
+        const isFuture = (date > now);
+
+        // Month view "future" check
+        if (state.viewScope === 'month') {
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            if (date.getFullYear() > currentYear || (date.getFullYear() === currentYear && date.getMonth() >= currentMonth)) {
+                els.dateNext.disabled = true;
+            } else {
+                els.dateNext.disabled = false;
+            }
+        } else if (state.viewScope === 'year') {
+            if (date.getFullYear() >= now.getFullYear()) {
+                els.dateNext.disabled = true;
+            } else {
+                els.dateNext.disabled = false;
+            }
+        } else {
+            els.dateNext.disabled = (isToday || isFuture);
+        }
+
+        els.dateNext.style.opacity = els.dateNext.disabled ? '0.3' : '1';
     }
 }
 

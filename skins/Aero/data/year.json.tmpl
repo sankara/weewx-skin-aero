@@ -1,0 +1,24 @@
+#errorCatcher Echo
+## year.json.tmpl
+{
+  "meta": {
+    "time": $current.dateTime.json,
+    "startTimestamp": $year.start.raw,
+    "endTimestamp": $year.end.raw
+  },
+  "observations": [
+    {
+      "observation": "outTemp",
+      "min": $year.outTemp.min.json,
+      "max": $year.outTemp.max.json,
+      "unit": "$unit.label.outTemp",
+      "graph": $year.outTemp.series(time_unit='unix_epoch', aggregate_interval=86400).json
+    },
+    {
+      "observation": "rain",
+      "sum": $year.rain.sum.json,
+      "unit": "$unit.label.rain",
+      "graph": $year.rain.series(time_unit='unix_epoch', aggregate_interval=86400).json
+    }
+  ]
+}

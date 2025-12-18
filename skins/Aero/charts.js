@@ -38,30 +38,69 @@ export function renderGraphs() {
     };
 
     // Configure X-Axis unit/format
-    const sDate = new Date(state.currentDate);
+    const now = state.currentDate || new Date();
+    const sDate = new Date(now);
+    sDate.setMilliseconds(0);
+    sDate.setSeconds(0);
+    sDate.setMinutes(0);
+    sDate.setHours(0);
+
     if (isDayView) {
-        sDate.setHours(0, 0, 0, 0);
         commonScales.x.min = sDate.getTime();
         commonScales.x.max = sDate.getTime() + 24 * 60 * 60 * 1000;
         commonScales.x.time = { unit: 'hour', displayFormats: { hour: 'h a' } };
     } else if (state.viewScope === 'week') {
-        // Week View: X-axis days
+        // Week View: full Mon-Sun or Sun-Sat range?
+        // WeeWX usually considers week-to-date from the start of the week.
+        // Let's force a consistent 7-day view.
+        // If state.activeData has start/end, use that to align the grid.
+        let startTime = sDate.getTime();
+        let endTime = sDate.getTime() + 7 * 24 * 60 * 60 * 1000;
+
+        if (state.activeData && state.activeData.meta && state.activeData.meta.startTimestamp) {
+            startTime = state.activeData.meta.startTimestamp * 1000;
+            endTime = state.activeData.meta.endTimestamp * 1000;
+        } else {
+            // Fallback: Start of week (assuming Monday start for consistency with many weewx setups, or just use 7 days back)
+            const day = sDate.getDay();
+            const diff = sDate.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            sDate.setDate(diff);
+            startTime = sDate.getTime();
+            endTime = startTime + 7 * 24 * 60 * 60 * 1000;
+        }
+
+        commonScales.x.min = startTime;
+        commonScales.x.max = endTime - 1; // Subtract 1ms to avoid 8th day label
         commonScales.x.time = { unit: 'day', displayFormats: { day: 'EEE d' } };
-        // Auto range based on data
+
     } else if (state.viewScope === 'month') {
-        sDate.setDate(1); sDate.setHours(0, 0, 0, 0);
+        sDate.setDate(1);
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setMonth(eDate.getMonth() + 1);
         commonScales.x.max = eDate.getTime();
         commonScales.x.time = { unit: 'day', displayFormats: { day: 'd' } };
     } else if (state.viewScope === 'year') {
-        sDate.setMonth(0, 1); sDate.setHours(0, 0, 0, 0);
+        sDate.setMonth(0, 1);
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setFullYear(eDate.getFullYear() + 1);
         commonScales.x.max = eDate.getTime();
         commonScales.x.time = { unit: 'month', displayFormats: { month: 'MMM' } };
+    }
+
+    // Server Truth Override: Only override if it BROADENS the view or provides specific bounds
+    // But we strictly want consistent axes as per user request: "consistent x-axis - day (12am to 12am), week (start to end of week), month (1st to last day of month), year (jan to dec)"
+    // So if it's "to-date" data, we still want to show the full period.
+    // The meta.startTimestamp and endTimestamp from Weewx for 'SummaryBy...' usually match the period exactly.
+    if (state.activeData && state.activeData.meta && state.activeData.meta.startTimestamp && state.activeData.meta.endTimestamp) {
+        // Only override if we aren't already enforcing a full period, or if it aligns.
+        // For 'week', we already used it. For day/month/year, our JS calculation is usually more "strict" to the calendar.
+        // Let's trust the Server for week since Weewx knows its own week configuration (Sunday vs Monday start).
+        if (state.viewScope === 'week') {
+            commonScales.x.min = state.activeData.meta.startTimestamp * 1000;
+            commonScales.x.max = state.activeData.meta.endTimestamp * 1000 - 1;
+        }
     }
 
     // 1. Temperature Chart
