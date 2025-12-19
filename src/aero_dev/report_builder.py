@@ -11,6 +11,7 @@ from weewx.station import StationInfo
 from weewx.reportengine import StdReportEngine
 import schemas.wview_extended
 import weedb
+import aero_dev.bundler as bundler
 import weewx.cheetahgenerator
 
 def main():
@@ -31,17 +32,44 @@ def main():
     parser.add_argument("--output", default="public_html", help="Output directory")
     args = parser.parse_args()
 
+
+
     # Resolve paths
     repo_root = os.getcwd()
     db_path = os.path.abspath(args.db)
 
-    # Allow overriding skin location if needed, but default to repo structure
+    # For local dev build with bundling, we must work on a copy to avoid checking in modified index.html
+    # Create build/dev_skin
+    build_root = os.path.join(repo_root, "build", "dev_skin")
+    if os.path.exists(build_root):
+        shutil.rmtree(build_root)
+    os.makedirs(build_root)
+    
+    # Original source
     if os.path.isabs(args.skin):
-        skin_dir = args.skin
+        src_skin = args.skin
     else:
-        skin_dir = os.path.abspath(os.path.join(repo_root, args.skin))
+        src_skin = os.path.abspath(os.path.join(repo_root, args.skin))
+    
+    # Target path (must maintain Aero/ structure for cheetah to find skin configs if it relies on folder name?)
+    # Usually weewx looks for skins/Aero
+    # We will copy contents of src_skin to build/dev_skin/Aero
+    
+    skin_name = os.path.basename(src_skin) # Aero
+    skin_dir = os.path.join(build_root, skin_name) # build/dev_skin/Aero
+    
+    shutil.copytree(src_skin, skin_dir)
+    
+    print(f"Created temporary build skin at {skin_dir}")
+    
+    # Run Bundler on the copy
+    try:
+        bundler.run_bundler(skin_dir)
+    except Exception as e:
+        print(f"Bundling failed: {e}")
+        sys.exit(1)
 
-    skin_root = os.path.dirname(skin_dir)
+    skin_root = build_root # The parent of 'Aero'
     output_dir = os.path.abspath(args.output)
 
     # Clean output dir

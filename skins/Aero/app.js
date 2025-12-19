@@ -1,4 +1,5 @@
 // app.js
+import './style.css';
 import { renderHeader, renderHistorySummary } from './ui.js';
 import { renderGraphs } from './charts.js';
 import { isSameDay } from './utils.js';
