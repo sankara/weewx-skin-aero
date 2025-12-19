@@ -19,3 +19,8 @@ description: How to generate Aero skin data and start a debug server
 
 4. Open your browser to internal URL (or equivalent port forwarding):
    http://localhost:8000
+
+5. For subsequent run, you can use the watch command:
+```bash
+uv run aero-debug
+```

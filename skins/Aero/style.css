@@ -153,6 +153,18 @@ body {
     padding: 1.5rem;
 }
 
+@media (max-width: 640px) {
+    .app-container {
+        padding: 1rem;
+    }
+
+    .card,
+    .graph-card,
+    .section-history {
+        padding: 1rem;
+    }
+}
+
 /* Header */
 .main-header {
     display: flex;
@@ -495,8 +507,8 @@ input:checked+.slider:before {
 
 .dials-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 0.75rem;
     margin-bottom: 2rem;
 }
 
@@ -523,8 +535,8 @@ input:checked+.slider:before {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 0.75rem;
     margin-bottom: 2rem;
 }
 

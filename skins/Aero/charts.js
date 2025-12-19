@@ -411,6 +411,10 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     const h = canvas.height;
     const cx = w / 2;
     const cy = h * 0.85;
+
+    // Relative Sizing Factors (Base: 280px width)
+    const s = w / 280; // Scale factor
+
     const radius = Math.min(w, h * 1.5) * 0.45;
 
     ctx.clearRect(0, 0, w, h);
@@ -427,7 +431,7 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     // 1. Background Track
     ctx.beginPath();
     ctx.arc(cx, cy, radius, startAngle, endAngle);
-    ctx.lineWidth = 15;
+    ctx.lineWidth = 15 * s;
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineCap = 'round';
     ctx.stroke();
@@ -439,20 +443,15 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     if (Math.abs(rangeEnd - rangeStart) > 0.01) {
         ctx.beginPath();
         // Ensure accurate arc drawing
-        // If rangeStart > rangeEnd (shouldn't happen with correct min/max logic but safety check)
-        const s = Math.min(rangeStart, rangeEnd);
-        const e = Math.max(rangeStart, rangeEnd);
+        const sAngle = Math.min(rangeStart, rangeEnd);
+        const eAngle = Math.max(rangeStart, rangeEnd);
 
-        ctx.arc(cx, cy, radius, s, e);
-        ctx.lineWidth = 15;
+        ctx.arc(cx, cy, radius, sAngle, eAngle);
+        ctx.lineWidth = 15 * s;
 
         let strokeStyle = color + '66';
 
         if (title === 'Temperature') {
-            // Gradient based on typical temperature range colors
-            // 0% (Left/Start) -> 100% (Right/End) of the *Canvas Width*? 
-            // The arc goes from bottom-left to bottom-right.
-            // Horizontal gradient works best.
             const grad = ctx.createLinearGradient(0, 0, w, 0);
             grad.addColorStop(0.1, '#3b82f6'); // Blue (Cold)
             grad.addColorStop(0.3, '#06b6d4'); // Cyan
@@ -468,17 +467,16 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     }
 
     // 3. Indicator
-    // Only draw needle if we have a valid number
     if (current !== null && current !== undefined) {
         const currentAngle = getAngle(current);
         const px = cx + radius * Math.cos(currentAngle);
         const py = cy + radius * Math.sin(currentAngle);
 
         ctx.beginPath();
-        ctx.arc(px, py, 12, 0, Math.PI * 2);
+        ctx.arc(px, py, 12 * s, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
         ctx.fill();
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 4 * s;
         ctx.strokeStyle = (title === 'Temperature') ? '#f59e0b' : color;
         ctx.stroke();
     }
@@ -486,39 +484,35 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     // 4. Text
     ctx.textAlign = 'center';
 
-    // Default fallbacks if arguments are missing (e.g. initial render before update)
     const tPrimary = textPrimary || '#1e293b';
     const tSecondary = textSecondary || '#64748b';
 
     // Value
-    ctx.font = 'bold 56px Inter, sans-serif';
+    ctx.font = `bold ${56 * s}px Inter, sans-serif`;
     ctx.fillStyle = color;
-    // Check if it's temperature for specific contrast needs, but we don't have title here if passed null
     const valStr = (current !== null && current !== undefined) ? (+current).toFixed(1) : '--';
-    ctx.fillText(valStr, cx, cy - radius * 0.3 + 10);
+    ctx.fillText(valStr, cx, cy - radius * 0.3 + (10 * s));
 
     // Unit
-    ctx.font = '500 22px Inter, sans-serif';
+    ctx.font = `500 ${22 * s}px Inter, sans-serif`;
     ctx.fillStyle = tSecondary;
-    ctx.fillText(unit, cx, cy - radius * 0.3 + 40);
+    ctx.fillText(unit, cx, cy - radius * 0.3 + (40 * s));
 
     // L/H Labels (Split for stability)
-    ctx.font = '500 18px Inter, sans-serif';
+    ctx.font = `500 ${18 * s}px Inter, sans-serif`;
     ctx.fillStyle = tSecondary;
 
     // Low
-    // Label fixed, Value grows right
     ctx.textAlign = 'right';
-    ctx.fillText('L: ', cx - 60, cy + 30);
+    ctx.fillText('L: ', cx - (60 * s), cy + (30 * s));
     ctx.textAlign = 'left';
-    ctx.fillText((+rangeMin).toFixed(1), cx - 60, cy + 30);
+    ctx.fillText((+rangeMin).toFixed(1), cx - (60 * s), cy + (30 * s));
 
     // High
-    // Label fixed, Value grows right
     ctx.textAlign = 'right';
-    ctx.fillText('H: ', cx + 50, cy + 30);
+    ctx.fillText('H: ', cx + (50 * s), cy + (30 * s));
     ctx.textAlign = 'left';
-    ctx.fillText((+rangeMax).toFixed(1), cx + 50, cy + 30);
+    ctx.fillText((+rangeMax).toFixed(1), cx + (50 * s), cy + (30 * s));
 }
 
 // Internal Helpers
@@ -530,7 +524,7 @@ function createGraphContainer(id, title, parentId, fullWidth = false) {
     if (fullWidth) div.style.gridColumn = "span 2";
     div.innerHTML = `
         <h3 class="card-label" style="margin-bottom:1rem">${title}</h3>
-        <div style="position: relative; height: 320px; width: 100%">
+        <div class="chart-responsive-wrapper" style="position: relative; width: 100%; min-height: 250px;">
             <canvas id="${id}"></canvas>
         </div>
     `;
@@ -661,6 +655,10 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     const cx = w / 2;
     // Shifted down to align values with other cards
     const cy = h * 0.65;
+
+    // Relative Sizing Factors (Base: 280px width)
+    const s = w / 280;
+
     // Slightly smaller radius to ensure labels inside don't cramp, also safer bounds
     const radius = Math.min(w, h) * 0.40;
 
@@ -675,7 +673,7 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     // 1. Tick Marks (Compass Rose)
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * s;
     // Denser ticks: every 2 degrees
     for (let i = 0; i < 360; i += 2) {
         ctx.save();
@@ -685,28 +683,28 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
         if (i % 90 === 0) {
             // Cardinal (N/E/S/W)
             ctx.strokeStyle = colTickC;
-            ctx.lineWidth = 2.5;
-            ctx.moveTo(0, -radius + 4);
-            ctx.lineTo(0, -radius - 10); // Longer cardinal ticks
+            ctx.lineWidth = 2.5 * s;
+            ctx.moveTo(0, -radius + (4 * s));
+            ctx.lineTo(0, -radius - (10 * s)); // Longer cardinal ticks
         } else if (i % 30 === 0) {
             // Major
             ctx.strokeStyle = colTickM;
-            ctx.lineWidth = 2;
-            ctx.moveTo(0, -radius + 2);
-            ctx.lineTo(0, -radius - 8);
+            ctx.lineWidth = 2 * s;
+            ctx.moveTo(0, -radius + (2 * s));
+            ctx.lineTo(0, -radius - (8 * s));
         } else if (i % 10 === 0) {
             // Minor
             ctx.strokeStyle = colTickm;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.5 * s;
             ctx.moveTo(0, -radius);
-            ctx.lineTo(0, -radius - 5);
+            ctx.lineTo(0, -radius - (5 * s));
         } else {
             // Micro (every 2 degrees)
             ctx.strokeStyle = colTickm;
             ctx.globalAlpha = 0.3; // Very subtle
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 1 * s;
             ctx.moveTo(0, -radius);
-            ctx.lineTo(0, -radius - 3);
+            ctx.lineTo(0, -radius - (3 * s));
         }
         ctx.stroke();
         ctx.restore();
@@ -714,13 +712,13 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.restore();
 
     // N/E/S/W Labels (Inside to prevent clipping)
-    ctx.font = 'bold 18px Inter, sans-serif';
+    ctx.font = `bold ${18 * s}px Inter, sans-serif`;
     ctx.fillStyle = textSecondary || '#64748b';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Position labels just inside the ticks (radius is ~64, so -16 puts it ~48 from center)
-    const labelDist = radius - 16;
+    // Position labels just inside the ticks
+    const labelDist = radius - (16 * s);
 
     ctx.fillText('N', cx, cy - labelDist);
     ctx.fillText('S', cx, cy + labelDist);
@@ -739,9 +737,9 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
         const markerDist = radius;
 
         ctx.beginPath();
-        ctx.moveTo(markerDist - 2, 0);
-        ctx.lineTo(markerDist + 10, 6);
-        ctx.lineTo(markerDist + 10, -6);
+        ctx.moveTo(markerDist - (2 * s), 0);
+        ctx.lineTo(markerDist + (10 * s), 6 * s);
+        ctx.lineTo(markerDist + (10 * s), -6 * s);
         ctx.closePath();
 
         ctx.fillStyle = colArrow;
@@ -754,21 +752,21 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.textBaseline = 'middle';
 
     // Speed Value (Move up slightly to make room for Gust below)
-    ctx.font = 'bold 56px Inter, sans-serif';
+    ctx.font = `bold ${56 * s}px Inter, sans-serif`;
     ctx.fillStyle = textPrimary || '#1e293b';
     ctx.textAlign = 'center';
-    ctx.fillText((+speed).toFixed(1), cx, cy - 20);
+    ctx.fillText((+speed).toFixed(1), cx, cy - (20 * s));
 
     // Unit
-    ctx.font = '500 19px Inter, sans-serif'; // Originally 12px
+    ctx.font = `500 ${19 * s}px Inter, sans-serif`; // Originally 12px -> 19px
     ctx.fillStyle = textSecondary || '#64748b';
-    ctx.fillText(unit, cx, cy + 20);
+    ctx.fillText(unit, cx, cy + (20 * s));
 
     // 4. Gust
     if (gust !== null && gust !== undefined) {
-        ctx.font = '500 17px Inter, sans-serif';
+        ctx.font = `500 ${17 * s}px Inter, sans-serif`;
         ctx.fillStyle = color; // Accent color
-        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + 45);
+        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + (45 * s));
     }
 }
 
@@ -778,6 +776,10 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     const h = canvas.height;
     const cx = w / 2;
     const cy = h * 0.65; // Shifted down to align with wind
+
+    // Relative Sizing Factors (Base: 280px width)
+    const s = w / 280;
+
     const radius = Math.min(w, h) * 0.42;
 
     ctx.clearRect(0, 0, w, h);
@@ -798,101 +800,62 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     const numTicks = 30;
     const step = (max - min) / numTicks;
 
-    ctx.save();
-    ctx.translate(cx, cy);
-
     for (let i = 0; i <= numTicks; i++) {
-        const val = min + (i * step);
-        const ang = getAngle(val);
+        const val = min + step * i;
+        const angle = getAngle(val);
 
-        ctx.save();
-        ctx.rotate(ang);
+        const isMajor = (i % 5 === 0);
+        const tickLen = isMajor ? (12 * s) : (8 * s);
+        const tickWidth = isMajor ? (2.5 * s) : (1.5 * s);
 
-        // Tick style
-        const isMajor = i % 5 === 0;
+        const x1 = cx + radius * Math.cos(angle);
+        const y1 = cy + radius * Math.sin(angle);
+        const x2 = cx + (radius - tickLen) * Math.cos(angle);
+        const y2 = cy + (radius - tickLen) * Math.sin(angle);
 
         ctx.beginPath();
-        if (isMajor) {
-            ctx.strokeStyle = textSecondary; // Darker
-            ctx.lineWidth = 2;
-            ctx.moveTo(radius, 0);
-            ctx.lineTo(radius - 12, 0); // Long tick
-        } else {
-            ctx.strokeStyle = hexToRgbA(textSecondary, 0.7); // Much more visible
-            ctx.lineWidth = 1;
-            ctx.moveTo(radius, 0);
-            ctx.lineTo(radius - 6, 0); // Short tick
-        }
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineWidth = tickWidth;
+        ctx.strokeStyle = isMajor ? color : '#e2e8f0';
         ctx.stroke();
-
-        // Labels for Major Ticks
-        if (isMajor) {
-            ctx.translate(radius - 22, 0);
-            ctx.rotate(-ang); // Undo rotate for text
-            ctx.font = 'bold 16px Inter, sans-serif';
-            ctx.fillStyle = textSecondary;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            // Draw label
-            let labelText = val.toFixed(0);
-            if (max - min < 10) labelText = val.toFixed(1);
-            if (max - min < 2) labelText = val.toFixed(2);
-
-            ctx.fillText(labelText, 0, 0);
-        }
-
-        ctx.restore();
     }
-    ctx.restore();
 
-    // 2. Active Arc / Background
+    // 2. Active Arc (Progress)
+    const currentAngle = getAngle(current !== null ? current : min);
     ctx.beginPath();
-    ctx.arc(cx, cy, radius - 25, 0, Math.PI * 2);
-    ctx.fillStyle = hexToRgbA(color, 0.05); // Very subtle fill
-    ctx.fill();
+    ctx.arc(cx, cy, radius - (15 * s), startAngle, currentAngle);
+    ctx.lineWidth = 6 * s;
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.stroke();
 
-    // 3. Current Needle
-    if (current !== null && current !== undefined) {
-        const currentAngle = getAngle(current);
-
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(currentAngle);
-
-        // Needle Line
-        ctx.beginPath();
-        ctx.moveTo(-10, 0); // Rear extension
-        ctx.lineTo(radius - 5, 0); // Tip
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#ef4444'; // Red needle
-        ctx.lineCap = 'round';
-        ctx.stroke();
-
-        // Center Pivot
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#ef4444';
-        ctx.fill();
-
-        ctx.restore();
-    }
-
-    // 4. Labels
+    // 3. Value Text
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Title REMOVED (Handled by HTML)
+    ctx.font = `bold ${48 * s}px Inter, sans-serif`;
+    ctx.fillStyle = textPrimary || '#1e293b';
+    const valStr = (current !== null && current !== undefined) ? (+current).toFixed(1) : '--';
+    ctx.fillText(valStr, cx, cy);
 
-    // Value (Large, Bottom)
-    ctx.font = 'bold 56px Inter, sans-serif';
-    ctx.fillStyle = textPrimary;
-    const valStr = (current !== null) ? (+current).toFixed(2) : '--';
-    ctx.fillText(valStr, cx, cy + radius + 40);
+    // 4. Unit
+    ctx.font = `500 ${18 * s}px Inter, sans-serif`;
+    ctx.fillStyle = textSecondary || '#64748b';
+    ctx.fillText(unit, cx, cy + (35 * s));
 
-    // Unit (Next to value)
-    ctx.font = '500 24px Inter, sans-serif';
-    ctx.fillStyle = textSecondary;
-    const valWidth = ctx.measureText(valStr).width;
-    ctx.fillText(unit, cx + valWidth / 2 + 25, cy + radius + 45);
+    // 5. Min/Max Labels
+    ctx.font = `500 ${14 * s}px Inter, sans-serif`;
+    ctx.fillStyle = textSecondary || '#64748b';
+
+    // Position nicely around the bottom opening
+    const rLabel = radius + (20 * s);
+    const minX = cx + rLabel * Math.cos(startAngle);
+    const minY = cy + rLabel * Math.sin(startAngle);
+    const maxX = cx + rLabel * Math.cos(endAngle);
+    const maxY = cy + rLabel * Math.sin(endAngle);
+
+    ctx.textAlign = 'center';
+    ctx.fillText((+min).toFixed(0), minX, minY);
+    ctx.fillText((+max).toFixed(0), maxX, maxY);
 }
