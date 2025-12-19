@@ -25,7 +25,7 @@ description: Auto-infer version bump (Minor/Patch), update changelog, and push r
     *   **Summarize**: Create a concise, categorized release note from the git log (e.g., "## Features", "## Fixes").
     *   **Tag**:
         ```bash
-        git tag -a v<new_version> -m "<summarized_release_notes>"
+        git tag -s v<new_version> -m "<summarized_release_notes>"
         ```
     *   **Push**:
         ```bash
