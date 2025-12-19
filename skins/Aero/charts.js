@@ -491,37 +491,34 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     const tSecondary = textSecondary || '#64748b';
 
     // Value
-    ctx.font = 'bold 36px Inter, sans-serif';
+    ctx.font = 'bold 56px Inter, sans-serif';
     ctx.fillStyle = color;
     // Check if it's temperature for specific contrast needs, but we don't have title here if passed null
-    // Actually ui.js passes null for title now.
-    // If color is not provided we fallback.
-
     const valStr = (current !== null && current !== undefined) ? (+current).toFixed(1) : '--';
-    ctx.fillText(valStr, cx, cy - radius * 0.3);
+    ctx.fillText(valStr, cx, cy - radius * 0.3 + 10);
 
     // Unit
-    ctx.font = '500 14px Inter, sans-serif';
+    ctx.font = '500 22px Inter, sans-serif';
     ctx.fillStyle = tSecondary;
-    ctx.fillText(unit, cx, cy - radius * 0.3 + 20);
+    ctx.fillText(unit, cx, cy - radius * 0.3 + 40);
 
     // L/H Labels (Split for stability)
-    ctx.font = '500 12px Inter, sans-serif';
+    ctx.font = '500 18px Inter, sans-serif';
     ctx.fillStyle = tSecondary;
 
     // Low
     // Label fixed, Value grows right
     ctx.textAlign = 'right';
-    ctx.fillText('L: ', cx - 45, cy + 20);
+    ctx.fillText('L: ', cx - 60, cy + 30);
     ctx.textAlign = 'left';
-    ctx.fillText((+rangeMin).toFixed(1), cx - 45, cy + 20);
+    ctx.fillText((+rangeMin).toFixed(1), cx - 60, cy + 30);
 
     // High
     // Label fixed, Value grows right
     ctx.textAlign = 'right';
-    ctx.fillText('H: ', cx + 35, cy + 20);
+    ctx.fillText('H: ', cx + 50, cy + 30);
     ctx.textAlign = 'left';
-    ctx.fillText((+rangeMax).toFixed(1), cx + 35, cy + 20);
+    ctx.fillText((+rangeMax).toFixed(1), cx + 50, cy + 30);
 }
 
 // Internal Helpers
@@ -662,8 +659,8 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
-    // Keep cy at 0.55 to roughly align center with Gauge (though gauge CoG is higher)
-    const cy = h * 0.55;
+    // Shifted down to align values with other cards
+    const cy = h * 0.65;
     // Slightly smaller radius to ensure labels inside don't cramp, also safer bounds
     const radius = Math.min(w, h) * 0.40;
 
@@ -717,7 +714,7 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.restore();
 
     // N/E/S/W Labels (Inside to prevent clipping)
-    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.font = 'bold 18px Inter, sans-serif';
     ctx.fillStyle = textSecondary || '#64748b';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -757,20 +754,21 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.textBaseline = 'middle';
 
     // Speed Value (Move up slightly to make room for Gust below)
-    ctx.font = 'bold 36px Inter, sans-serif';
+    ctx.font = 'bold 56px Inter, sans-serif';
     ctx.fillStyle = textPrimary || '#1e293b';
-    ctx.fillText((+speed).toFixed(1), cx, cy - 5);
+    ctx.textAlign = 'center';
+    ctx.fillText((+speed).toFixed(1), cx, cy - 20);
 
     // Unit
-    ctx.font = '500 12px Inter, sans-serif';
+    ctx.font = '500 19px Inter, sans-serif'; // Originally 12px
     ctx.fillStyle = textSecondary || '#64748b';
-    ctx.fillText(unit, cx, cy + 18);
+    ctx.fillText(unit, cx, cy + 20);
 
     // 4. Gust
     if (gust !== null && gust !== undefined) {
-        ctx.font = '500 11px Inter, sans-serif';
+        ctx.font = '500 17px Inter, sans-serif';
         ctx.fillStyle = color; // Accent color
-        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + 32);
+        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + 45);
     }
 }
 
@@ -779,7 +777,7 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
-    const cy = h * 0.55; // Lower slightly
+    const cy = h * 0.65; // Shifted down to align with wind
     const radius = Math.min(w, h) * 0.42;
 
     ctx.clearRect(0, 0, w, h);
@@ -831,7 +829,7 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
         if (isMajor) {
             ctx.translate(radius - 22, 0);
             ctx.rotate(-ang); // Undo rotate for text
-            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.font = 'bold 16px Inter, sans-serif';
             ctx.fillStyle = textSecondary;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -887,14 +885,14 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     // Title REMOVED (Handled by HTML)
 
     // Value (Large, Bottom)
-    ctx.font = 'bold 36px Inter, sans-serif';
+    ctx.font = 'bold 56px Inter, sans-serif';
     ctx.fillStyle = textPrimary;
     const valStr = (current !== null) ? (+current).toFixed(2) : '--';
-    ctx.fillText(valStr, cx, cy + radius + 25);
+    ctx.fillText(valStr, cx, cy + radius + 40);
 
     // Unit (Next to value)
-    ctx.font = '500 14px Inter, sans-serif';
+    ctx.font = '500 24px Inter, sans-serif';
     ctx.fillStyle = textSecondary;
     const valWidth = ctx.measureText(valStr).width;
-    ctx.fillText(unit, cx + valWidth / 2 + 15, cy + radius + 28);
+    ctx.fillText(unit, cx + valWidth / 2 + 25, cy + radius + 45);
 }

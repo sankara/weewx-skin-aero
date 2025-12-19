@@ -72,23 +72,24 @@ html.dark {
 }
 
 html.theme-aero {
-    --glass-blur: blur(20px);
+    --glass-blur: saturate(180%) blur(30px);
     --card-radius: 28px;
     --section-radius: 24px;
     /* Squircles for cards */
     --ease-spring: cubic-bezier(0.4, 0.0, 0.2, 1);
-    --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Increased shadow for better depth in Light Mode */
+    --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
 
-    /* Aero Specific Enhancements (Ultra Transparent / Liquid) */
-    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
-    --card-border-color: rgba(255, 255, 255, 0.3);
+    /* Aero Specific Enhancements (More visible white for contrast) */
+    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.35);
     --text-shadow-heading: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 html.theme-aero.dark {
     /* Dark Mode Aero (Ultra Transparent) */
-    --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.1) 100%);
-    --card-border-color: rgba(255, 255, 255, 0.1);
+    --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.05) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Update Card to use new Aero variables */
@@ -207,12 +208,12 @@ body {
 .nav-tabs {
     display: flex;
     gap: 0.5rem;
-    background: var(--card-bg);
+    background: var(--card-gradient, var(--card-bg));
     backdrop-filter: var(--glass-blur);
     padding: 0.5rem;
     border-radius: 9999px;
-    border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--card-border-color, var(--card-border));
+    box-shadow: var(--shadow-card, var(--shadow-md));
 }
 
 .nav-btn {
@@ -254,6 +255,13 @@ html.dark .nav-btn:hover {
     color: var(--text-primary);
 }
 
+html.dark .nav-btn.active {
+    background-color: var(--accent-color);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
+    /* Glow */
+}
+
 .nav-extra {
     display: none;
     /* Hidden on desktop, mobile only */
@@ -279,12 +287,12 @@ html.dark .nav-btn:hover {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--card-bg);
+    background: var(--card-gradient, var(--card-bg));
     backdrop-filter: var(--glass-blur);
     padding: 0.5rem 1rem;
     border-radius: 12px;
-    border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--card-border-color, var(--card-border));
+    box-shadow: var(--shadow-card, var(--shadow-md));
 }
 
 .date-btn {
@@ -335,8 +343,9 @@ html.dark .nav-btn:hover {
 }
 
 .card:hover {
-    transform: translateY(-2px);
     box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    /* Removed transform to prevent backdrop-filter artifacts */
 }
 
 .card-header {
@@ -493,18 +502,22 @@ input:checked+.slider:before {
 
 /* HISTORY SECTION STYLES */
 .section-history {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--card-bg);
+    /* Use base card bg, not gradient, for cleaner look */
+    backdrop-filter: var(--glass-blur);
     padding: 1.5rem;
     border-radius: var(--section-radius);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--card-border-color, rgba(255, 255, 255, 0.3));
 }
+
 
 .history-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    /* Prevent wrapping on desktop */
     gap: 1rem;
 }
 
@@ -516,12 +529,12 @@ input:checked+.slider:before {
 }
 
 .summary-card {
-    background: var(--card-bg);
+    background: var(--card-gradient, var(--card-bg));
     backdrop-filter: var(--glass-blur);
     padding: 1rem;
     border-radius: 12px;
-    border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--card-border-color, var(--card-border));
+    box-shadow: var(--shadow-card, var(--shadow-md));
     text-align: center;
 }
 
@@ -615,4 +628,80 @@ input:checked+.slider:before {
         padding-top: 0.5rem;
         border-top: 1px solid var(--card-border);
     }
+}
+
+/* REFACTORED UTILITIES */
+.card-header-centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 24px;
+}
+
+.card-icon-sm {
+    width: 16px;
+    height: 16px;
+}
+
+.dial-canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}
+
+.rain-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    width: 100%;
+    margin-top: 1.5rem;
+    /* Alignment Fix */
+}
+
+.value-display-lg {
+    font-size: 3rem;
+    line-height: 1;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.unit-display-md {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.card-content-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    width: 100%;
+    margin-top: 0.75rem;
+}
+
+.value-display-md {
+    text-align: center;
+    font-size: 3rem;
+    /* Scaled up from 1.5rem to match lg/dials */
+    font-weight: 700;
+    line-height: 1;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-variant-numeric: tabular-nums;
+}
+
+.unit-inline-sm {
+    font-size: 0.9rem;
+    margin-left: 0.25rem;
 }

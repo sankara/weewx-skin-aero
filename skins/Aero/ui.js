@@ -109,6 +109,8 @@ function renderCurrentObservations() {
     if (uvItem && uvItem.current !== null && uvItem.current !== undefined) {
         createDialCard(container, uvItem, 'UV Index', cUV, 0, 15, cTextPrimary, cTextSecondary);
     }
+
+    if (window.lucide) window.lucide.createIcons();
 }
 
 function createGaugeCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
@@ -118,11 +120,11 @@ function createGaugeCard(container, item, title, color, absMin, absMax, textPrim
     div.className = 'card';
 
     div.innerHTML = `
-        <div class="card-header" style="width:100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
+        <div class="card-header card-header-centered">
             <span class="card-label">${title}</span>
-            <i data-lucide="gauge" style="width:16px; height:16px; color:${color}"></i>
+            <i data-lucide="gauge" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <canvas width="180" height="160" style="display: block; margin: 0 auto; max-width: 100%; height: auto;"></canvas>
+        <canvas width="280" height="260" class="dial-canvas"></canvas>
     `;
     container.appendChild(div);
 
@@ -143,11 +145,11 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
     if (title.toLowerCase().includes('uv')) icon = 'sun';
 
     div.innerHTML = `
-        <div class="card-header" style="width:100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
+        <div class="card-header card-header-centered">
             <span class="card-label">${item.label || title}</span>
-            <i data-lucide="${icon}" style="width:16px; height:16px; color:${color}"></i>
+            <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <canvas width="180" height="160" style="display: block; margin: 0 auto; max-width: 100%; height: auto;"></canvas>
+        <canvas width="280" height="260" class="dial-canvas"></canvas>
     `;
     container.appendChild(div);
 
@@ -165,11 +167,11 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
     div.className = 'card';
 
     div.innerHTML = `
-        <div class="card-header" style="width:100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
+        <div class="card-header card-header-centered">
             <span class="card-label">Wind</span>
-            <i data-lucide="wind" style="width:16px; height:16px; color:${color}"></i>
+            <i data-lucide="wind" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <canvas width="180" height="160" style="display: block; margin: 0 auto; max-width: 100%; height: auto;"></canvas>
+        <canvas width="280" height="260" class="dial-canvas"></canvas>
     `;
     container.appendChild(div);
 
@@ -197,16 +199,18 @@ function createSimpleCard(container, item, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.justifyContent = 'center'; // Added this line
+    // Removed justifyContent center to fix alignment with other cards
 
     div.innerHTML = `
-        <div class="card-header" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; width: 100%; min-height: 24px;">
+        <div class="card-header card-header-centered">
             <span class="card-label">${label}</span>
-            <i data-lucide="${icon}" style="width:16px; height:16px; color:${color}"></i>
+            <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; width: 100%; margin-top: 0.75rem;">
-            <div class="card-value" style="font-size: 3rem; line-height: 1; font-weight: 700; background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-variant-numeric: tabular-nums;">${val}</div>
-            <div class="card-unit" style="font-size: 1.125rem; font-weight: 500; color: var(--text-secondary);">${item.unit}</div>
+        <div class="rain-content">
+            <div class="card-value value-display-lg" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
+                ${val}
+            </div>
+            <div class="card-unit unit-display-md">${item.unit}</div>
         </div>
     `;
     container.appendChild(div);
@@ -305,16 +309,16 @@ function createSummaryCard(container, label, value, unit, color) {
     if (lowLabel.includes('uv')) icon = 'sun';
 
     div.innerHTML = `
-        <div class="card-header" style="width: 100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
+        <div class="card-header card-header-centered">
              <span class="card-label" style="color:${color}">${label}</span>
-             <i data-lucide="${icon}" style="width:16px; height:16px; color:${color}"></i>
+             <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; width: 100%; margin-top: 0.75rem;">
-            <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text; text-align: center; font-size: 1.5rem;">
-                ${(+value).toFixed(1)}<span class="card-unit" style="font-size: 0.9rem; margin-left: 0.25rem;">${unit}</span>
+        <div class="card-content-centered">
+            <div class="card-value value-display-md" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
+                ${(+value).toFixed(1)}<span class="card-unit unit-inline-sm">${unit}</span>
             </div>
         </div>
     `;
-    div.style.justifyContent = 'center';
+    // div.style.justifyContent = 'center'; // Removed
     container.appendChild(div);
 }
