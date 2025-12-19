@@ -4,53 +4,39 @@ import re
 
 def main():
     parser = argparse.ArgumentParser(description="Bump Aero Skin Version")
-    parser.add_argument("version", help="New version string (e.g. 2.1.3)")
+    parser.add_argument("version", help="New version string (e.g. 1.0.2)")
     args = parser.parse_args()
 
     repo_root = os.getcwd()
-    if os.path.basename(repo_root) == "dev":
+    # Handle running from src/aero_dev or root
+    if os.path.basename(repo_root) == "aero_dev":
+        repo_root = os.path.dirname(os.path.dirname(repo_root))
+    elif os.path.basename(repo_root) == "src":
         repo_root = os.path.dirname(repo_root)
 
-    skin_dir = os.path.join(repo_root, "skins/Aero")
-
-    files_to_update = [
-        os.path.join(skin_dir, "VERSION"),
-        os.path.join(skin_dir, "skin.conf"),
-        os.path.join(repo_root, "install.py")
-    ]
+    toml_path = os.path.join(repo_root, "pyproject.toml")
+    if not os.path.exists(toml_path):
+        print(f"Error: pyproject.toml not found at {toml_path}")
+        return
 
     version = args.version
-    print(f"Updating version to {version}...")
+    if version.startswith('v'):
+        version = version[1:]
 
-    # 1. Update VERSION file
-    with open(os.path.join(skin_dir, "VERSION"), "w") as f:
-        f.write(version)
+    print(f"Updating version to {version} in pyproject.toml...")
 
-    # 2. Update skin.conf
-    # Look for `version = ...` under [Skin]
-    skin_conf = os.path.join(skin_dir, "skin.conf")
-    with open(skin_conf, "r") as f:
+    with open(toml_path, "r") as f:
         content = f.read()
 
-    new_content = re.sub(r'(version\s*=\s*)([\d\.]+)', fr'\g<1>{version}', content)
+    # Regex to find version = "..." in [project] section
+    # Simplified assumption: version = "..." is near the top
+    # We want to match `version = "1.0.0"`
+    new_content = re.sub(r'(version\s*=\s*")([\d\.]+)"', fr'\g<1>{version}"', content, count=1)
 
-    with open(skin_conf, "w") as f:
+    with open(toml_path, "w") as f:
         f.write(new_content)
 
-    # 3. Update install.py
-    # Look for `version="..."`
-    install_py = os.path.join(repo_root, "install.py")
-    if os.path.exists(install_py):
-        with open(install_py, "r") as f:
-            content = f.read()
-
-        new_content = re.sub(r'(version\s*=\s*")([\d\.]+)"', fr'\g<1>{version}"', content)
-        new_content = re.sub(r"(version\s*=\s*')([\d\.]+)'", fr"\g<1>{version}'", new_content)
-
-        with open(install_py, "w") as f:
-            f.write(new_content)
-
-    print("Version updated.")
+    print("pyproject.toml updated.")
 
 if __name__ == "__main__":
     main()

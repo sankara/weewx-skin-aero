@@ -4,6 +4,7 @@ import zipfile
 import shutil
 
 import hashlib
+import re
 import aero_dev.bundler as bundler
 
 def update_install_py(install_py_path, file_list):
@@ -115,17 +116,35 @@ def main():
 
 
 
-    # Determine version
+    # Determine version from pyproject.toml
     if args.version:
         version = args.version
     else:
-        version_file = os.path.join(target_skin_dir, "VERSION")
-        if os.path.exists(version_file):
-            with open(version_file, "r") as f:
-                version = f.read().strip()
-        else:
-            version = "0.0.0"
+        toml_path = os.path.join(repo_root, "pyproject.toml")
+        version = "0.0.0"
+        if os.path.exists(toml_path):
+            with open(toml_path, "r") as f:
+                for line in f:
+                    if line.strip().startswith("version"):
+                        # version = "1.0.0"
+                        parts = line.split("=")
+                        if len(parts) == 2:
+                            version = parts[1].strip().strip('"').strip("'")
+                        break
+    
+    print(f"Packaging version: {version}")
 
+    # Inject version into skin.conf in the target directory
+    # skin.conf has `version = ...`
+    skin_conf_path = os.path.join(target_skin_dir, "skin.conf")
+    if os.path.exists(skin_conf_path):
+        with open(skin_conf_path, 'r') as f:
+            conf = f.read()
+        # Replace version = ... with version = version
+        conf = re.sub(r'(version\s*=\s*)(.*)', fr'\g<1>{version}', conf)
+        with open(skin_conf_path, 'w') as f:
+            f.write(conf)
+    
     # Bundle Assets (CSS/JS)
     # This runs npm build, updates index.html and skin.conf in the target directory
     bundler.run_bundler(target_skin_dir)
