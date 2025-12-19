@@ -342,15 +342,25 @@ function setupNav() {
 }
 
 function setupUnits() {
-    if (!els.unitToggle) return;
-    els.unitToggle.addEventListener('change', (e) => {
-        state.units = e.target.checked ? 'imperial' : 'metric';
+    const btn = document.getElementById('unit-toggle');
+    if (!btn) return;
+
+    const updateLabel = () => {
+        // Show what we will switch TO
+        const label = state.units === 'metric' ? '°F' : '°C';
+        btn.innerHTML = `<span class="unit-text" style="font-weight: 700; font-size: 0.9rem;">${label}</span>`;
+    };
+
+    // Initial state
+    updateLabel();
+
+    btn.addEventListener('click', () => {
+        state.units = state.units === 'metric' ? 'imperial' : 'metric';
+        updateLabel();
         renderHeader();
         renderHistorySummary();
         renderGraphs();
     });
-    // Set initial state
-    els.unitToggle.checked = (state.units === 'imperial');
 }
 
 function setupDateControls() {
@@ -383,9 +393,7 @@ function setupTheme() {
     if (!btn) return;
 
     const updateIcon = (isDark) => {
-        // Icon should represent what you will switch TO, or the current state?
-        // Usually: if dark, show Sun (to switch to light). If light, show Moon.
-        // Or show current state. Let's do: Show Sun if currently Dark (so click -> light).
+        // Icon: Sun if Dark (switch to light), Moon if Light (switch to dark)
         const iconName = isDark ? 'sun' : 'moon';
         btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
         lucide.createIcons();
@@ -415,6 +423,42 @@ function setupTheme() {
     });
 }
 
+function setupDesign() {
+    const btn = document.getElementById('design-toggle');
+    if (!btn) return;
+
+    const updateIcon = (isAero) => {
+        // Icon: Sparkles (if Aero active, or to switch to Aero?), Layout (if Simple active)
+        // Let's use logic: Show current state icon? Or switch to?
+        // Theme uses "Switch To". 
+        // Simple Top -> Layout. Aero Top -> Sparkles.
+        // If Simple: Show Sparkles (Switch to Aero).
+        // If Aero: Show Layout (Switch to Simple).
+        const iconName = isAero ? 'layout-template' : 'sparkles';
+        btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        if (window.lucide) window.lucide.createIcons();
+    };
+
+    // Load preference
+    const saved = localStorage.getItem('design');
+    if (saved === 'aero') {
+        document.documentElement.classList.add('theme-aero');
+        state.design = 'aero';
+    } else {
+        state.design = 'simple';
+    }
+    updateIcon(state.design === 'aero');
+
+    btn.addEventListener('click', () => {
+        const isAero = document.documentElement.classList.toggle('theme-aero');
+        state.design = isAero ? 'aero' : 'simple';
+        localStorage.setItem('design', state.design);
+        updateIcon(isAero);
+    });
+}
+
 // Start
+// Start
+setupDesign();
 setupTheme(); // Initialize theme immediately, independent of data loading
 init();

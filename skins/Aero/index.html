@@ -37,17 +37,20 @@
                     <span id="last-updated" class="subtitle">Updating...</span>
                 </div>
                 <div class="header-controls">
-                    <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme">
+                    <!-- Design Toggle (Simple <-> Aero) -->
+                    <button id="design-toggle" class="btn-icon" aria-label="Toggle Design Style" title="Toggle Design Style">
+                        <i data-lucide="layout-template"></i>
+                    </button>
+
+                    <!-- Theme Toggle (Light <-> Dark) -->
+                    <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
                         <i data-lucide="moon"></i>
                     </button>
-                    <div class="unit-toggle-container">
-                        <span class="unit-label">Metric</span>
-                        <label class="switch">
-                            <input type="checkbox" id="unit-toggle">
-                            <span class="slider round"></span>
-                        </label>
-                        <span class="unit-label">Imperial</span>
-                    </div>
+
+                    <!-- Unit Toggle (Metric <-> Imperial) -->
+                    <button id="unit-toggle" class="btn-icon" aria-label="Toggle Units" title="Toggle Units">
+                        <span class="unit-text" style="font-weight: 700; font-size: 0.9rem;">°C</span>
+                    </button>
                 </div>
             </header>
 

@@ -449,13 +449,16 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
         let strokeStyle = color + '66';
 
         if (title === 'Temperature') {
-            const grad = ctx.createLinearGradient(0, h, w, h);
-            grad.addColorStop(0, '#1e3a8a');
-            grad.addColorStop(0.2, '#3b82f6');
-            grad.addColorStop(0.4, '#06b6d4');
-            grad.addColorStop(0.6, '#10b981');
-            grad.addColorStop(0.8, '#f97316');
-            grad.addColorStop(1, '#ef4444');
+            // Gradient based on typical temperature range colors
+            // 0% (Left/Start) -> 100% (Right/End) of the *Canvas Width*? 
+            // The arc goes from bottom-left to bottom-right.
+            // Horizontal gradient works best.
+            const grad = ctx.createLinearGradient(0, 0, w, 0);
+            grad.addColorStop(0.1, '#3b82f6'); // Blue (Cold)
+            grad.addColorStop(0.3, '#06b6d4'); // Cyan
+            grad.addColorStop(0.5, '#10b981'); // Green (Comfort)
+            grad.addColorStop(0.7, '#f59e0b'); // Orange
+            grad.addColorStop(0.9, '#ef4444'); // Red (Hot)
             strokeStyle = grad;
         }
 
@@ -489,12 +492,10 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
 
     // Value
     ctx.font = 'bold 36px Inter, sans-serif';
-    // Use the passed textPrimary color if it's temperature (ensures high contrast in dark mode)
-    if (title === 'Temperature') {
-        ctx.fillStyle = tPrimary;
-    } else {
-        ctx.fillStyle = color;
-    }
+    ctx.fillStyle = color;
+    // Check if it's temperature for specific contrast needs, but we don't have title here if passed null
+    // Actually ui.js passes null for title now.
+    // If color is not provided we fallback.
 
     const valStr = (current !== null && current !== undefined) ? (+current).toFixed(1) : '--';
     ctx.fillText(valStr, cx, cy - radius * 0.3);
@@ -504,11 +505,23 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     ctx.fillStyle = tSecondary;
     ctx.fillText(unit, cx, cy - radius * 0.3 + 20);
 
-    // L/H
+    // L/H Labels (Split for stability)
     ctx.font = '500 12px Inter, sans-serif';
     ctx.fillStyle = tSecondary;
-    ctx.fillText(`L: ${(+rangeMin).toFixed(1)}`, cx - 50, cy + 20);
-    ctx.fillText(`H: ${(+rangeMax).toFixed(1)}`, cx + 50, cy + 20);
+
+    // Low
+    // Label fixed, Value grows right
+    ctx.textAlign = 'right';
+    ctx.fillText('L: ', cx - 45, cy + 20);
+    ctx.textAlign = 'left';
+    ctx.fillText((+rangeMin).toFixed(1), cx - 45, cy + 20);
+
+    // High
+    // Label fixed, Value grows right
+    ctx.textAlign = 'right';
+    ctx.fillText('H: ', cx + 35, cy + 20);
+    ctx.textAlign = 'left';
+    ctx.fillText((+rangeMax).toFixed(1), cx + 35, cy + 20);
 }
 
 // Internal Helpers
@@ -649,14 +662,12 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
-    // Center Y: usually card canvases are 200x150.
-    // Move up slightly to fit "Gust" text at bottom
-    const cy = h / 2 - 12;
-    // Reduce radius slightly
-    const radius = Math.min(w, h) * 0.32;
+    // Keep cy at 0.55 to roughly align center with Gauge (though gauge CoG is higher)
+    const cy = h * 0.55;
+    // Slightly smaller radius to ensure labels inside don't cramp, also safer bounds
+    const radius = Math.min(w, h) * 0.40;
 
     const t = theme || {};
-    // Fallback colors if theme not provided
     const colTickC = t.tickCardinal || '#94a3b8';
     const colTickM = t.tickMajor || '#cbd5e1';
     const colTickm = t.tickMinor || '#e2e8f0';
@@ -668,60 +679,59 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.save();
     ctx.translate(cx, cy);
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#e2e8f0'; // Light tick color
-
-    // "Second hands" - denser ticks. Let's do every 10 degrees.
-    for (let i = 0; i < 360; i += 10) {
+    // Denser ticks: every 2 degrees
+    for (let i = 0; i < 360; i += 2) {
         ctx.save();
         ctx.rotate((i * Math.PI) / 180);
 
         ctx.beginPath();
         if (i % 90 === 0) {
-            // Cardinal (N/E/S/W) - Longest, Darker
+            // Cardinal (N/E/S/W)
             ctx.strokeStyle = colTickC;
             ctx.lineWidth = 2.5;
             ctx.moveTo(0, -radius + 4);
-            ctx.lineTo(0, -radius - 4);
+            ctx.lineTo(0, -radius - 10); // Longer cardinal ticks
         } else if (i % 30 === 0) {
-            // Major (30, 60...) - Medium
+            // Major
             ctx.strokeStyle = colTickM;
             ctx.lineWidth = 2;
             ctx.moveTo(0, -radius + 2);
-            ctx.lineTo(0, -radius - 2);
-        } else {
-            // Minor (10, 20...) - Small, subtle
+            ctx.lineTo(0, -radius - 8);
+        } else if (i % 10 === 0) {
+            // Minor
             ctx.strokeStyle = colTickm;
             ctx.lineWidth = 1.5;
             ctx.moveTo(0, -radius);
-            ctx.lineTo(0, -radius - 2);
+            ctx.lineTo(0, -radius - 5);
+        } else {
+            // Micro (every 2 degrees)
+            ctx.strokeStyle = colTickm;
+            ctx.globalAlpha = 0.3; // Very subtle
+            ctx.lineWidth = 1;
+            ctx.moveTo(0, -radius);
+            ctx.lineTo(0, -radius - 3);
         }
         ctx.stroke();
         ctx.restore();
     }
     ctx.restore();
 
-    // N/E/S/W Labels
+    // N/E/S/W Labels (Inside to prevent clipping)
     ctx.font = 'bold 12px Inter, sans-serif';
     ctx.fillStyle = textSecondary || '#64748b';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // Positions relative to center
-    const labelDist = radius + 22;
 
-    // N (Top)
+    // Position labels just inside the ticks (radius is ~64, so -16 puts it ~48 from center)
+    const labelDist = radius - 16;
+
     ctx.fillText('N', cx, cy - labelDist);
-    // S (Bottom)
     ctx.fillText('S', cx, cy + labelDist);
-    // E (Right)
     ctx.fillText('E', cx + labelDist, cy);
-    // W (Left)
     ctx.fillText('W', cx - labelDist, cy);
 
     // 2. Direction Arrow
     if (direction !== null && direction !== undefined) {
-        // Standard: 0=N, 90=E.
-        // Canvas: 0=E, 90=S.
-        // Angle to rotate = direction - 90
         const angle = direction - 90;
         const rad = angle * (Math.PI / 180);
 
@@ -729,23 +739,16 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
         ctx.translate(cx, cy);
         ctx.rotate(rad);
 
-        // Draw Triangle Marker on the rim
         const markerDist = radius;
 
-        // Simple Triangle
         ctx.beginPath();
-        // Pointing IN (Tip on ring)
-        ctx.moveTo(markerDist - 2, 0);     // Tip slightly inside ring
-        ctx.lineTo(markerDist + 8, 5);     // Base outside
-        ctx.lineTo(markerDist + 8, -5);    // Base outside
+        ctx.moveTo(markerDist - 2, 0);
+        ctx.lineTo(markerDist + 10, 6);
+        ctx.lineTo(markerDist + 10, -6);
         ctx.closePath();
 
-        // Neutral Color (Gray)
         ctx.fillStyle = colArrow;
         ctx.fill();
-
-        // Removed ring accent as per "simple triangle" request
-
         ctx.restore();
     }
 
@@ -753,22 +756,145 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Speed Value
-    ctx.font = 'bold 24px Inter, sans-serif';
+    // Speed Value (Move up slightly to make room for Gust below)
+    ctx.font = 'bold 36px Inter, sans-serif';
     ctx.fillStyle = textPrimary || '#1e293b';
     ctx.fillText((+speed).toFixed(1), cx, cy - 5);
 
     // Unit
     ctx.font = '500 12px Inter, sans-serif';
     ctx.fillStyle = textSecondary || '#64748b';
-    ctx.fillText(unit, cx, cy + 15);
+    ctx.fillText(unit, cx, cy + 18);
 
-    // 4. Gust (Bottom overlay or just below unit?)
-    // Space is tight in center. Let's put Gust near the bottom of canvas or below unit.
+    // 4. Gust
     if (gust !== null && gust !== undefined) {
         ctx.font = '500 11px Inter, sans-serif';
-        ctx.fillStyle = color;
-        // render near bottom
-        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, h - 5);
+        ctx.fillStyle = color; // Accent color
+        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + 32);
     }
+}
+
+export function drawGauge(canvas, min, max, current, unit, color, title, textPrimary, textSecondary) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h * 0.55; // Lower slightly
+    const radius = Math.min(w, h) * 0.42;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Full Circle Gauge: 135deg to 405deg (270deg total sweep)
+    const startAngle = Math.PI * 0.75;
+    const endAngle = Math.PI * 2.25;
+
+    const angleRange = endAngle - startAngle;
+
+    const getAngle = (val) => {
+        const pct = (val - min) / (max - min);
+        const clamped = Math.max(0, Math.min(1, pct));
+        return startAngle + clamped * angleRange;
+    };
+
+    // 1. Ticks
+    const numTicks = 30;
+    const step = (max - min) / numTicks;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    for (let i = 0; i <= numTicks; i++) {
+        const val = min + (i * step);
+        const ang = getAngle(val);
+
+        ctx.save();
+        ctx.rotate(ang);
+
+        // Tick style
+        const isMajor = i % 5 === 0;
+
+        ctx.beginPath();
+        if (isMajor) {
+            ctx.strokeStyle = textSecondary; // Darker
+            ctx.lineWidth = 2;
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(radius - 12, 0); // Long tick
+        } else {
+            ctx.strokeStyle = hexToRgbA(textSecondary, 0.7); // Much more visible
+            ctx.lineWidth = 1;
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(radius - 6, 0); // Short tick
+        }
+        ctx.stroke();
+
+        // Labels for Major Ticks
+        if (isMajor) {
+            ctx.translate(radius - 22, 0);
+            ctx.rotate(-ang); // Undo rotate for text
+            ctx.font = 'bold 10px Inter, sans-serif';
+            ctx.fillStyle = textSecondary;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Draw label
+            let labelText = val.toFixed(0);
+            if (max - min < 10) labelText = val.toFixed(1);
+            if (max - min < 2) labelText = val.toFixed(2);
+
+            ctx.fillText(labelText, 0, 0);
+        }
+
+        ctx.restore();
+    }
+    ctx.restore();
+
+    // 2. Active Arc / Background
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - 25, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgbA(color, 0.05); // Very subtle fill
+    ctx.fill();
+
+    // 3. Current Needle
+    if (current !== null && current !== undefined) {
+        const currentAngle = getAngle(current);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(currentAngle);
+
+        // Needle Line
+        ctx.beginPath();
+        ctx.moveTo(-10, 0); // Rear extension
+        ctx.lineTo(radius - 5, 0); // Tip
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ef4444'; // Red needle
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Center Pivot
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // 4. Labels
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Title REMOVED (Handled by HTML)
+
+    // Value (Large, Bottom)
+    ctx.font = 'bold 36px Inter, sans-serif';
+    ctx.fillStyle = textPrimary;
+    const valStr = (current !== null) ? (+current).toFixed(2) : '--';
+    ctx.fillText(valStr, cx, cy + radius + 25);
+
+    // Unit (Next to value)
+    ctx.font = '500 14px Inter, sans-serif';
+    ctx.fillStyle = textSecondary;
+    const valWidth = ctx.measureText(valStr).width;
+    ctx.fillText(unit, cx + valWidth / 2 + 15, cy + radius + 28);
 }

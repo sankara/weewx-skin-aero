@@ -5,6 +5,7 @@ export const state = {
     view: 'overview',
     viewScope: 'day',
     units: 'metric',
+    design: 'simple',
     currentDate: null,
     basePath: 'data/'
 };

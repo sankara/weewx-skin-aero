@@ -8,6 +8,17 @@
     --text-secondary: #64748b;
     --accent-color: #3b82f6;
 
+    /* Theme Variables (Default: Simple) */
+    --glass-blur: blur(12px);
+    --card-radius: 20px;
+    /* Standard rounded */
+    --btn-radius: 9999px;
+    /* Pill shape for nav, round for circular */
+    --section-radius: 20px;
+    --ease-spring: cubic-bezier(0.25, 0.1, 0.25, 1);
+    /* Standard ease */
+    --shadow-card: var(--shadow-lg);
+
     /* Graph Theme Colors */
     --color-temp: #f59e0b;
     /* Amber */
@@ -23,20 +34,18 @@
     /* Rose */
 
     /* Compass Colors */
-    --color-compass-tick-cardinal: #94a3b8;
+    --color-compass-tick-cardinal: #334155;
+    /* Slate 700 */
+    --color-compass-tick-major: #475569;
+    /* Slate 600 */
+    --color-compass-tick-minor: #94a3b8;
     /* Slate 400 */
-    --color-compass-tick-major: #cbd5e1;
-    /* Slate 300 */
-    --color-compass-tick-minor: #e2e8f0;
-    /* Slate 200 */
-    --color-compass-arrow: #64748b;
-    /* Slate 500 */
+    --color-compass-arrow: #1e293b;
+    /* Slate 900 */
 
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-
-    --glass-blur: blur(12px);
 }
 
 html.dark {
@@ -52,14 +61,73 @@ html.dark {
     --color-temp: #fbbf24;
 
     /* Compass Colors (Dark Mode) - Lighter for contrast */
-    --color-compass-tick-cardinal: #cbd5e1;
+    --color-compass-tick-cardinal: #e2e8f0;
+    /* Slate 200 (Brightest) */
+    --color-compass-tick-major: #cbd5e1;
     /* Slate 300 */
-    --color-compass-tick-major: #94a3b8;
+    --color-compass-tick-minor: #94a3b8;
     /* Slate 400 */
-    --color-compass-tick-minor: #64748b;
-    /* Slate 500 */
-    --color-compass-arrow: #e2e8f0;
-    /* Slate 200 (Bright for visibility) */
+    --color-compass-arrow: #f8fafc;
+    /* Slate 50 (Very Bright) */
+}
+
+html.theme-aero {
+    --glass-blur: blur(20px);
+    --card-radius: 28px;
+    --section-radius: 24px;
+    /* Squircles for cards */
+    --ease-spring: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Aero Specific Enhancements (Ultra Transparent / Liquid) */
+    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.3);
+    --text-shadow-heading: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+html.theme-aero.dark {
+    /* Dark Mode Aero (Ultra Transparent) */
+    --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.1) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Update Card to use new Aero variables */
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: var(--card-bg);
+    /* Fallback */
+    background: var(--card-gradient, var(--card-bg));
+    /* Use gradient if defined (Aero) */
+    backdrop-filter: var(--glass-blur);
+    padding: 1.5rem;
+    border-radius: var(--card-radius);
+    border: 1px solid var(--card-border-color, var(--card-border));
+    box-shadow: var(--shadow-card);
+}
+
+/* ... existing styles ... */
+
+.card-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: normal;
+    /* Fix height jumping? */
+    background: linear-gradient(180deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    /* Layout Stability Fixes */
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+    /* Flexbox safety */
+    white-space: nowrap;
+    /* Prevent wrapping */
+    text-align: center;
+    /* Ensure centered if width grows */
 }
 
 * {
@@ -89,12 +157,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    /* Allow wrapping on smaller desktop screens */
+    gap: 1rem;
+    /* Add gap for wrapped items */
     margin-bottom: 2rem;
     padding: 1rem 1.5rem;
     background: var(--card-bg);
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--card-border);
-    border-radius: 16px;
+    border-radius: var(--section-radius);
     box-shadow: var(--shadow-md);
 }
 
@@ -112,6 +184,10 @@ body {
     display: flex;
     gap: 1.5rem;
     align-items: center;
+    flex-wrap: wrap;
+    /* Ensure controls themselves can wrap if needed */
+    justify-content: flex-end;
+    /* Align right */
     color: var(--text-secondary);
     font-size: 0.875rem;
     font-weight: 500;
@@ -140,9 +216,11 @@ body {
 }
 
 .nav-btn {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.2);
+    /* Reduced opacity for better text contrast */
     border: 1px solid transparent;
-    color: var(--text-secondary);
+    color: var(--text-primary);
+    /* Use primary text for better visibility (was secondary) */
     font-weight: 600;
     cursor: pointer;
     padding: 0.5rem 1.25rem;
@@ -153,7 +231,7 @@ body {
 
 .nav-btn:hover {
     color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.4);
     border-color: var(--card-border);
 }
 
@@ -161,6 +239,19 @@ body {
     color: #fff;
     background-color: var(--accent-color);
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Specific Dark Mode overrides if needed for deeper contrast */
+html.dark .nav-btn {
+    background: rgba(255, 255, 255, 0.05);
+    /* Very subtle in dark mode */
+    color: var(--text-secondary);
+    /* Restored secondary but on dark bg it pops more than on light-gray bg */
+}
+
+html.dark .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
 }
 
 .nav-extra {
@@ -229,17 +320,18 @@ body {
 }
 
 .card {
-    background-color: var(--card-bg);
-    backdrop-filter: var(--glass-blur);
-    padding: 1.5rem;
-    border-radius: 20px;
-    /* Softer corners */
-    border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
     transition: transform 0.2s, box-shadow 0.2s;
+    background-color: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    padding: 1rem;
+    border-radius: var(--card-radius);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-card);
+    min-height: 250px;
+    justify-content: flex-start;
 }
 
 .card:hover {
@@ -291,9 +383,9 @@ body {
     background-color: var(--card-bg);
     backdrop-filter: var(--glass-blur);
     padding: 1.5rem;
-    border-radius: 20px;
+    border-radius: var(--card-radius);
     border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-card);
     height: 400px;
 }
 
@@ -394,16 +486,16 @@ input:checked+.slider:before {
 
 .dials-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
 }
 
 /* HISTORY SECTION STYLES */
 .section-history {
     background: rgba(255, 255, 255, 0.4);
     padding: 1.5rem;
-    border-radius: 20px;
+    border-radius: var(--section-radius);
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -500,5 +592,27 @@ input:checked+.slider:before {
         color: var(--accent-color);
         width: 20px;
         height: 20px;
+    }
+
+    /* Header adjustments for mobile */
+    .main-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .header-left {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .header-controls {
+        width: 100%;
+        justify-content: space-between;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--card-border);
     }
 }

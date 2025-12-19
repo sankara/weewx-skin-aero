@@ -99,9 +99,9 @@ function renderCurrentObservations() {
     }
     createSimpleCard(container, rainItem, 'rain', cRain);
 
-    // 5. Pressure
+    // 5. Pressure (New Gauge)
     const pItem = getDialItem('barometer') || getDialItem('pressure');
-    createDialCard(container, pItem, 'Pressure', cPress, limits.pressure.min, limits.pressure.max, cTextPrimary, cTextSecondary);
+    createGaugeCard(container, pItem, 'Pressure', cPress, limits.pressure.min, limits.pressure.max, cTextPrimary, cTextSecondary);
 
     // 6. UV
     const uvItem = getDialItem('UV');
@@ -111,22 +111,43 @@ function renderCurrentObservations() {
     }
 }
 
-function createDialCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
+function createGaugeCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
     if (!item) return;
-    // Check for explicit null for differentiation
-    // const hasData = item.current !== null && item.current !== undefined;
-    // if (!hasData) return; // Allow rendering even if null (shows --)
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.alignItems = 'center';
-    div.style.justifyContent = 'center';
 
     div.innerHTML = `
-        <div class="card-header" style="width:100%; justify-content: center;">
-            <span class="card-label">${item.label || title}</span>
+        <div class="card-header" style="width:100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
+            <span class="card-label">${title}</span>
+            <i data-lucide="gauge" style="width:16px; height:16px; color:${color}"></i>
         </div>
-        <canvas width="200" height="150"></canvas>
+        <canvas width="180" height="160" style="display: block; margin: 0 auto; max-width: 100%; height: auto;"></canvas>
+    `;
+    container.appendChild(div);
+
+    const canvas = div.querySelector('canvas');
+    import('./charts.js').then(charts => {
+        charts.drawGauge(canvas, absMin, absMax, item.current, item.unit, color, null, textPrimary, textSecondary);
+    });
+}
+
+function createDialCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
+    if (!item) return;
+
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    let icon = 'thermometer';
+    if (title.toLowerCase().includes('humidity')) icon = 'droplets';
+    if (title.toLowerCase().includes('uv')) icon = 'sun';
+
+    div.innerHTML = `
+        <div class="card-header" style="width:100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
+            <span class="card-label">${item.label || title}</span>
+            <i data-lucide="${icon}" style="width:16px; height:16px; color:${color}"></i>
+        </div>
+        <canvas width="180" height="160" style="display: block; margin: 0 auto; max-width: 100%; height: auto;"></canvas>
     `;
     container.appendChild(div);
 
@@ -134,7 +155,7 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
     const dailyMin = item.min !== undefined && item.min !== null ? item.min : item.current;
     const dailyMax = item.max !== undefined && item.max !== null ? item.max : item.current;
 
-    drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title, textPrimary, textSecondary);
+    drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, null, textPrimary, textSecondary);
 }
 
 function createCompassCard(container, speedItem, gustItem, dirItem, color, textPrimary, textSecondary, theme) {
@@ -142,14 +163,13 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.alignItems = 'center';
-    div.style.justifyContent = 'center';
 
     div.innerHTML = `
-        <div class="card-header" style="width:100%; justify-content: center;">
+        <div class="card-header" style="width:100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
             <span class="card-label">Wind</span>
+            <i data-lucide="wind" style="width:16px; height:16px; color:${color}"></i>
         </div>
-        <canvas width="200" height="150"></canvas>
+        <canvas width="180" height="160" style="display: block; margin: 0 auto; max-width: 100%; height: auto;"></canvas>
     `;
     container.appendChild(div);
 
@@ -160,7 +180,8 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
     const dir = dirItem ? dirItem.current : null;
     const unit = speedItem.unit;
 
-    drawCompass(canvas, speed, gust, dir, unit, color, 'Wind', textPrimary, textSecondary, theme);
+    // Pass null for title
+    drawCompass(canvas, speed, gust, dir, unit, color, null, textPrimary, textSecondary, theme);
 }
 
 function createSimpleCard(container, item, type, color) {
@@ -176,16 +197,16 @@ function createSimpleCard(container, item, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.alignItems = 'center'; // Center flex items (header and value)
-    div.style.justifyContent = 'center';
+    div.style.justifyContent = 'center'; // Added this line
 
     div.innerHTML = `
-        <div class="card-header" style="width:100%; justify-content: center; gap: 0.5rem;">
+        <div class="card-header" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; width: 100%; min-height: 24px;">
             <span class="card-label">${label}</span>
-            <i data-lucide="${icon}" style="width:18px; height:18px; color:${color}"></i>
+            <i data-lucide="${icon}" style="width:16px; height:16px; color:${color}"></i>
         </div>
-        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text; text-align: center;">
-            ${val}<span class="card-unit">${item.unit}</span>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; width: 100%; margin-top: 0.75rem;">
+            <div class="card-value" style="font-size: 3rem; line-height: 1; font-weight: 700; background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-variant-numeric: tabular-nums;">${val}</div>
+            <div class="card-unit" style="font-size: 1.125rem; font-weight: 500; color: var(--text-secondary);">${item.unit}</div>
         </div>
     `;
     container.appendChild(div);
@@ -274,16 +295,26 @@ export function renderHistorySummary() {
 function createSummaryCard(container, label, value, unit, color) {
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.alignItems = 'center'; // Center column items
-    div.style.justifyContent = 'center';
+
+    let icon = 'activity';
+    const lowLabel = label.toLowerCase();
+    if (lowLabel.includes('rain')) icon = 'cloud-rain';
+    if (lowLabel.includes('wind') || lowLabel.includes('gust')) icon = 'wind';
+    if (lowLabel.includes('temp')) icon = 'thermometer';
+    if (lowLabel.includes('pressure')) icon = 'gauge';
+    if (lowLabel.includes('uv')) icon = 'sun';
 
     div.innerHTML = `
-        <div class="card-header" style="justify-content: center;">
+        <div class="card-header" style="width: 100%; justify-content: center; align-items: center; display: flex; gap: 0.5rem; min-height: 24px;">
              <span class="card-label" style="color:${color}">${label}</span>
+             <i data-lucide="${icon}" style="width:16px; height:16px; color:${color}"></i>
         </div>
-        <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text; text-align: center;">
-            ${(+value).toFixed(1)}<span class="card-unit">${unit}</span>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; width: 100%; margin-top: 0.75rem;">
+            <div class="card-value" style="background: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)}); -webkit-background-clip: text; text-align: center; font-size: 1.5rem;">
+                ${(+value).toFixed(1)}<span class="card-unit" style="font-size: 0.9rem; margin-left: 0.25rem;">${unit}</span>
+            </div>
         </div>
     `;
+    div.style.justifyContent = 'center';
     container.appendChild(div);
 }
