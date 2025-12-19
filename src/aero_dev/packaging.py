@@ -149,6 +149,23 @@ def main():
     # This runs npm build, updates index.html and skin.conf in the target directory
     bundler.run_bundler(target_skin_dir)
 
+    # Cleanup before generating file list
+    # Remove node_modules
+    nm_dir = os.path.join(target_skin_dir, 'node_modules')
+    if os.path.exists(nm_dir):
+        shutil.rmtree(nm_dir)
+    
+    # Remove source files that are now bundled
+    # We keep index.html and skin.conf of course
+    removals = [
+        'package.json', 'package-lock.json', 'webpack.config.js',
+        'app.js', 'style.css', 'utils.js', 'charts.js', 'ui.js', 'state.js'
+    ]
+    for r in removals:
+        p = os.path.join(target_skin_dir, r)
+        if os.path.exists(p):
+            os.remove(p)
+
     # Gather files for install.py list
     # We want to list all files in skins/Aero relative to the package root (inside the zip root)
     file_list = []
@@ -167,21 +184,7 @@ def main():
     update_install_py(dst_install, file_list)
 
     # Cleanup before zipping
-    # Remove node_modules
-    nm_dir = os.path.join(target_skin_dir, 'node_modules')
-    if os.path.exists(nm_dir):
-        shutil.rmtree(nm_dir)
-    
-    # Remove source files that are now bundled
-    # We keep index.html and skin.conf of course
-    removals = [
-        'package.json', 'package-lock.json', 'webpack.config.js',
-        'app.js', 'style.css', 'utils.js', 'charts.js', 'ui.js', 'state.js'
-    ]
-    for r in removals:
-        p = os.path.join(target_skin_dir, r)
-        if os.path.exists(p):
-            os.remove(p)
+
 
     # Create Zip
     zip_filename = f"weewx-aero-{version}.zip"
