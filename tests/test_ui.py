@@ -35,7 +35,7 @@ def test_current_conditions_visible(page: Page, report_server):
 
 def test_history_tabs(page: Page, report_server):
     page.goto(report_server)
-    page.get_by_text("Week").click()
+    page.get_by_role("button", name="Week").click()
     page.wait_for_timeout(1000)
     expect(page.locator("canvas").first).to_be_visible()
 
