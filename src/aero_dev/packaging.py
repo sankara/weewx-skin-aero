@@ -210,6 +210,11 @@ def main():
     print(f"Package created at {zip_path}")
     print(f"SHA256: {hasher.hexdigest()}")
 
+    # Also create a generic filename zip for "latest" download links
+    generic_zip_path = os.path.join(output_dir, "weewx-aero.zip")
+    shutil.copy2(zip_path, generic_zip_path)
+    print(f"Generic package created at {generic_zip_path}")
+
     # Cleanup (optional, but good for local dev)
     # shutil.rmtree(build_dir)
 

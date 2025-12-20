@@ -7,6 +7,7 @@ description: Auto-infer version bump (Minor/Patch), update changelog, and push r
 
 2. **Get Context**:
     * Current Version: Read `version` from `pyproject.toml`.
+    * **README & Packaging**: Note that `uv run aero-bump` automatically updates the versioned download link in `README.md`. Also, `uv run aero-package` generates both a versioned zip (e.g., `weewx-aero-v1.4.0.zip`) and a generic `weewx-aero.zip` to support stable "latest" links.
     * Git Log & Last Tag:
       ```bash
       git log $(git describe --tags --match "v*" --abbrev=0)..HEAD --pretty=format:"- %s"
