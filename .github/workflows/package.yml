@@ -67,7 +67,7 @@ jobs:
           body: "Rolling release of the latest development version."
           allowUpdates: true
           prerelease: true
-          artifacts: dist/${{ steps.package.outputs.asset_name }}
+          artifacts: dist/*.zip
           token: ${{ secrets.GITHUB_TOKEN }}
           removeArtifacts: true
 
@@ -79,5 +79,5 @@ jobs:
           tag: ${{ steps.version.outputs.VERSION }}
           name: Aero Skin ${{ steps.version.outputs.VERSION }}
           body: "Release of Aero Skin version ${{ steps.version.outputs.VERSION }}."
-          artifacts: dist/${{ steps.package.outputs.asset_name }}
+          artifacts: dist/*.zip
           token: ${{ secrets.GITHUB_TOKEN }}
