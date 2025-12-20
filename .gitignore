@@ -5,7 +5,6 @@ dist/
 weewx.sdb
 public_html/
 .venv/
-screenshots/
 __pycache__/
 *.pyc
 .pytest_cache/
