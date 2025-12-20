@@ -59,11 +59,11 @@ def main():
             readme_content
         )
         
-        # Also update the install command filename
-        # weectl extension install weewx-aero-v1.2.1.zip
+        # Also update the install command filename (which now includes URL)
+        # weectl extension install https://github.com/.../weewx-aero-v1.2.1.zip
         new_readme_content = re.sub(
-             r'weectl extension install weewx-aero-v[\d\.]+\.zip',
-             f'weectl extension install weewx-aero-v{version}.zip',
+             r'weectl extension install https://.*/weewx-aero-v[\d\.]+\.zip',
+             f'weectl extension install https://github.com/sankara/weewx-skin-aero/releases/download/v{version}/weewx-aero-v{version}.zip',
              new_readme_content
         )
 
