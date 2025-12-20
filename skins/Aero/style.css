@@ -410,6 +410,14 @@ html.dark .nav-btn.active {
     height: 400px;
 }
 
+@media (max-width: 640px) {
+    .graph-card {
+        padding: 1rem;
+        height: 300px; /* Shorter graphs on mobile */
+        grid-column: span 1 !important; /* Ensure they don't try to span 2 in a 1-col grid, though 1fr handles it */
+    }
+}
+
 /* Buttons */
 .btn-icon {
     background: none;
@@ -429,6 +437,7 @@ html.dark .nav-btn.active {
     .graphs-section {
         grid-template-columns: repeat(2, 1fr);
         /* 2 columns for graphs on large screens */
+        gap: 1.5rem;
     }
 
     #wind-graph-container {
@@ -507,8 +516,8 @@ input:checked+.slider:before {
 
 .dials-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
     margin-bottom: 2rem;
 }
 
@@ -535,8 +544,8 @@ input:checked+.slider:before {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
     margin-bottom: 2rem;
 }
 
@@ -570,6 +579,30 @@ input:checked+.slider:before {
 }
 
 @media (max-width: 640px) {
+    .dials-container {
+        grid-template-columns: 1fr; /* Single column on small mobile */
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr 1fr; /* Two columns for summary cards to keep it from being too long */
+    }
+
+    /* If a dial is inside a summary grid (historical), make it span full width */
+    /* Using :has() might not be supported in very old mobile browsers, but it's widely supported now.
+       Fallback: we can also target based on being the first child if we know it's always the dial. */
+    .summary-grid .card:has(.dial-canvas) {
+        grid-column: span 2;
+    }
+
+    .summary-card .value {
+        font-size: 1.1rem;
+    }
+
+    .dial-canvas {
+        max-width: 100%;
+        height: auto !important; /* Allow responsive height */
+    }
+
     .history-nav {
         flex-direction: row;
         /* Row layout on mobile */

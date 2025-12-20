@@ -22,7 +22,7 @@ Aero renders weather data using HTML5 Canvas for sharp, detailed charts and dial
 
 1.  Install using the standard WeeWX extension utility:
     ```bash
-    weectl extension install https://github.com/sankara/weewx-skin-aero/releases/download/v1.3.1/weewx-aero-v1.3.1.zip
+    weectl extension install https://github.com/sankara/weewx-skin-aero/releases/download/v1.3.2/weewx-aero-v1.3.2.zip
     ```
 2.  Restart WeeWX:
     ```bash

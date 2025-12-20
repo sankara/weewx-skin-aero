@@ -494,7 +494,7 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     // cy = (h * 0.5) + (radius * 0.3) - (10 * s)
 
     // Relative Sizing Factors (Base: 280px width)
-    const s = w / 280;
+    const s = Math.max(w / 280, 1.0); 
     const radius = Math.min(w, h) * 0.38;
 
     const textY = h * 0.5;
@@ -604,7 +604,12 @@ function createGraphContainer(id, title, parentId, fullWidth = false) {
     const div = document.createElement('div');
     div.className = 'graph-card';
     div.id = id + '-container';
-    if (fullWidth) div.style.gridColumn = "span 2";
+    
+    // On mobile, everything is full width. On desktop, honor fullWidth
+    if (fullWidth || window.innerWidth < 640) {
+        div.style.gridColumn = "span 2";
+    }
+
     div.innerHTML = `
         <h3 class="card-label" style="margin-bottom:1rem">${title}</h3>
         <div class="chart-responsive-wrapper" style="position: relative; width: 100%; min-height: 250px;">
@@ -738,7 +743,7 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     const cx = w / 2;
     // Shifted down to align values with other cards
 
-    const s = w / 280;
+    const s = Math.max(w / 280, 1.0);
     const radius = Math.min(w, h) * 0.38;
 
     // ABSOLUTE CENTER TEXT STRATEGY
@@ -859,7 +864,7 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     const cx = w / 2;
 
     // Relative Sizing Factors (Base: 280px width)
-    const s = w / 280;
+    const s = Math.max(w / 280, 1.0);
     const radius = Math.min(w, h) * 0.38;
 
     // ABSOLUTE CENTER TEXT STRATEGY
