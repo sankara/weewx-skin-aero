@@ -18,6 +18,7 @@ description: Auto-infer version bump (Minor/Patch), update changelog, and push r
 
 3.  **Execute Release**:
     *   **Bump**: Run `uv run aero-bump <new_version>` (updates `pyproject.toml`).
+    *   **Lock**: Run `uv lock` to synchronize `uv.lock` with the new version.
     *   **Commit**:
         ```bash
         git commit -am "chore: release v<new_version>"
