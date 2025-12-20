@@ -62,6 +62,11 @@ def main():
         page.wait_for_timeout(2000)
         page.screenshot(path=os.path.join(output_dir, "mobile-light.png"))
 
+        page.emulate_media(color_scheme='dark')
+        page.reload()
+        page.wait_for_timeout(2000)
+        page.screenshot(path=os.path.join(output_dir, "mobile-dark.png"))
+
         browser.close()
 
     httpd.shutdown()
