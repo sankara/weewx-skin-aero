@@ -25,7 +25,13 @@
       "observation": "rain",
       "sum": $day.rain.sum.json,
       "unit": "$unit.label.rain",
-      "graph": $day.rain.series(time_unit='unix_epoch', aggregate_interval=None).json
+      "graph": $day.rain.series(time_unit='unix_epoch', aggregate_type='sum', aggregate_interval=3600).json
+    },
+    {
+      "observation": "rainRate",
+      "max": $day.rainRate.max.json,
+      "unit": "$unit.label.rainRate",
+      "graph": $day.rainRate.series(time_unit='unix_epoch', aggregate_type='max', aggregate_interval=3600).json
     },
     {
       "observation": "windSpeed",

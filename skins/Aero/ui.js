@@ -101,6 +101,10 @@ function renderCurrentObservations() {
     }
     createSimpleCard(container, rainItem, 'rain', cRain);
 
+    // 4b. Rain Rate (Simple Card)
+    const rainRateItem = getDialItem('rainRate');
+    createSimpleCard(container, rainRateItem, 'rain', cRain);
+
     // 5. Pressure (New Gauge)
     const pItem = getDialItem('barometer') || getDialItem('pressure');
     createGaugeCard(container, pItem, 'Pressure', cPress, limits.pressure.min, limits.pressure.max, cTextPrimary, cTextSecondary);
@@ -285,6 +289,12 @@ export function renderHistorySummary() {
     const rain = convertItem(obs.rain, state.units);
     if (rain && rain.sum !== undefined) {
         createSummaryCard(container, 'Total Rain', rain.sum, rain.unit, cRain);
+    }
+    
+    // 2b. Rain Rate
+    const rainRate = convertItem(obs.rainRate, state.units);
+    if (rainRate && rainRate.max !== undefined) {
+        createSummaryCard(container, 'Max Rain Rate', rainRate.max, rainRate.unit, cRain);
     }
 
     // 3. Wind

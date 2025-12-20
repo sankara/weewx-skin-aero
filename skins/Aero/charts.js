@@ -310,6 +310,12 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
         // Fallback: Day View but NO Wind Direction -> Simple Line Chart for Speed
         const dataPoints = windSpeed.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
 
+        const opts = getChartOptions(true);
+        opts.scales = commonScales;
+        opts.plugins.tooltip.callbacks.label = (ctx) => {
+             return `Wind Speed: ${ctx.parsed.y.toFixed(1)} ${windSpeed.unit}`;
+        };
+
         charts.wind = new Chart(ctx, {
             type: 'line',
             data: {
@@ -324,7 +330,7 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
                     hitRadius: 10
                 }]
             },
-            options: { ...getChartOptions(true), scales: commonScales }
+            options: opts
         });
 
     } else {
@@ -334,6 +340,18 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
         // We can show two datasets: Max (Bar) and Avg (Line)
         const maxData = aggData.map(d => ({ x: d.x, y: d.max }));
         const avgData = aggData.map(d => ({ x: d.x, y: d.avg }));
+
+        const windOpts = getChartOptions(false);
+        windOpts.scales = commonScales;
+        windOpts.plugins.tooltip.callbacks.label = (ctx) => {
+            let label = ctx.dataset.label || '';
+            if (label) label += ': ';
+            if (ctx.parsed.y !== null) {
+                label += ctx.parsed.y.toFixed(1);
+                label += ` ${windSpeed.unit}`;
+            }
+            return label;
+        };
 
         charts.wind = new Chart(ctx, {
             type: 'bar',
@@ -357,17 +375,16 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
                     }
                 ]
             },
-            options: {
-                ...getChartOptions(false),
-                scales: commonScales
-            }
+            options: windOpts
         });
     }
 }
 
 function renderRainChart(commonScales, isDayView, chartTheme) {
     const rainSum = convertItem(state.activeData.obs.rain, state.units);
-    if (!rainSum || !rainSum.graph) {
+    const rainRate = convertItem(state.activeData.obs.rainRate, state.units);
+
+    if ((!rainSum || !rainSum.graph) && (!rainRate || !rainRate.graph)) {
         createNoDataContainer('Precipitation');
         return;
     }
@@ -376,60 +393,78 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
     const ctx = document.getElementById('graph-rain').getContext('2d');
 
     let datasets = [];
-    let options = {
-        ...getChartOptions(isDayView),
-        scales: {
-            ...commonScales,
-            y: {
-                beginAtZero: true,
-                position: 'left',
-                grid: { color: 'rgba(0,0,0,0.05)' }
+    
+    // Prepare Options with Tooltip Formatting
+    const options = getChartOptions(isDayView);
+    options.scales = {
+        ...commonScales,
+        y: {
+            beginAtZero: true,
+            position: 'left',
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            title: {
+                display: true,
+                text: `Rain (${rainSum.unit})`
             }
         }
     };
+    
+    // Add Tooltip Callback for Rain (2 decimals)
+    options.plugins.tooltip.callbacks.label = (context) => {
+        let label = context.dataset.label || '';
+        if (label) label += ': ';
+        if (context.parsed.y !== null) {
+            label += context.parsed.y.toFixed(2);
+        }
+        return label;
+    };
 
     if (isDayView) {
-        const chartData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+        // Use rainRate for Day View if available
+        const rainAmountData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
 
-        // 1. Bar Dataset
+        // 1. Bar Dataset for Rain Amount
         datasets.push({
             type: 'bar',
             label: `Rain (${rainSum.unit})`,
-            data: chartData,
+            data: rainAmountData,
             backgroundColor: chartTheme.rainRate,
             borderColor: chartTheme.rainRate,
             borderWidth: 1,
             yAxisID: 'y'
         });
 
-        // 2. Cumulative Line for Day
-        let runningTotal = 0;
-        const cumulativeData = chartData.map(d => {
-            runningTotal += d.y;
-            return { x: d.x, y: runningTotal };
-        });
-
-        if (cumulativeData.length > 0) {
+        // 2. Line Dataset for Rain Rate
+        if (rainRate && rainRate.graph) {
+            const rateData = rainRate.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+            // Use consistent unit with rain sum - derive rate unit from rain unit
+            const rateUnit = rainSum.unit === 'mm' ? 'mm/hr' : 'in/hr';
             datasets.push({
                 type: 'line',
-                label: `Total Rain (${rainSum.unit})`,
-                data: cumulativeData,
+                label: `Rain Rate (${rateUnit})`,
+                data: rateData,
                 borderColor: '#1e3a8a',
-                backgroundColor: '#1e3a8a',
+                backgroundColor: hexToRgbA('#1e3a8a', 0.1),
                 borderWidth: 2,
                 tension: 0.4,
                 pointRadius: 0,
+                fill: true,
                 yAxisID: 'y1'
             });
 
-            // Configure Secondary Axis
+            // Configure Secondary Axis for Rate
             options.scales.y1 = {
                 beginAtZero: true,
                 position: 'right',
-                grid: { display: false }
+                grid: { display: false },
+                title: {
+                    display: true,
+                    text: `Rate (${rateUnit})`
+                }
             };
         }
     } else {
+        // For History Views (Week/Month/Year), Bars for daily totals still make sense
         const aggData = aggregate(rainSum.graph, state.viewScope);
         const chartData = aggData.map(d => ({ x: d.x, y: d.sum }));
 
@@ -444,34 +479,6 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
             yAxisID: 'y'
         });
 
-        // 2. Line Dataset (Cumulative Total)
-        let runningTotal = 0;
-        const cumulativeData = aggData.map(d => {
-            runningTotal += d.sum;
-            return { x: d.x, y: runningTotal };
-        });
-
-        // Only add cumulative if there is data
-        if (cumulativeData.length > 0) {
-            datasets.push({
-                type: 'line',
-                label: `Total Rain (${rainSum.unit})`,
-                data: cumulativeData,
-                borderColor: '#1e3a8a', // Darker Blue for contrast
-                backgroundColor: '#1e3a8a',
-                borderWidth: 2,
-                tension: 0.4,
-                pointRadius: 0,
-                yAxisID: 'y1'
-            });
-
-            // Configure Secondary Axis
-            options.scales.y1 = {
-                beginAtZero: true,
-                position: 'right',
-                grid: { display: false }
-            };
-        }
     }
 
     charts.rain = new Chart(ctx, {

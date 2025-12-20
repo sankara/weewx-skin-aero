@@ -19,6 +19,12 @@
       "sum": $year.rain.sum.json,
       "unit": "$unit.label.rain",
       "graph": $year.rain.series(time_unit='unix_epoch', aggregate_interval=86400).json
+    },
+    {
+      "observation": "rainRate",
+      "max": $year.rainRate.max.json,
+      "unit": "$unit.label.rainRate",
+      "graph": $year.rainRate.series(time_unit='unix_epoch', aggregate_interval=86400).json
     }
   ]
 }

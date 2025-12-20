@@ -40,6 +40,12 @@
       "sum": $week.rain.sum.json,
       "unit": "$unit.label.rain",
       "graph": $week.rain.series(time_unit='unix_epoch', aggregate_interval=3600).json
+    },
+    {
+      "observation": "rainRate",
+      "max": $week.rainRate.max.json,
+      "unit": "$unit.label.rainRate",
+      "graph": $week.rainRate.series(time_unit='unix_epoch', aggregate_interval=3600).json
     }
   ]
 }
