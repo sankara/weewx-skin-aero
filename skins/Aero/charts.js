@@ -375,32 +375,109 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
     createGraphContainer('graph-rain', 'Precipitation', 'graphs-container', true);
     const ctx = document.getElementById('graph-rain').getContext('2d');
 
-    let chartData;
+    let datasets = [];
+    let options = {
+        ...getChartOptions(isDayView),
+        scales: {
+            ...commonScales,
+            y: {
+                beginAtZero: true,
+                position: 'left',
+                grid: { color: 'rgba(0,0,0,0.05)' }
+            }
+        }
+    };
+
     if (isDayView) {
-        chartData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+        const chartData = rainSum.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+
+        // 1. Bar Dataset
+        datasets.push({
+            type: 'bar',
+            label: `Rain (${rainSum.unit})`,
+            data: chartData,
+            backgroundColor: chartTheme.rainRate,
+            borderColor: chartTheme.rainRate,
+            borderWidth: 1,
+            yAxisID: 'y'
+        });
+
+        // 2. Cumulative Line for Day
+        let runningTotal = 0;
+        const cumulativeData = chartData.map(d => {
+            runningTotal += d.y;
+            return { x: d.x, y: runningTotal };
+        });
+
+        if (cumulativeData.length > 0) {
+            datasets.push({
+                type: 'line',
+                label: `Total Rain (${rainSum.unit})`,
+                data: cumulativeData,
+                borderColor: '#1e3a8a',
+                backgroundColor: '#1e3a8a',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 0,
+                yAxisID: 'y1'
+            });
+
+            // Configure Secondary Axis
+            options.scales.y1 = {
+                beginAtZero: true,
+                position: 'right',
+                grid: { display: false }
+            };
+        }
     } else {
         const aggData = aggregate(rainSum.graph, state.viewScope);
-        chartData = aggData.map(d => ({ x: d.x, y: d.sum }));
+        const chartData = aggData.map(d => ({ x: d.x, y: d.sum }));
+
+        // 1. Bar Dataset (Daily/Weekly Sums)
+        datasets.push({
+            type: 'bar',
+            label: `Rain (${rainSum.unit})`,
+            data: chartData,
+            backgroundColor: chartTheme.rainRate,
+            borderColor: chartTheme.rainRate,
+            borderWidth: 1,
+            yAxisID: 'y'
+        });
+
+        // 2. Line Dataset (Cumulative Total)
+        let runningTotal = 0;
+        const cumulativeData = aggData.map(d => {
+            runningTotal += d.sum;
+            return { x: d.x, y: runningTotal };
+        });
+
+        // Only add cumulative if there is data
+        if (cumulativeData.length > 0) {
+            datasets.push({
+                type: 'line',
+                label: `Total Rain (${rainSum.unit})`,
+                data: cumulativeData,
+                borderColor: '#1e3a8a', // Darker Blue for contrast
+                backgroundColor: '#1e3a8a',
+                borderWidth: 2,
+                tension: 0.4,
+                pointRadius: 0,
+                yAxisID: 'y1'
+            });
+
+            // Configure Secondary Axis
+            options.scales.y1 = {
+                beginAtZero: true,
+                position: 'right',
+                grid: { display: false }
+            };
+        }
     }
 
     charts.rain = new Chart(ctx, {
         type: 'bar',
-        data: {
-            datasets: [{
-                label: `Rain (${rainSum.unit})`,
-                data: chartData,
-                backgroundColor: chartTheme.rainRate,
-                borderColor: chartTheme.rainRate,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            ...getChartOptions(isDayView),
-            scales: {
-                ...commonScales,
-                y: { beginAtZero: true }
-            }
-        }
+        data: { datasets },
+        options: options
     });
 }
 
