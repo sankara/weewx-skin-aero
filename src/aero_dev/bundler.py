@@ -2,27 +2,67 @@ import os
 import subprocess
 import shutil
 import re
+import logging
+from typing import List
 
-def run_bundler(skin_dir):
+# Configure logging
+logger = logging.getLogger(__name__)
+
+def update_html_references(html: str, js_bundle: str, css_bundle: str) -> str:
+    """Updates CSS and JS references in HTML content."""
+    # Replace CSS link
+    # Pattern: <link rel="stylesheet" href="style.css">
+    html = re.sub(r'<link rel="stylesheet" href=["\']?style\.css["\']?>', 
+                  f'<link rel="stylesheet" href="dist/{css_bundle}">', html)
+
+    # Replace JS script
+    # Pattern: <script type="module" src="app.js"></script>
+    html = re.sub(r'<script (type="module" )?src=["\']?app\.js["\']?></script>', 
+                  f'<script src="dist/{js_bundle}"></script>', html)
+    
+    return html
+
+def update_skin_conf(conf: str, js_bundle: str, css_bundle: str) -> str:
+    """Updates copy_once list in skin.conf."""
+    removals = ['style.css', 'app.js', 'utils.js', 'charts.js', 'ui.js', 'state.js']
+    additions = [f"dist/{js_bundle}", f"dist/{css_bundle}"]
+
+    def replacer(match):
+        line = match.group(1) # content after =
+        items = [x.strip() for x in line.split(',')]
+        
+        # Filter out removals
+        new_items = [x for x in items if x not in removals]
+        
+        # Add additions
+        for item in additions:
+            if item not in new_items:
+                new_items.append(item)
+        
+        return "copy_once = " + ", ".join(new_items)
+
+    return re.sub(r'copy_once\s*=\s*(.*)', replacer, conf)
+
+def run_bundler(skin_dir: str) -> None:
     """
     Runs Webpack build in the skin directory and updates references.
     """
     skin_dir = os.path.abspath(skin_dir)
-    print(f"Bundling assets in {skin_dir}...")
+    logger.info("Bundling assets in %s...", skin_dir)
 
     # 1. Check for node_modules, install if missing
     if not os.path.exists(os.path.join(skin_dir, 'node_modules')):
-        print("Installing npm dependencies...")
+        logger.info("Installing npm dependencies...")
         subprocess.check_call(['npm', 'install'], cwd=skin_dir)
 
     # 2. Run Webpack Build
-    print("Running Webpack build...")
+    logger.info("Running Webpack build...")
     subprocess.check_call(['npm', 'run', 'build'], cwd=skin_dir)
 
     # 3. Identify generated bundles
     dist_dir = os.path.join(skin_dir, 'dist')
     if not os.path.exists(dist_dir):
-        raise Exception("Webpack build failed: dist directory not found")
+        raise RuntimeError("Webpack build failed: dist directory not found")
 
     js_bundle = None
     css_bundle = None
@@ -34,9 +74,9 @@ def run_bundler(skin_dir):
             css_bundle = f
     
     if not js_bundle or not css_bundle:
-        raise Exception(f"Could not find bundles in {dist_dir}. Found: {os.listdir(dist_dir)}")
+        raise RuntimeError(f"Could not find bundles in {dist_dir}. Found: {os.listdir(dist_dir)}")
 
-    print(f"Generated bundles: {js_bundle}, {css_bundle}")
+    logger.info("Generated bundles: %s, %s", js_bundle, css_bundle)
 
     # 4. Update index.html or index.html.tmpl
     index_name = 'index.html'
@@ -45,59 +85,30 @@ def run_bundler(skin_dir):
     
     index_path = os.path.join(skin_dir, index_name)
     if not os.path.exists(index_path):
-        raise Exception(f"Could not find index.html or index.html.tmpl in {skin_dir}")
+        raise FileNotFoundError(f"Could not find index.html or index.html.tmpl in {skin_dir}")
 
     with open(index_path, 'r') as f:
         html = f.read()
 
-    # Replace CSS link
-    # Pattern: <link rel="stylesheet" href="style.css">
-    html = re.sub(r'<link rel="stylesheet" href="style\.css">', 
-                  f'<link rel="stylesheet" href="dist/{css_bundle}">', html)
-
-    # Replace JS script
-    # Pattern: <script type="module" src="app.js"></script>
-    html = re.sub(r'<script type="module" src="app\.js"></script>', 
-                  f'<script src="dist/{js_bundle}"></script>', html)
+    html = update_html_references(html, js_bundle, css_bundle)
 
     with open(index_path, 'w') as f:
         f.write(html)
     
-    print(f"Updated {index_name} references.")
+    logger.info("Updated %s references.", index_name)
 
     # 5. Update skin.conf
-    # We need to ensure the CopyGenerator copies the 'dist' folder or the specific files.
-    # Actually, usually we list individual files in copy_once.
-    # Let's update copy_once to include the new files and remove the old ones.
-    
     conf_path = os.path.join(skin_dir, 'skin.conf')
+    if not os.path.exists(conf_path):
+        logger.warning("skin.conf not found at %s", conf_path)
+        return
+
     with open(conf_path, 'r') as f:
         conf = f.read()
 
-    # Files to remove from copy_once
-    removals = ['style.css', 'app.js', 'utils.js', 'charts.js', 'ui.js', 'state.js']
-    
-    # Files to add
-    additions = [f"dist/{js_bundle}", f"dist/{css_bundle}"]
-
-    # Regex to find copy_once line
-    # copy_once = index.html, style.css, app.js, ...
-    
-    def replacer(match):
-        line = match.group(1) # content after =
-        items = [x.strip() for x in line.split(',')]
-        
-        # Filter out removals
-        new_items = [x for x in items if x not in removals]
-        
-        # Add additions
-        new_items.extend(additions)
-        
-        return "copy_once = " + ", ".join(new_items)
-
-    conf = re.sub(r'copy_once\s*=\s*(.*)', replacer, conf)
+    conf = update_skin_conf(conf, js_bundle, css_bundle)
 
     with open(conf_path, 'w') as f:
         f.write(conf)
 
-    print("Updated skin.conf copy_once list.")
+    logger.info("Updated skin.conf copy_once list.")

@@ -1,5 +1,8 @@
 // utils.js
 
+/**
+ * Standard colors tied to CSS variables.
+ */
 export const THEME = {
     outTemp: 'var(--color-temp)',
     humidity: 'var(--color-humidity)',
@@ -67,6 +70,13 @@ const TARGET_UNITS = {
     }
 };
 
+/**
+ * Converts a WeeWX data item (e.g., observation or summary) to the target unit system.
+ * 
+ * @param {Object} item - The data item with .unit and values like .current, .min, .max.
+ * @param {'metric'|'imperial'} unitSystem - The target unit system.
+ * @returns {Object} - A new item with converted units and values.
+ */
 export function convertItem(item, unitSystem) {
     if (!item || !item.unit) return item;
 
@@ -98,47 +108,72 @@ export function convertItem(item, unitSystem) {
     const newItem = { ...item };
     newItem.unit = targetUnit;
 
-    ['current', 'min', 'max', 'avg', 'sum'].forEach(k => {
-        if (newItem[k] !== undefined && newItem[k] !== null) newItem[k] = convert(newItem[k]);
+    const keysToConvert = ['current', 'min', 'max', 'avg', 'sum'];
+    keysToConvert.forEach(k => {
+        if (newItem[k] !== undefined && newItem[k] !== null) {
+            newItem[k] = convert(newItem[k]);
+        }
     });
 
-    if (newItem.graph) {
+    if (newItem.graph && Array.isArray(newItem.graph)) {
         newItem.graph = newItem.graph.map(p => {
+            if (!Array.isArray(p)) return p;
+
             if (p.length >= 3) {
                 // [start, end, val]
-                return [p[0], p[1], convert(p[2])];
+                return [p[0], p[1], (p[2] !== null && p[2] !== undefined) ? convert(p[2]) : p[2]];
             }
-            // [time, val]
-            return [p[0], convert(p[1])];
+            if (p.length >= 2) {
+                // [time, val]
+                return [p[0], (p[1] !== null && p[1] !== undefined) ? convert(p[1]) : p[1]];
+            }
+            return p;
         });
     }
 
     return newItem;
 }
 
+/**
+ * Checks if two Date objects represent the same calendar day.
+ */
 export function isSameDay(d1, d2) {
     return d1.getFullYear() === d2.getFullYear() &&
         d1.getMonth() === d2.getMonth() &&
         d1.getDate() === d2.getDate();
 }
 
+/**
+ * Calculates or retrieves the average value for a data item.
+ */
 export function getAverage(item) {
-    if (item.avg !== undefined) return item.avg;
-    if (item.sum !== undefined && item.count) return item.sum / item.count;
-
-    if (item.graph && item.graph.length > 0) {
-        const sum = item.graph.reduce((acc, p) => {
-            const val = (p.length >= 3) ? p[2] : p[1];
-            return acc + val;
-        }, 0);
-        return sum / item.graph.length;
+    if (item.avg !== undefined && item.avg !== null) return item.avg;
+    if (item.sum !== undefined && item.sum !== null && item.count) {
+        return item.sum / item.count;
     }
-    if (item.min !== undefined && item.max !== undefined) {
+
+    if (item.graph && Array.isArray(item.graph) && item.graph.length > 0) {
+        let validCount = 0;
+        const sum = item.graph.reduce((acc, p) => {
+            const val = (Array.isArray(p) && p.length >= 2) ? (p.length >= 3 ? p[2] : p[1]) : null;
+            if (val !== null && val !== undefined) {
+                validCount++;
+                return acc + val;
+            }
+            return acc;
+        }, 0);
+        return validCount > 0 ? sum / validCount : undefined;
+    }
+
+    if (item.min !== undefined && item.min !== null && item.max !== undefined && item.max !== null) {
         return (item.min + item.max) / 2;
     }
     return item.current;
 }
 
+/**
+ * Converts a hex color string to rgba format.
+ */
 export function hexToRgbA(hex, alpha) {
     let c;
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
@@ -152,12 +187,19 @@ export function hexToRgbA(hex, alpha) {
     return hex;
 }
 
+/**
+ * Converts degrees to a compass direction (e.g., 0 -> N).
+ */
 export function degToCompass(num) {
+    if (num === null || num === undefined) return "--";
     const val = Math.floor((num / 22.5) + 0.5);
     const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
     return arr[(val % 16)];
 }
 
+/**
+ * Samples data by a given time interval to reduce density.
+ */
 export function sampleData(data, minutes) {
     if (!data || data.length === 0) return [];
     const ms = minutes * 60 * 1000;
@@ -179,7 +221,7 @@ export function sampleData(data, minutes) {
 /**
  * Aggregates high-res data for longer time periods (Month/Year).
  * @param {Array} graphData - [[ts, val], ...]
- * @param {String} scope - 'month', 'year', 'week'
+ * @param {'month'|'year'|'week'} scope - The view scope.
  * @returns {Array} - [{x: ts, min, max, avg, sum}, ...]
  */
 export function aggregate(graphData, scope) {
@@ -188,6 +230,7 @@ export function aggregate(graphData, scope) {
     const grouped = new Map();
 
     graphData.forEach((p) => {
+        if (!Array.isArray(p)) return;
         const ts = p[0];
         const val = (p.length >= 3) ? p[2] : p[1];
         if (val === null || val === undefined) return;
@@ -197,7 +240,6 @@ export function aggregate(graphData, scope) {
 
         if (scope === 'year') {
             // Group by Month
-            // Set to 1st of month
             date.setDate(1);
             date.setHours(0, 0, 0, 0);
             key = date.getTime();
@@ -215,7 +257,6 @@ export function aggregate(graphData, scope) {
 
     // Process groups
     const result = [];
-    // Sort keys
     const sortedKeys = Array.from(grouped.keys()).sort((a, b) => a - b);
 
     sortedKeys.forEach(key => {

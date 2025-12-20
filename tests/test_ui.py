@@ -43,3 +43,21 @@ def test_charts_render(page: Page, report_server):
     page.goto(report_server)
     page.wait_for_timeout(1000)
     expect(page.locator("canvas").first).to_be_visible()
+
+def test_theme_toggle(page: Page, report_server):
+    page.goto(report_server)
+    # Check if dark class exists (default might be light or dark based on system)
+    initial_is_dark = page.evaluate("document.documentElement.classList.contains('dark')")
+    
+    page.locator("#theme-toggle").click()
+    new_is_dark = page.evaluate("document.documentElement.classList.contains('dark')")
+    assert new_is_dark != initial_is_dark
+
+def test_unit_toggle(page: Page, report_server):
+    page.goto(report_server)
+    # Get initial unit text from the toggle button or a dial
+    initial_text = page.locator("#unit-toggle").inner_text()
+    
+    page.locator("#unit-toggle").click()
+    new_text = page.locator("#unit-toggle").inner_text()
+    assert new_text != initial_text

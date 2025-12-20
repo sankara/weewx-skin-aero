@@ -3,13 +3,20 @@ import time
 import random
 import sys
 import sqlite3
-from datetime import datetime, timedelta
+import logging
+import math
+from datetime import datetime
+from typing import Dict, Any, List, Optional
+
 import weewx.units
 import weewx.manager
-import math
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 # Standard WeeWX schema (wview_extended)
-SCHEMA = [
+SCHEMA: List[tuple[str, str]] = [
     ('dateTime', 'INTEGER NOT NULL UNIQUE PRIMARY KEY'),
     ('usUnits', 'INTEGER NOT NULL'),
     ('interval', 'INTEGER NOT NULL'),
@@ -114,12 +121,13 @@ SCHEMA = [
     ('windSpeed', 'REAL'),
 ]
 
-def create_table(cursor):
+def create_table(cursor: sqlite3.Cursor) -> None:
+    """Creates the archive table if it doesn't exist."""
     cols = ", ".join([f"{name} {dtype}" for name, dtype in SCHEMA])
     cursor.execute(f"CREATE TABLE IF NOT EXISTS archive ({cols})")
 
-def generate_record(timestamp):
-    # Determine season/time of day for somewhat realistic values
+def generate_record(timestamp: int) -> Dict[str, Any]:
+    """Generates a single weather record with semi-realistic values."""
     dt = datetime.fromtimestamp(timestamp)
 
     # Base temp based on time of day (coolest at 4am, warmest at 3pm)
@@ -132,24 +140,24 @@ def generate_record(timestamp):
 
     # Peak at 15:00
     temp_offset = math.sin(2 * math.pi * (day_progress - 9.0/24.0)) * (temp_swing / 2.0)
-    outTemp = avg_temp + temp_offset
+    out_temp = avg_temp + temp_offset
 
     # Random noise
-    outTemp += random.uniform(-1.0, 1.0)
+    out_temp += random.uniform(-1.0, 1.0)
 
     # Humidity inverse to temp usually
-    outHumidity = 50.0 - (temp_offset * 1.5) + random.uniform(-5, 5)
-    outHumidity = max(10, min(100, outHumidity))
+    out_humidity = 50.0 - (temp_offset * 1.5) + random.uniform(-5, 5)
+    out_humidity = max(10, min(100, out_humidity))
 
     # Dewpoint approx: T - ((100 - RH)/5.0)
-    dewpoint = outTemp - ((100.0 - outHumidity) / 5.0)
+    dewpoint = out_temp - ((100.0 - out_humidity) / 5.0)
 
     # Wind
-    windSpeed = random.uniform(0, 10)
-    if random.random() > 0.9: windSpeed += 10 # Gusts
+    wind_speed = random.uniform(0, 10)
+    if random.random() > 0.9: wind_speed += 10 # Gusts
 
-    windGust = windSpeed * random.uniform(1.0, 1.5)
-    windDir = random.uniform(0, 360)
+    wind_gust = wind_speed * random.uniform(1.0, 1.5)
+    wind_dir = random.uniform(0, 360)
 
     # Rain (rarely)
     rain = 0.0
@@ -160,67 +168,77 @@ def generate_record(timestamp):
         'dateTime': timestamp,
         'usUnits': weewx.US,
         'interval': 5,
-        'outTemp': outTemp,
-        'outHumidity': outHumidity,
+        'outTemp': out_temp,
+        'outHumidity': out_humidity,
         'dewpoint': dewpoint,
         'barometer': 29.92 + random.uniform(-0.1, 0.1),
-        'windSpeed': windSpeed,
-        'windGust': windGust,
-        'windDir': windDir,
+        'windSpeed': wind_speed,
+        'windGust': wind_gust,
+        'windDir': wind_dir,
         'rain': rain,
         'rainRate': rain * 12.0, # hourly rate approx
         'UV': max(0, math.sin(2 * math.pi * (day_progress - 0.5)) * 10) if 6 <= hour <= 18 else 0,
         'radiation': max(0, math.sin(2 * math.pi * (day_progress - 0.5)) * 1000) if 6 <= hour <= 18 else 0,
     }
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Generate WeeWX test data")
     parser.add_argument("--output", default="weewx.sdb", help="Output database file")
     parser.add_argument("--days", type=int, default=7, help="Number of days to generate")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
+
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
 
     conn = sqlite3.connect(args.output)
     cursor = conn.cursor()
 
-    create_table(cursor)
+    try:
+        create_table(cursor)
 
-    end_time = int(time.time())
-    start_time = end_time - (args.days * 86400)
+        end_time = int(time.time())
+        start_time = end_time - (args.days * 86400)
 
-    # Snap to 5 minute boundary
-    start_time = start_time - (start_time % 300)
+        # Snap to 5 minute boundary
+        start_time = start_time - (start_time % 300)
 
-    print(f"Generating data from {datetime.fromtimestamp(start_time)} to {datetime.fromtimestamp(end_time)}")
+        logger.info("Generating data from %s to %s", datetime.fromtimestamp(start_time), datetime.fromtimestamp(end_time))
 
-    current = start_time
-    count = 0
-    batch = []
-
-    while current <= end_time:
-        rec = generate_record(current)
-
-        # Build sql
-        keys = rec.keys()
-        vals = [rec[k] for k in keys]
-        placeholders = ",".join(["?" for _ in keys])
+        current = start_time
+        count = 0
+        batch: List[List[Any]] = []
+        
+        # We need to extract keys once to maintain order
+        sample_rec = generate_record(current)
+        keys = list(sample_rec.keys())
         cols = ",".join(keys)
+        placeholders = ",".join(["?" for _ in keys])
 
-        batch.append(vals)
+        while current <= end_time:
+            rec = generate_record(current)
+            vals = [rec[k] for k in keys]
+            batch.append(vals)
 
-        if len(batch) >= 1000:
+            if len(batch) >= 1000:
+                cursor.executemany(f"INSERT OR REPLACE INTO archive ({cols}) VALUES ({placeholders})", batch)
+                batch = []
+                logger.debug("Generated %d records...", count)
+
+            current += 300 # 5 minutes
+            count += 1
+
+        if batch:
             cursor.executemany(f"INSERT OR REPLACE INTO archive ({cols}) VALUES ({placeholders})", batch)
-            batch = []
-            print(f"Generated {count} records...", end='\r')
 
-        current += 300 # 5 minutes
-        count += 1
+        conn.commit()
+        logger.info("Done. Generated %d records in %s", count, args.output)
 
-    if batch:
-        cursor.executemany(f"INSERT OR REPLACE INTO archive ({cols}) VALUES ({placeholders})", batch)
-
-    conn.commit()
-    conn.close()
-    print(f"\nDone. Generated {count} records in {args.output}")
+    except Exception as e:
+        logger.error("Error generating data: %s", e)
+        sys.exit(1)
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     main()
