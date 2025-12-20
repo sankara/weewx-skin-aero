@@ -38,8 +38,15 @@ def run_bundler(skin_dir):
 
     print(f"Generated bundles: {js_bundle}, {css_bundle}")
 
-    # 4. Update index.html
-    index_path = os.path.join(skin_dir, 'index.html')
+    # 4. Update index.html or index.html.tmpl
+    index_name = 'index.html'
+    if not os.path.exists(os.path.join(skin_dir, index_name)):
+        index_name = 'index.html.tmpl'
+    
+    index_path = os.path.join(skin_dir, index_name)
+    if not os.path.exists(index_path):
+        raise Exception(f"Could not find index.html or index.html.tmpl in {skin_dir}")
+
     with open(index_path, 'r') as f:
         html = f.read()
 
@@ -50,15 +57,13 @@ def run_bundler(skin_dir):
 
     # Replace JS script
     # Pattern: <script type="module" src="app.js"></script>
-    # Note: Webpack output is usually not a module in standard config unless distinct, but widely compatible as standard script or module.
-    # Our webpack config outputs standard script.
     html = re.sub(r'<script type="module" src="app\.js"></script>', 
                   f'<script src="dist/{js_bundle}"></script>', html)
 
     with open(index_path, 'w') as f:
         f.write(html)
     
-    print("Updated index.html references.")
+    print(f"Updated {index_name} references.")
 
     # 5. Update skin.conf
     # We need to ensure the CopyGenerator copies the 'dist' folder or the specific files.

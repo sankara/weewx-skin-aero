@@ -10,7 +10,9 @@ export function renderHeader() {
     if (!state.currentData) return;
 
     // 1. Title & Time
-    els.title.textContent = state.currentData.title || "Aero Weather";
+    const stationName = state.currentData.title || "Aero Weather";
+    els.title.textContent = stationName;
+    document.title = stationName;
     const date = new Date(state.currentData.meta.time * 1000);
     els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
 
