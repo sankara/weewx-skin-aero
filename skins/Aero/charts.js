@@ -443,8 +443,8 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
                 type: 'line',
                 label: `Rain Rate (${rateUnit})`,
                 data: rateData,
-                borderColor: '#1e3a8a',
-                backgroundColor: hexToRgbA('#1e3a8a', 0.1),
+                borderColor: '#0891b2', // Cyan-700 (Distinct from Blue-600)
+                backgroundColor: hexToRgbA('#0891b2', 0.1),
                 borderWidth: 2,
                 tension: 0.4,
                 pointRadius: 0,

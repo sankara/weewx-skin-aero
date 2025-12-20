@@ -93,17 +93,17 @@ function renderCurrentObservations() {
 
     createCompassCard(container, wSpeed, wGust, wDir, cWind, cTextPrimary, cTextSecondary, compassTheme);
 
-    // 4. Rain (Simple Card)
+    // 4. Rain (Combined Card)
     const rainItem = getDialItem('rain');
+    const rainRateItem = getDialItem('rainRate');
+    
     if (rainItem && rainItem.sum !== undefined) {
         rainItem.current = rainItem.sum;
-        rainItem.label = "Rain (Total)";
+        rainItem.label = "Rain";
     }
-    createSimpleCard(container, rainItem, 'rain', cRain);
-
-    // 4b. Rain Rate (Simple Card)
-    const rainRateItem = getDialItem('rainRate');
-    createSimpleCard(container, rainRateItem, 'rain', cRain);
+    
+    // Combine Rain and Rain Rate into one card
+    createCombinedCard(container, rainItem, rainRateItem, 'rain', cRain);
 
     // 5. Pressure (New Gauge)
     const pItem = getDialItem('barometer') || getDialItem('pressure');
@@ -190,6 +190,50 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
 
     // Pass null for title
     drawCompass(canvas, speed, gust, dir, unit, color, null, textPrimary, textSecondary, theme);
+}
+
+function createCombinedCard(container, item1, item2, type, color) {
+    if (!item1) return;
+
+    let icon = 'activity';
+    if (type === 'wind') { icon = 'wind'; }
+    if (type === 'rain') { icon = 'cloud-rain'; }
+
+    // Labels
+    const label1 = item1.label || (type === 'wind' ? 'Wind Speed' : 'Rain');
+    const label2 = item2 ? (item2.label || (type === 'wind' ? 'Gust' : 'Rate')) : '';
+
+    const precision1 = type === 'rain' ? 2 : 1;
+    const precision2 = type === 'rain' ? 2 : 1;
+
+    const val1 = item1.current !== undefined ? (+item1.current).toFixed(precision1) : '-';
+    const val2 = (item2 && item2.current !== undefined) ? (+item2.current).toFixed(precision2) : '-';
+
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    div.innerHTML = `
+        <div class="card-header card-header-centered">
+            <span class="card-label">${label1}</span>
+            <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
+        </div>
+        <div class="rain-content">
+            <div class="card-value value-display-lg" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
+                ${val1}
+            </div>
+            <div class="card-unit unit-display-md">${item1.unit}</div>
+            
+            ${item2 ? `
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; align-items: center;">
+                <span class="card-label-sm" style="color: var(--text-secondary); font-size: 0.85rem;">${label2}</span>
+                <div style="font-size: 1.2rem; font-weight: 600; color: ${color};">
+                    ${val2} <span style="font-size: 0.8rem; color: var(--text-secondary);">${item2.unit}</span>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    container.appendChild(div);
 }
 
 function createSimpleCard(container, item, type, color) {
@@ -285,25 +329,34 @@ export function renderHistorySummary() {
         createDialCard(container, tempSummaryItem, 'Avg Temp', cTemp, limits.min, limits.max, cTextPrimary, cTextSecondary);
     }
 
-    // 2. Rain
+    // 2. Rain (Combined Total + Max Rate)
     const rain = convertItem(obs.rain, state.units);
-    if (rain && rain.sum !== undefined) {
-        createSummaryCard(container, 'Total Rain', rain.sum, rain.unit, cRain);
-    }
-    
-    // 2b. Rain Rate
     const rainRate = convertItem(obs.rainRate, state.units);
-    if (rainRate && rainRate.max !== undefined) {
-        createSummaryCard(container, 'Max Rain Rate', rainRate.max, rainRate.unit, cRain);
+    
+    if (rain && rain.sum !== undefined) {
+        // Prepare items for combined card
+        const item1 = { current: rain.sum, unit: rain.unit, label: 'Total Rain' };
+        let item2 = null;
+        
+        if (rainRate && rainRate.max !== undefined) {
+            item2 = { current: rainRate.max, unit: rainRate.unit, label: 'Max Rate' };
+        }
+        
+        createCombinedCard(container, item1, item2, 'rain', cRain);
     }
 
-    // 3. Wind
+    // 3. Wind (Combined Max Gust + Avg)
     const wind = convertItem(obs.windSpeed, state.units);
     if (wind) {
-        if (wind.max !== undefined) createSummaryCard(container, 'Max Gust', wind.max, wind.unit, cWind);
-        // Avg wind?
+        const item1 = { current: wind.max, unit: wind.unit, label: 'Max Gust' };
+        let item2 = null;
+        
         const avg = getAverage(wind);
-        if (avg !== undefined) createSummaryCard(container, 'Avg Wind', avg, wind.unit, cWind);
+        if (avg !== undefined) {
+            item2 = { current: avg, unit: wind.unit, label: 'Avg Wind' };
+        }
+        
+        createCombinedCard(container, item1, item2, 'wind', cWind);
     }
 
     if (window.lucide) window.lucide.createIcons();
