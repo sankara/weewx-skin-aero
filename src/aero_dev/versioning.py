@@ -38,5 +38,39 @@ def main():
 
     print("pyproject.toml updated.")
 
+    # Update README.md
+    readme_path = os.path.join(repo_root, "README.md")
+    if os.path.exists(readme_path):
+        print(f"Updating version to {version} in README.md...")
+        with open(readme_path, "r") as f:
+            readme_content = f.read()
+
+        # Replace version in download URL and filename
+        # Pattern looks for vX.X.X/weewx-aero-vX.X.X.zip
+        # We replace with v{version}/weewx-aero-v{version}.zip
+        
+        # Regex to capture the version part in the specific URL context
+        # https://github.com/.../download/v1.2.1/weewx-aero-v1.2.1.zip
+        # limiting to the specific context to avoid incidental numbers
+        
+        new_readme_content = re.sub(
+            r'/download/v[\d\.]+/weewx-aero-v[\d\.]+\.zip',
+            f'/download/v{version}/weewx-aero-v{version}.zip',
+            readme_content
+        )
+        
+        # Also update the install command filename
+        # weectl extension install weewx-aero-v1.2.1.zip
+        new_readme_content = re.sub(
+             r'weectl extension install weewx-aero-v[\d\.]+\.zip',
+             f'weectl extension install weewx-aero-v{version}.zip',
+             new_readme_content
+        )
+
+        with open(readme_path, "w") as f:
+            f.write(new_readme_content)
+        
+        print("README.md updated.")
+
 if __name__ == "__main__":
     main()
