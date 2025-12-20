@@ -23,16 +23,17 @@ description: Auto-infer version bump (Minor/Patch), update changelog, and push r
 4. **Execute Release**:
     * **Bump**: Run `uv run aero-bump <new_version>` (updates `pyproject.toml`).
     * **Lock**: Run `uv lock` to synchronize `uv.lock` with the new version.
+    * **Summarize**: Create a concise, categorized release note from the git log (e.g., "## Features", "## Fixes").
+    * **Changelog**: Prepend the summarized release notes to `CHANGELOG.md` under a new `## [<new_version>] - <YYYY-MM-DD>` header.
     * **Commit**:
       ```bash
       git commit -am "chore: release v<new_version>"
       ```
-    * **Summarize**: Create a concise, categorized release note from the git log (e.g., "## Features", "## Fixes").
     * **Tag**:
       ```bash
       git tag -s v<new_version> -m "<summarized_release_notes>"
       ```
     * **Push**:
       ```bash
-      git push origin v<new_version>
+      git push origin v<new_version> && git push origin trunk
       ```

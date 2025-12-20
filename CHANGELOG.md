@@ -3,17 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.4.0] - 2025-12-20
-### Added
-- Comprehensive code review and refactoring of backend and frontend.
+## Features
+- Complete code review and refactoring of backend and frontend for improved modularity.
 - Unified test runner `aero-test` for Python and JavaScript suites.
 - GitHub Actions CI integration for automated testing.
 - Enhanced logging with configurable verbosity levels (`--verbose`, `--debug`).
 - Parallel data fetching for weekly history views.
 - JSDoc documentation for utility functions.
 
-### Fixed
-- Improved null/undefined handling in data conversions and aggregation.
+## Fixes
+- Minor UI fixes for style and consistency.
 - Fixed `rainRate` vs `rain_total` inconsistencies.
+- Improved null/undefined handling in data conversions and aggregation.
 - Corrected unit conversion logic for pressure in Imperial mode.
 - Resolved Webpack warnings for missing exports.
 
