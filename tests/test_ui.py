@@ -26,7 +26,7 @@ def report_server(report_output):
 
 def test_homepage_loads(page: Page, report_server):
     page.goto(report_server)
-    expect(page).to_have_title("Aero - WeeWX")
+    expect(page).to_have_title("Test Station")
 
 def test_current_conditions_visible(page: Page, report_server):
     page.goto(report_server)
