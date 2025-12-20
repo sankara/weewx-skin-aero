@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [2.0.0] - 2025-12-20
 ## Features
 - Major stable release marking a milestone in project maturity.
-- Implemented persistent "latest" download links in README using generic asset naming (`weewx-aero.zip`).
-- Automated `CHANGELOG.md` updates as part of the release workflow.
+- **Refined Rain Card**: Added "Rain Last Hour" (last 60 minutes) to current conditions.
+- **Unit Consistency**: Fixed unit conversion logic for rain rates and ensured all components respect user unit preferences.
+- **Stable Release Tooling**: Implemented persistent "latest" download links in README using generic asset naming (`weewx-aero.zip`).
+- **Automated Workflows**: Updated release process with automated changelog management and hardened report building.
 - Standardized project-wide versioning and dependency management.
 
 ## Documentation

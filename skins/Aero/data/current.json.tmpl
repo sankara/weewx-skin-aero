@@ -52,6 +52,12 @@
       "label": "Rain Rate"
     },
     {
+      "observation": "rainHour",
+      "current": $span(hour_delta=1).rain.sum.json,
+      "unit": "$unit.label.rain",
+      "label": "Last Hour"
+    },
+    {
       "observation": "UV",
       "current": $current.UV.json,
       "unit": "",

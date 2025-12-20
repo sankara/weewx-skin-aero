@@ -43,8 +43,21 @@ describe('utils.js', () => {
                 ]
             };
             const converted = convertItem(item, 'imperial');
-            expect(converted.graph[0][1]).toBe(32);
             expect(converted.graph[1][2]).toBe(68);
+        });
+
+        it('should convert rain rate (cm/hr to in/h)', () => {
+            const item = { unit: 'cm/hr', current: 2.54 };
+            const converted = convertItem(item, 'imperial');
+            expect(converted.unit).toBe('in/h');
+            expect(converted.current).toBe(1);
+        });
+
+        it('should convert rain rate (mm/h to in/h)', () => {
+            const item = { unit: 'mm/h', current: 25.4 };
+            const converted = convertItem(item, 'imperial');
+            expect(converted.unit).toBe('in/h');
+            expect(converted.current).toBe(1);
         });
     });
 

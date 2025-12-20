@@ -96,14 +96,15 @@ function renderCurrentObservations() {
     // 4. Rain (Combined Card)
     const rainItem = getDialItem('rain');
     const rainRateItem = getDialItem('rainRate');
-    
+    const rainHourItem = getDialItem('rainHour');
+
     if (rainItem && rainItem.sum !== undefined) {
         rainItem.current = rainItem.sum;
-        rainItem.label = "Rain";
+        rainItem.label = "Total Rain";
     }
-    
-    // Combine Rain and Rain Rate into one card
-    createCombinedCard(container, rainItem, rainRateItem, 'rain', cRain);
+
+    // Create Rain Card with Total, Hour and Rate
+    createRainCard(container, rainItem, rainHourItem, rainRateItem, cRain);
 
     // 5. Pressure (New Gauge)
     const pItem = getDialItem('barometer') || getDialItem('pressure');
@@ -236,6 +237,51 @@ function createCombinedCard(container, item1, item2, type, color) {
     container.appendChild(div);
 }
 
+function createRainCard(container, totalItem, hourItem, rateItem, color) {
+    if (!totalItem) return;
+
+    const icon = 'cloud-rain';
+    const valTotal = totalItem.current !== undefined ? (+totalItem.current).toFixed(2) : '-';
+    const valHour = hourItem ? (hourItem.current !== undefined ? (+hourItem.current).toFixed(2) : '-') : null;
+    const valRate = rateItem ? (rateItem.current !== undefined ? (+rateItem.current).toFixed(2) : '-') : null;
+
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    div.innerHTML = `
+        <div class="card-header card-header-centered">
+            <span class="card-label">${totalItem.label || 'Total Rain'}</span>
+            <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
+        </div>
+        <div class="rain-content">
+            <div class="card-value value-display-lg" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
+                ${valTotal}
+            </div>
+            <div class="card-unit unit-display-md">${totalItem.unit}</div>
+            
+            <div class="rain-stats-grid">
+                ${valHour !== null ? `
+                <div class="rain-stat-item">
+                    <span class="card-label-xs">Last Hour</span>
+                    <div class="rain-stat-value">
+                        ${valHour} <span class="rain-stat-unit">${totalItem.unit}</span>
+                    </div>
+                </div>
+                ` : ''}
+                ${valRate !== null ? `
+                <div class="rain-stat-item">
+                    <span class="card-label-xs">Rain Rate</span>
+                    <div class="rain-stat-value">
+                        ${valRate} <span class="rain-stat-unit">${rateItem.unit}</span>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+}
+
 function createSimpleCard(container, item, type, color) {
     if (!item) return;
 
@@ -332,16 +378,16 @@ export function renderHistorySummary() {
     // 2. Rain (Combined Total + Max Rate)
     const rain = convertItem(obs.rain, state.units);
     const rainRate = convertItem(obs.rainRate, state.units);
-    
+
     if (rain && rain.sum !== undefined) {
         // Prepare items for combined card
         const item1 = { current: rain.sum, unit: rain.unit, label: 'Total Rain' };
         let item2 = null;
-        
+
         if (rainRate && rainRate.max !== undefined) {
             item2 = { current: rainRate.max, unit: rainRate.unit, label: 'Max Rate' };
         }
-        
+
         createCombinedCard(container, item1, item2, 'rain', cRain);
     }
 
@@ -350,12 +396,12 @@ export function renderHistorySummary() {
     if (wind) {
         const item1 = { current: wind.max, unit: wind.unit, label: 'Max Gust' };
         let item2 = null;
-        
+
         const avg = getAverage(wind);
         if (avg !== undefined) {
             item2 = { current: avg, unit: wind.unit, label: 'Avg Wind' };
         }
-        
+
         createCombinedCard(container, item1, item2, 'wind', cWind);
     }
 

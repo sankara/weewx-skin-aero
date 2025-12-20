@@ -750,3 +750,41 @@ input:checked+.slider:before {
     font-size: 0.9rem;
     margin-left: 0.25rem;
 }
+
+/* Rain Stats Grid */
+.rain-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    width: 100%;
+    border-top: 1px solid var(--card-border);
+    padding-top: 0.75rem;
+}
+
+.rain-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.card-label-xs {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.rain-stat-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.rain-stat-unit {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}

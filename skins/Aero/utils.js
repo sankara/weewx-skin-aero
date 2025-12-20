@@ -52,6 +52,18 @@ const CONVERSIONS = {
     'cm': [
         { target: 'in', func: v => v / 2.54, type: 'rain' },
         { target: 'mm', func: v => v * 10, type: 'rain' }
+    ],
+    'in/h': { target: 'mm/h', func: v => v * 25.4, type: 'rainRate' },
+    'in/hr': { target: 'mm/h', func: v => v * 25.4, type: 'rainRate' },
+    'mm/h': { target: 'in/h', func: v => v / 25.4, type: 'rainRate' },
+    'mm/hr': { target: 'in/h', func: v => v / 25.4, type: 'rainRate' },
+    'cm/h': [
+        { target: 'in/h', func: v => v / 2.54, type: 'rainRate' },
+        { target: 'mm/h', func: v => v * 10, type: 'rainRate' }
+    ],
+    'cm/hr': [
+        { target: 'in/h', func: v => v / 2.54, type: 'rainRate' },
+        { target: 'mm/h', func: v => v * 10, type: 'rainRate' }
     ]
 };
 
@@ -60,13 +72,15 @@ const TARGET_UNITS = {
         temp: '°C',
         speed: 'km/h',
         pressure: 'hPa',
-        rain: 'mm'
+        rain: 'mm',
+        rainRate: 'mm/h'
     },
     imperial: {
         temp: '°F',
         speed: 'mph',
         pressure: 'inHg',
-        rain: 'in'
+        rain: 'in',
+        rainRate: 'in/h'
     }
 };
 
@@ -89,6 +103,7 @@ export function convertItem(item, unitSystem) {
     if (['km/h', 'mph', 'm/s', 'kts'].includes(unit)) type = 'speed';
     if (['hPa', 'mbar', 'inHg'].includes(unit)) type = 'pressure';
     if (['mm', 'in', 'cm'].includes(unit)) type = 'rain';
+    if (['mm/h', 'mm/hr', 'in/h', 'in/hr', 'cm/h', 'cm/hr'].includes(unit)) type = 'rainRate';
 
     if (!type) return item;
 

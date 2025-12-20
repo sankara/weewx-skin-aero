@@ -108,7 +108,7 @@ def main() -> None:
     skin_dir = os.path.join(build_root, skin_name) # build/dev_skin/Aero
     
     logger.info("Creating temporary build skin at %s", skin_dir)
-    shutil.copytree(src_skin, skin_dir)
+    shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('node_modules', '.*'))
     
     # Run Bundler on the copy
     try:
