@@ -195,7 +195,8 @@ function createSimpleCard(container, item, type, color) {
 
     // Fallback label
     const label = item.label || (type === 'wind' ? 'Wind Speed' : 'Rain');
-    const val = item.current !== undefined ? (+item.current).toFixed(1) : '-';
+    const precision = type === 'rain' ? 2 : 1;
+    const val = item.current !== undefined ? (+item.current).toFixed(precision) : '-';
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -315,7 +316,7 @@ function createSummaryCard(container, label, value, unit, color) {
         </div>
         <div class="card-content-centered">
             <div class="card-value value-display-md" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
-                ${(+value).toFixed(1)}<span class="card-unit unit-inline-sm">${unit}</span>
+                ${(+value).toFixed(label.toLowerCase().includes('rain') ? 2 : 1)}<span class="card-unit unit-inline-sm">${unit}</span>
             </div>
         </div>
     `;

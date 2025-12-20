@@ -46,7 +46,10 @@ const CONVERSIONS = {
 
     'in': { target: 'mm', func: v => v * 25.4, type: 'rain' },
     'mm': { target: 'in', func: v => v / 25.4, type: 'rain' },
-    'cm': { target: 'in', func: v => v / 2.54, type: 'rain' }
+    'cm': [
+        { target: 'in', func: v => v / 2.54, type: 'rain' },
+        { target: 'mm', func: v => v * 10, type: 'rain' }
+    ]
 };
 
 const TARGET_UNITS = {
@@ -82,7 +85,11 @@ export function convertItem(item, unitSystem) {
     const targetUnit = TARGET_UNITS[unitSystem][type];
     if (unit === targetUnit) return item;
 
-    const conv = CONVERSIONS[unit];
+    let conv = CONVERSIONS[unit];
+    if (Array.isArray(conv)) {
+        conv = conv.find(c => c.target === targetUnit);
+    }
+
     if (!conv || conv.target !== targetUnit) {
         return item;
     }

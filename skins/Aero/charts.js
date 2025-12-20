@@ -410,12 +410,18 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
-    const cy = h * 0.85;
+    // ABSOLUTE CENTER TEXT STRATEGY
+    // We want the text to be at h * 0.5 (Dead Center)
+    // In this function, text is drawn at: cy - radius * 0.3 + (10 * s)
+    // So: h * 0.5 = cy - radius * 0.3 + (10 * s)
+    // cy = (h * 0.5) + (radius * 0.3) - (10 * s)
 
     // Relative Sizing Factors (Base: 280px width)
-    const s = w / 280; // Scale factor
+    const s = w / 280;
+    const radius = Math.min(w, h) * 0.38;
 
-    const radius = Math.min(w, h * 1.5) * 0.45;
+    const textY = h * 0.5;
+    const cy = textY + (radius * 0.3) - (10 * s);
 
     ctx.clearRect(0, 0, w, h);
 
@@ -654,13 +660,12 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     const h = canvas.height;
     const cx = w / 2;
     // Shifted down to align values with other cards
-    const cy = h * 0.65;
 
-    // Relative Sizing Factors (Base: 280px width)
     const s = w / 280;
+    const radius = Math.min(w, h) * 0.38;
 
-    // Slightly smaller radius to ensure labels inside don't cramp, also safer bounds
-    const radius = Math.min(w, h) * 0.40;
+    // ABSOLUTE CENTER TEXT STRATEGY
+    const cy = h * 0.5;
 
     const t = theme || {};
     const colTickC = t.tickCardinal || '#94a3b8';
@@ -693,8 +698,8 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
             ctx.moveTo(0, -radius + (2 * s));
             ctx.lineTo(0, -radius - (8 * s));
         } else if (i % 10 === 0) {
-            // Minor
-            ctx.strokeStyle = colTickm;
+            // Minor - Darkened to match major ticks better
+            ctx.strokeStyle = colTickM;
             ctx.lineWidth = 1.5 * s;
             ctx.moveTo(0, -radius);
             ctx.lineTo(0, -radius - (5 * s));
@@ -751,22 +756,22 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Speed Value (Move up slightly to make room for Gust below)
+    // Speed Value: Draw at dead center
     ctx.font = `bold ${56 * s}px Inter, sans-serif`;
     ctx.fillStyle = textPrimary || '#1e293b';
     ctx.textAlign = 'center';
-    ctx.fillText((+speed).toFixed(1), cx, cy - (20 * s));
+    ctx.fillText((+speed).toFixed(1), cx, cy);
 
-    // Unit
-    ctx.font = `500 ${19 * s}px Inter, sans-serif`; // Originally 12px -> 19px
+    // Unit: Relative to center
+    ctx.font = `500 ${19 * s}px Inter, sans-serif`;
     ctx.fillStyle = textSecondary || '#64748b';
-    ctx.fillText(unit, cx, cy + (20 * s));
+    ctx.fillText(unit, cx, cy + (30 * s));
 
     // 4. Gust
     if (gust !== null && gust !== undefined) {
         ctx.font = `500 ${17 * s}px Inter, sans-serif`;
         ctx.fillStyle = color; // Accent color
-        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + (45 * s));
+        ctx.fillText(`Gust: ${(+gust).toFixed(1)}`, cx, cy + (55 * s));
     }
 }
 
@@ -775,12 +780,13 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     const w = canvas.width;
     const h = canvas.height;
     const cx = w / 2;
-    const cy = h * 0.65; // Shifted down to align with wind
 
     // Relative Sizing Factors (Base: 280px width)
     const s = w / 280;
+    const radius = Math.min(w, h) * 0.38;
 
-    const radius = Math.min(w, h) * 0.42;
+    // ABSOLUTE CENTER TEXT STRATEGY
+    const cy = h * 0.5;
 
     ctx.clearRect(0, 0, w, h);
 
@@ -817,7 +823,8 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.lineWidth = tickWidth;
-        ctx.strokeStyle = isMajor ? color : '#e2e8f0';
+        // Darkened minor ticks
+        ctx.strokeStyle = isMajor ? color : '#cbd5e1';
         ctx.stroke();
     }
 
@@ -834,15 +841,17 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.font = `bold ${48 * s}px Inter, sans-serif`;
+    ctx.font = `bold ${56 * s}px Inter, sans-serif`;
     ctx.fillStyle = textPrimary || '#1e293b';
     const valStr = (current !== null && current !== undefined) ? (+current).toFixed(1) : '--';
+
+    // Centered at cy
     ctx.fillText(valStr, cx, cy);
 
     // 4. Unit
-    ctx.font = `500 ${18 * s}px Inter, sans-serif`;
+    ctx.font = `500 ${22 * s}px Inter, sans-serif`;
     ctx.fillStyle = textSecondary || '#64748b';
-    ctx.fillText(unit, cx, cy + (35 * s));
+    ctx.fillText(unit, cx, cy + (30 * s));
 
     // 5. Min/Max Labels
     ctx.font = `500 ${14 * s}px Inter, sans-serif`;
