@@ -8,15 +8,15 @@ class AeroInstaller(ExtensionInstaller):
     def __init__(self):
         super(AeroInstaller, self).__init__(
             version="1.0.0",
-            name='aero',
+            name='Aero',
             description='A premium modern skin for WeeWX with Canvas-based visualizations.',
             author="Sankara",
             text="Installs the Aero skin.",
             config={
                 'StdReport': {
-                    'aero': {
-                        'skin': 'aero',
-                        'HTML_ROOT': 'aero'
+                    'Aero': {
+                        'skin': 'Aero',
+                        'HTML_ROOT': ''
                     }
                 }
             },
