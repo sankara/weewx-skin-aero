@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-12-20
+## Features
+- Major stable release marking a milestone in project maturity.
+- Implemented persistent "latest" download links in README using generic asset naming (`weewx-aero.zip`).
+- Automated `CHANGELOG.md` updates as part of the release workflow.
+- Standardized project-wide versioning and dependency management.
+
+## Documentation
+- Added comprehensive historical `CHANGELOG.md`.
+- Updated README with stable installation commands and improved development instructions.
+- Refined release workflow with automated changelog and asset management.
+
 ## [1.4.0] - 2025-12-20
 ## Features
 - Complete code review and refactoring of backend and frontend for improved modularity.
