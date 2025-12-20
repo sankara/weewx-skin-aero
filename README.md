@@ -2,7 +2,7 @@
 
 **Aero** is a premium, modern, and high-performance skin for [WeeWX](http://weewx.com/), designed to visualize your weather data with stunning aesthetics and clarity.
 
-![Aero Skin Screenshot](screenshots/aero-preview.png)
+![Aero Skin Screenshot](screenshots/desktop-dark.png)
 
 ## Features
 
