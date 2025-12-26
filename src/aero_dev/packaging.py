@@ -96,7 +96,7 @@ def main():
 
     # Copy skins/Aero
     target_skin_dir = os.path.join(pkg_root, "skins/Aero")
-    shutil.copytree(skin_dir, target_skin_dir, ignore=shutil.ignore_patterns('.*'))
+    shutil.copytree(skin_dir, target_skin_dir, ignore=shutil.ignore_patterns('.*', 'node_modules'))
 
     # Copy root files (README, LICENSE) to skins/Aero
     extra_files = ['README.md', 'LICENSE']

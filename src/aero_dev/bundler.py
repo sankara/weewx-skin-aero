@@ -52,12 +52,24 @@ def run_bundler(skin_dir: str) -> None:
 
     # 1. Check for node_modules, install if missing
     if not os.path.exists(os.path.join(skin_dir, 'node_modules')):
-        logger.info("Installing npm dependencies...")
-        subprocess.check_call(['npm', 'install'], cwd=skin_dir)
+        logger.info("Installing npm dependencies in %s...", skin_dir)
+        try:
+            subprocess.check_call(['npm', 'install'], cwd=skin_dir)
+        except subprocess.CalledProcessError as e:
+            logger.error("npm install failed in %s: %s", skin_dir, e)
+            raise
 
     # 2. Run Webpack Build
-    logger.info("Running Webpack build...")
-    subprocess.check_call(['npm', 'run', 'build'], cwd=skin_dir)
+    logger.info("Running Webpack build in %s...", skin_dir)
+    try:
+        subprocess.check_call(['npm', 'run', 'build'], cwd=skin_dir)
+    except subprocess.CalledProcessError as e:
+        logger.error("Webpack build failed in %s: %s", skin_dir, e)
+        # Check if webpack exists in node_modules/.bin
+        webpack_bin = os.path.join(skin_dir, 'node_modules', '.bin', 'webpack')
+        if not os.path.exists(webpack_bin):
+            logger.error("webpack binary NOT found at %s. node_modules may be corrupt.", webpack_bin)
+        raise
 
     # 3. Identify generated bundles
     dist_dir = os.path.join(skin_dir, 'dist')

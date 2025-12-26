@@ -77,3 +77,21 @@ def test_week_json_structure(report_output):
                 assert len(graph[0]) >= 2
             break
     assert found_temp
+
+def test_weatherplus_json_structure(report_output):
+    """Verify weatherplus.json structure for Homebridge."""
+    with open(report_output / "data" / "weatherplus.json") as f:
+        data = json.load(f)
+
+    # Check for observations array
+    assert "observations" in data
+    assert isinstance(data["observations"], list)
+    assert len(data["observations"]) > 0
+
+    obs = data["observations"][0]
+    assert "stationID" in obs
+    assert "epoch" in obs
+    assert "imperial" in obs
+    assert "metric" in obs
+    assert "metric_si" in obs
+    assert "uk_hybrid" in obs
