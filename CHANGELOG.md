@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-12-26
+## Features
+- **Homebridge Integration**: Added a new template `weatherplus.json` for seamless integration with the Homebridge WeatherPlus plugin.
+- **Improved Documentation**: Added comprehensive setup instructions for Homebridge integration.
+
+## Fixes
+- **Packaging Robustness**: Fixed a critical issue in `aero-package` where the `node_modules` directory was incorrectly handled, causing build failures.
+- **Enhanced Diagnostics**: Improved error handling and logging in the bundler for better troubleshooting of asset builds.
+
 ## [2.0.0] - 2025-12-20
 ## Features
 - Major stable release marking a milestone in project maturity.
