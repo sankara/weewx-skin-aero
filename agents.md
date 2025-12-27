@@ -17,12 +17,30 @@ This document serves as a knowledge base for the Aero Skin project, capturing ke
 - **Breakpoints**: Major layout changes happen at `640px` (Mobile) and `1024px` (Desktop).
 - **Navigation**: The header controls (Theme Icon, Unit Switch) adapt their layout via Flexbox explicitly for mobile rows.
 
-## 2. Development Workflow
+## 2. Development Workflow (UV Based)
 
-### Watch Script (`aero-watch`)
-- **Purpose**: Automates the build and verification loop.
-- **Function**: Watches for file changes -> Rebuilds/copies files -> Refreshes browser (via live-server or manual reload).
-- **Usage**: `uv run aero-watch`
+This project uses `uv` for dependency management and running development scripts. All commands should be prefixed with `uv run`.
+
+### Core Development Commands
+- **Watch Script**: Automates the build and verification loop.
+  - `uv run aero-watch`
+- **Data Generator**: Generates mock WeeWX data for testing.
+  - `uv run aero-gen`
+- **Report Builder**: Builds the skin report from templates.
+  - `uv run aero-build`
+- **Clean Artifacts**: Removes generated data and builds.
+  - `uv run aero-clean`
+- **Packaging**: Creates the skin installation archive.
+  - `uv run aero-package`
+- **Version Bumping**: Safely increments the project version.
+  - `uv run aero-bump <major|minor|patch>`
+
+### Testing & Verification
+- **Run Tests**: Executes the full test suite (pytest).
+  - `uv run aero-test`
+- **Snapshot Capture**: Captures automated screenshots across viewports.
+  - `uv run aero-snap`
+- **iOS Simulator**: Use the iOS Simulator via MCP for high-fidelity mobile verification. This provides a more realistic test environment than browser resizing, especially for notch/safe-area testing.
 
 ## 3. Key Files
 - `skins/Aero/index.html`: Main entry point, structure.

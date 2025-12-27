@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#e0eafc">
     <title>$station.location</title>
     <script>
         // Inline script to prevent FOUC
@@ -11,10 +12,13 @@
             try {
                 var local = localStorage.getItem('theme');
                 var sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var meta = document.querySelector('meta[name="theme-color"]');
                 if (local === 'dark' || (!local && sys)) {
                     document.documentElement.classList.add('dark');
+                    if (meta) meta.setAttribute('content', '#0f172a');
                 } else {
                     document.documentElement.classList.remove('dark');
+                    if (meta) meta.setAttribute('content', '#e0eafc');
                 }
             } catch (e) {}
         })();

@@ -2,7 +2,14 @@
 
 A modern, responsive skin for [WeeWX](http://weewx.com/) focused on data visualization.
 
-![Aero Skin Screenshot](screenshots/desktop-dark.png)
+![Aero Dark Desktop](screenshots/desktop-dark.png)
+
+## Gallery
+
+| Mode | Desktop | Mobile |
+| :--- | :--- | :--- |
+| **Dark** | ![Desktop Dark](screenshots/desktop-dark.png) | ![Mobile Dark](screenshots/mobile-dark.png) |
+| **Light** | ![Desktop Light](screenshots/desktop-light.png) | ![Mobile Light](screenshots/mobile-light.png) |
 
 ## Overview
 

@@ -72,24 +72,23 @@ html.dark {
 }
 
 html.theme-aero {
-    --glass-blur: saturate(180%) blur(30px);
+    --glass-blur: saturate(180%) blur(40px);
     --card-radius: 28px;
     --section-radius: 24px;
-    /* Squircles for cards */
-    --ease-spring: cubic-bezier(0.4, 0.0, 0.2, 1);
-    /* Increased shadow for better depth in Light Mode */
-    --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    /* Softened depth with multi-layered shadow */
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 20px 40px -4px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 
-    /* Aero Specific Enhancements (More visible white for contrast) */
-    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
-    --card-border-color: rgba(255, 255, 255, 0.35);
-    --text-shadow-heading: 0 1px 2px rgba(0, 0, 0, 0.05);
+    /* Aero Specific Enhancements (Ultra-Soft Glass) */
+    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.4);
+    --text-shadow-heading: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 html.theme-aero.dark {
-    /* Dark Mode Aero (Ultra Transparent) */
-    --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.05) 100%);
-    --card-border-color: rgba(255, 255, 255, 0.08);
+    /* Dark Mode Aero (Ultra Transparent & Deep) */
+    --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.05) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.12);
+    --shadow-card: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* Update Card to use new Aero variables */
@@ -135,6 +134,10 @@ html.theme-aero.dark {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+html {
+    background-color: var(--bg-gradient-start);
 }
 
 body {
@@ -413,8 +416,10 @@ html.dark .nav-btn.active {
 @media (max-width: 640px) {
     .graph-card {
         padding: 1rem;
-        height: 300px; /* Shorter graphs on mobile */
-        grid-column: span 1 !important; /* Ensure they don't try to span 2 in a 1-col grid, though 1fr handles it */
+        height: 300px;
+        /* Shorter graphs on mobile */
+        grid-column: span 1 !important;
+        /* Ensure they don't try to span 2 in a 1-col grid, though 1fr handles it */
     }
 }
 
@@ -580,18 +585,21 @@ input:checked+.slider:before {
 
 @media (max-width: 640px) {
     .dials-container {
-        grid-template-columns: 1fr; /* Single column on small mobile */
+        grid-template-columns: 1fr 1fr;
+        /* Two columns on mobile */
+        gap: 0.75rem;
+        /* Tighter gap for small screens */
     }
 
     .summary-grid {
-        grid-template-columns: 1fr 1fr; /* Two columns for summary cards to keep it from being too long */
+        grid-template-columns: 1fr 1fr;
+        /* Two columns for summary cards */
+        gap: 0.75rem;
     }
 
-    /* If a dial is inside a summary grid (historical), make it span full width */
-    /* Using :has() might not be supported in very old mobile browsers, but it's widely supported now.
-       Fallback: we can also target based on being the first child if we know it's always the dial. */
+    /* Remove dial spanning to allow 2-column dials on mobile */
     .summary-grid .card:has(.dial-canvas) {
-        grid-column: span 2;
+        grid-column: span 1;
     }
 
     .summary-card .value {
@@ -600,7 +608,7 @@ input:checked+.slider:before {
 
     .dial-canvas {
         max-width: 100%;
-        height: auto !important; /* Allow responsive height */
+        height: auto !important;
     }
 
     .history-nav {
@@ -654,24 +662,48 @@ input:checked+.slider:before {
 
     /* Header adjustments for mobile */
     .main-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
+        flex-direction: row;
+        /* Keep as row on mobile */
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        gap: 0.5rem;
     }
 
     .header-left {
-        width: 100%;
+        width: auto;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    #station-title {
+        font-size: 1.125rem;
+        /* Slightly smaller for mobile row */
+    }
+
+    .subtitle {
+        font-size: 0.7rem;
     }
 
     .header-controls {
-        width: 100%;
-        justify-content: space-between;
-        padding-top: 0.5rem;
-        border-top: 1px solid var(--card-border);
+        width: auto;
+        justify-content: flex-end;
+        padding-top: 0;
+        border-top: none;
+        gap: 1.25rem;
+        /* Increased for better thumb usage */
+    }
+
+    .btn-icon {
+        padding: 0.6rem;
+        /* Even larger touch target */
+    }
+
+    /* Notch gap fix */
+    body {
+        padding-top: env(safe-area-inset-top);
     }
 }
 

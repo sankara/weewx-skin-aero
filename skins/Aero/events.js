@@ -99,6 +99,13 @@ export function setupTheme() {
     const isDark = document.documentElement.classList.contains('dark');
     updateIcon(isDark);
 
+    const updateThemeColor = (isDark) => {
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+            meta.setAttribute('content', isDark ? '#0f172a' : '#e0eafc');
+        }
+    };
+
     btn.addEventListener('click', () => {
         const isDarkNow = document.documentElement.classList.contains('dark');
         const nextState = !isDarkNow;
@@ -111,6 +118,7 @@ export function setupTheme() {
             localStorage.setItem('theme', 'light');
         }
         updateIcon(nextState);
+        updateThemeColor(nextState);
 
         renderHeader();
         renderHistorySummary();
