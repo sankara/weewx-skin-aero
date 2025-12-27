@@ -405,6 +405,38 @@ export function renderHistorySummary() {
         createCombinedCard(container, item1, item2, 'wind', cWind);
     }
 
+    // 4. Humidity & Pressure (as Dials)
+    const hum = convertItem(obs.outHumidity, state.units);
+    const press = convertItem(obs.barometer, state.units) || convertItem(obs.pressure, state.units);
+
+    const cHum = resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9');
+    const cPress = resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6');
+    const cTextPrimary = resolveThemeColor('--text-primary', '#1e293b', '#f8fafc');
+    const cTextSecondary = resolveThemeColor('--text-secondary', '#64748b', '#94a3b8');
+
+    if (hum) {
+        const humSummary = {
+            current: getAverage(hum),
+            min: hum.min,
+            max: hum.max,
+            unit: hum.unit,
+            label: 'Avg Humidity'
+        };
+        createDialCard(container, humSummary, 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
+    }
+
+    if (press) {
+        const pressLimits = state.units === 'imperial' ? { min: 28, max: 31 } : { min: 950, max: 1050 };
+        const pressSummary = {
+            current: getAverage(press),
+            min: press.min,
+            max: press.max,
+            unit: press.unit,
+            label: 'Avg Pressure'
+        };
+        createGaugeCard(container, pressSummary, 'Pressure', cPress, pressLimits.min, pressLimits.max, cTextPrimary, cTextSecondary);
+    }
+
     if (window.lucide) window.lucide.createIcons();
 }
 

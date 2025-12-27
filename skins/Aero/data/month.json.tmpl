@@ -36,6 +36,12 @@
       "graph": $month.windSpeed.series(time_unit='unix_epoch', aggregate_interval=10800).json
     },
     {
+      "observation": "windGust",
+      "max": $month.windGust.max.json,
+      "unit": "$unit.label.windSpeed",
+      "graph": $month.windGust.series(time_unit='unix_epoch', aggregate_interval=10800).json
+    },
+    {
       "observation": "rain",
       "sum": $month.rain.sum.json,
       "unit": "$unit.label.rain",
