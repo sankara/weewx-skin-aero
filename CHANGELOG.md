@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2025-12-27
+### Fixed
+- **Historical Wind Data**: Resolved issue where wind data was missing from Month and Year views due to outdated templates.
+- **Improved History Summary**: Added Humidity and Pressure cards to historical views for a more comprehensive summary.
+
 ## [2.2.0] - 2025-12-26
 ## Features
 - **Mobile Layout Refinement**: Optimized header with left-aligned station name and right-aligned controls.
