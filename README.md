@@ -34,7 +34,7 @@ weectl extension install https://github.com/sankara/weewx-skin-aero/releases/lat
 ### Manual Install (Versioned)
 Or install a specific version:
 ```bash
-weectl extension install https://github.com/sankara/weewx-skin-aero/releases/download/v2.1.0/weewx-aero-v2.1.0.zip
+weectl extension install https://github.com/sankara/weewx-skin-aero/releases/download/v2.2.0/weewx-aero-v2.2.0.zip
 ```
 2.  Restart WeeWX:
     ```bash

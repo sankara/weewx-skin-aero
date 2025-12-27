@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2025-12-26
+## Features
+- **Mobile Layout Refinement**: Optimized header with left-aligned station name and right-aligned controls.
+- **Improved Information Density**: Enforced 2-column card grid on mobile viewports (iPhone Pro).
+- **Aesthetic Improvements**: Enhanced glassmorphism effects (40px blur), softer shadows, and deeper dark mode background.
+- **Notch Gap Fix**: Implemented `viewport-fit=cover` and safe-area padding for seamless mobile experience.
+- **Developer Workflow**: Standardized `uv run` commands, added `aero-clean` script, and documented iOS Simulator verification process.
+- **Mobile PWA Support**: Dynamic `theme-color` meta tag updates based on theme toggle.
+
 ## [2.1.0] - 2025-12-26
 ## Features
 - **Homebridge Integration**: Added a new template `weatherplus.json` for seamless integration with the Homebridge WeatherPlus plugin.
