@@ -15,6 +15,27 @@
       "graph": $year.outTemp.series(time_unit='unix_epoch', aggregate_interval=86400).json
     },
     {
+      "observation": "outHumidity",
+      "min": $year.outHumidity.min.json,
+      "max": $year.outHumidity.max.json,
+      "unit": "$unit.label.outHumidity",
+      "graph": $year.outHumidity.series(time_unit='unix_epoch', aggregate_interval=86400).json
+    },
+    {
+      "observation": "barometer",
+      "min": $year.barometer.min.json,
+      "max": $year.barometer.max.json,
+      "unit": "$unit.label.barometer",
+      "graph": $year.barometer.series(time_unit='unix_epoch', aggregate_interval=86400).json
+    },
+    {
+      "observation": "windSpeed",
+      "min": $year.windSpeed.min.json,
+      "max": $year.windSpeed.max.json,
+      "unit": "$unit.label.windSpeed",
+      "graph": $year.windSpeed.series(time_unit='unix_epoch', aggregate_interval=86400).json
+    },
+    {
       "observation": "rain",
       "sum": $year.rain.sum.json,
       "unit": "$unit.label.rain",
