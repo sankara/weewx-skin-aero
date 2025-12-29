@@ -640,9 +640,17 @@ html.dark #history-summary {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    flex-wrap: nowrap;
-    /* Prevent wrapping on desktop */
+    flex-wrap: wrap;
+    /* Allow wrapping for mobile */
     gap: 1rem;
+}
+
+.history-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .summary-grid {

@@ -324,22 +324,22 @@ export function renderHistorySummary() {
     const container = document.getElementById('history-summary');
     if (!container) return;
     container.innerHTML = '';
+    container.innerHTML = ''; // Clear only the card container
 
     if (!state.activeData || !state.activeData.obs) return;
 
     // Dynamic Title Logic
     let titleText = 'Summary';
-    if (state.viewScope === 'day') titleText = 'Daily Summary';
-    if (state.viewScope === 'week') titleText = 'Weekly Summary';
-    if (state.viewScope === 'month') titleText = 'Monthly Summary';
-    if (state.viewScope === 'year') titleText = 'Yearly Summary';
+    const view = state.historyView;
+    if (view === 'day') titleText = 'Daily Summary';
+    else if (view === 'week') titleText = 'Weekly Summary';
+    else if (view === 'month') titleText = 'Monthly Summary';
+    else if (view === 'year') titleText = 'Yearly Summary';
 
-    const sectionHeader = document.createElement('div');
-    sectionHeader.className = 'history-section-header';
-    sectionHeader.innerHTML = `
-        <h2 class="section-title">${titleText}</h2>
-    `;
-    container.appendChild(sectionHeader);
+    const titleEl = document.getElementById('history-title'); // Assuming history-title is outside the cleared container
+    if (titleEl) {
+        titleEl.textContent = titleText;
+    }
 
     // Grid Container for Summary Cards
     const summaryGrid = document.createElement('div');
