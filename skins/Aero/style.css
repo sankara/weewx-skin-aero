@@ -725,8 +725,17 @@ html.dark #history-summary {
         align-items: center;
         width: 100%;
         gap: 0.5rem;
-        flex-wrap: nowrap;
-        /* Prevent wrapping */
+        flex-wrap: wrap;
+        /* Allow wrapping to accommodate title */
+    }
+
+    .history-title {
+        font-size: 1.25rem;
+        /* Smaller title on mobile */
+        width: auto;
+        /* Allow it to wrap if really needed, but mostly flex container wraps */
+        margin-right: auto;
+        /* Push controls to right if wrapped */
     }
 
     /* Make date controls compact on mobile */
