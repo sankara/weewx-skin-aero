@@ -1,7 +1,7 @@
 // ui.js
 import { els, state } from './state.js';
 import { THEME, convertItem, getAverage, resolveThemeColor, hexToRgbA } from './utils.js';
-import { drawDial, drawCompass } from './charts.js';
+import { drawDial, drawCompass, drawGauge } from './charts.js';
 
 /**
  * Renders the Fixed Top Section (Current Conditions)
@@ -11,7 +11,7 @@ export function renderHeader() {
 
     // 1. Title & Time
     const stationName = state.currentData.title || "Aero Weather";
-    els.title.textContent = stationName;
+    els.title.innerHTML = `<a href="#/day" class="home-link">${stationName}</a>`;
     document.title = stationName;
     const date = new Date(state.currentData.meta.time * 1000);
     els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
@@ -121,7 +121,7 @@ function renderCurrentObservations() {
 }
 
 function createGaugeCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
-    if (!item) return;
+    if (!item || item.current === null || item.current === undefined) return;
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -136,13 +136,11 @@ function createGaugeCard(container, item, title, color, absMin, absMax, textPrim
     container.appendChild(div);
 
     const canvas = div.querySelector('canvas');
-    import('./charts.js').then(charts => {
-        charts.drawGauge(canvas, absMin, absMax, item.current, item.unit, color, null, textPrimary, textSecondary);
-    });
+    drawGauge(canvas, absMin, absMax, item.current, item.unit, color, null, textPrimary, textSecondary);
 }
 
 function createDialCard(container, item, title, color, absMin, absMax, textPrimary, textSecondary) {
-    if (!item) return;
+    if (!item || item.current === null || item.current === undefined) return;
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -164,14 +162,15 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
     const dailyMin = item.min !== undefined && item.min !== null ? item.min : item.current;
     const dailyMax = item.max !== undefined && item.max !== null ? item.max : item.current;
 
-    drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, null, textPrimary, textSecondary);
+    drawDial(canvas, absMin, absMax, item.current, dailyMin, dailyMax, item.unit, color, title, textPrimary, textSecondary);
 }
 
 function createCompassCard(container, speedItem, gustItem, dirItem, color, textPrimary, textSecondary, theme) {
-    if (!speedItem) return;
+    if (!speedItem || speedItem.current === null) return;
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.style.minHeight = '320px';
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -212,6 +211,7 @@ function createCombinedCard(container, item1, item2, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.style.minHeight = '320px';
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -247,6 +247,7 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.style.minHeight = '320px';
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -296,6 +297,7 @@ function createSimpleCard(container, item, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.style.minHeight = '320px';
     // Removed justifyContent center to fix alignment with other cards
 
     div.innerHTML = `
@@ -325,54 +327,54 @@ export function renderHistorySummary() {
 
     if (!state.activeData || !state.activeData.obs) return;
 
+    // Dynamic Title Logic
+    let titleText = 'Summary';
+    if (state.viewScope === 'day') titleText = 'Daily Summary';
+    if (state.viewScope === 'week') titleText = 'Weekly Summary';
+    if (state.viewScope === 'month') titleText = 'Monthly Summary';
+    if (state.viewScope === 'year') titleText = 'Yearly Summary';
+
+    const sectionHeader = document.createElement('div');
+    sectionHeader.className = 'history-section-header';
+    sectionHeader.innerHTML = `
+        <h2 class="section-title">${titleText}</h2>
+    `;
+    container.appendChild(sectionHeader);
+
+    // Grid Container for Summary Cards
+    const summaryGrid = document.createElement('div');
+    summaryGrid.className = 'summary-grid';
+    container.appendChild(summaryGrid);
+
     const obs = state.activeData.obs;
 
     // Resolve Colors properly for the cards
     const cTemp = resolveThemeColor('--color-temp', '#f59e0b', '#fbbf24');
     const cRain = resolveThemeColor('--color-rain', '#2563eb', '#2563eb');
     const cWind = resolveThemeColor('--color-wind', '#10b981', '#10b981');
-
-    // Helper to extract nice summary values
-    // We want: Max Temp, Min Temp, Total Rain, Max Wind
+    const cHum = resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9');
+    const cPress = resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6');
+    const cTextPrimary = resolveThemeColor('--text-primary', '#1e293b', '#f8fafc');
+    const cTextSecondary = resolveThemeColor('--text-secondary', '#64748b', '#94a3b8');
 
     // 1. Temp (Range + Avg as Dial style)
     const temp = convertItem(obs.outTemp, state.units);
     if (temp) {
-        // Construct a "Dial Item" from history stats
-        // We want: Central = Avg, Range = Min/Max
-        // If "avg" is missing (e.g. today.json might not have avg computed yet in standard weewx json?), check avail.
-        // Usually day.outTemp.avg is available.
-        // Check `daily.json.tmpl`... yes, `avg` is there for wind, but what about temp? 
-        // daily.json.tmpl: "graph": $day.outTemp.series...
-        // It DOES NOT have "avg" for outTemp explicitly in default structure?
-        // Wait, I saw today.json.tmpl content earlier.
-        // It has `min` and `max`. It does NOT have `avg`.
-        // However, I can compute average from the graph series if needed, OR relies on `getAverage` helper from utils.
-
         let avgVal = temp.avg;
         if (avgVal === undefined && temp.graph) {
             avgVal = getAverage(temp);
         }
 
-        // Make formatted object for createDialCard
         const tempSummaryItem = {
-            current: avgVal !== undefined ? avgVal : (temp.max + temp.min) / 2, // Fallback
+            current: avgVal !== undefined ? avgVal : (temp.max + temp.min) / 2,
             min: temp.min,
             max: temp.max,
             unit: temp.unit,
             label: 'Avg Obs Temp'
         };
 
-        const cTextPrimary = resolveThemeColor('--text-primary', '#1e293b', '#f8fafc');
-        const cTextSecondary = resolveThemeColor('--text-secondary', '#64748b', '#94a3b8');
-
-        // Limits need to be defined or inferred?
-        // Reuse global limits from renderCurrentObservations or define locally
-        // or dynamic limits based on min/max +/- padding?
-        // Let's use standard range for the dial background
         const limits = state.units === 'imperial' ? { min: 0, max: 120 } : { min: -20, max: 50 };
-
-        createDialCard(container, tempSummaryItem, 'Avg Temp', cTemp, limits.min, limits.max, cTextPrimary, cTextSecondary);
+        createDialCard(summaryGrid, tempSummaryItem, 'Temperature', cTemp, limits.min, limits.max, cTextPrimary, cTextSecondary);
     }
 
     // 2. Rain (Combined Total + Max Rate)
@@ -380,7 +382,6 @@ export function renderHistorySummary() {
     const rainRate = convertItem(obs.rainRate, state.units);
 
     if (rain && rain.sum !== undefined) {
-        // Prepare items for combined card
         const item1 = { current: rain.sum, unit: rain.unit, label: 'Total Rain' };
         let item2 = null;
 
@@ -388,7 +389,7 @@ export function renderHistorySummary() {
             item2 = { current: rainRate.max, unit: rainRate.unit, label: 'Max Rate' };
         }
 
-        createCombinedCard(container, item1, item2, 'rain', cRain);
+        createCombinedCard(summaryGrid, item1, item2, 'rain', cRain);
     }
 
     // 3. Wind (Combined Max Gust + Avg)
@@ -402,17 +403,12 @@ export function renderHistorySummary() {
             item2 = { current: avg, unit: wind.unit, label: 'Avg Wind' };
         }
 
-        createCombinedCard(container, item1, item2, 'wind', cWind);
+        createCombinedCard(summaryGrid, item1, item2, 'wind', cWind);
     }
 
-    // 4. Humidity & Pressure (as Dials)
+    // 4. Humidity & Pressure
     const hum = convertItem(obs.outHumidity, state.units);
     const press = convertItem(obs.barometer, state.units) || convertItem(obs.pressure, state.units);
-
-    const cHum = resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9');
-    const cPress = resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6');
-    const cTextPrimary = resolveThemeColor('--text-primary', '#1e293b', '#f8fafc');
-    const cTextSecondary = resolveThemeColor('--text-secondary', '#64748b', '#94a3b8');
 
     if (hum) {
         const humSummary = {
@@ -422,7 +418,7 @@ export function renderHistorySummary() {
             unit: hum.unit,
             label: 'Avg Humidity'
         };
-        createDialCard(container, humSummary, 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
+        createDialCard(summaryGrid, humSummary, 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
     }
 
     if (press) {
@@ -434,7 +430,7 @@ export function renderHistorySummary() {
             unit: press.unit,
             label: 'Avg Pressure'
         };
-        createGaugeCard(container, pressSummary, 'Pressure', cPress, pressLimits.min, pressLimits.max, cTextPrimary, cTextSecondary);
+        createGaugeCard(summaryGrid, pressSummary, 'Pressure', cPress, pressLimits.min, pressLimits.max, cTextPrimary, cTextSecondary);
     }
 
     if (window.lucide) window.lucide.createIcons();

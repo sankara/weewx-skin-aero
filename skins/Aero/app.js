@@ -5,7 +5,7 @@ import { state, els } from './state.js';
 import { renderHeader, renderHistorySummary } from './ui.js';
 import { renderGraphs, initWebglIfNeeded } from './charts.js';
 import { isSameDay } from './utils.js';
-import { setupNav, setupUnits, setupDateControls, setupTheme, setupDesign } from './events.js';
+import { setupNav, setupUnits, setupDateControls, setupTheme, setupDesign, setupPullToRefresh } from './events.js';
 
 /**
  * Parses WeeWX JSON data into a standard internal format.
@@ -32,7 +32,7 @@ function parseWeeWXData(json) {
 /**
  * Loads and renders data for a specific date.
  */
-export async function loadDate(date) {
+export async function loadDate(date, skipPushState = false) {
     state.currentDate = new Date(date);
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -40,6 +40,10 @@ export async function loadDate(date) {
     const dateStr = `${y}-${m}-${d}`;
 
     const isToday = isSameDay(date, new Date());
+
+    if (!skipPushState) {
+        updateRouter();
+    }
 
     let activeFile;
     if (state.viewScope === 'day') {
@@ -209,6 +213,7 @@ function updateDateDisplay() {
 function render() {
     updateDateDisplay();
     updateNavControls();
+    updateNavButtons();
 
     if (!state.activeData) {
         if (els.graphs) {
@@ -226,6 +231,80 @@ function render() {
     renderHeader();
 }
 
+function updateNavButtons() {
+    els.navBtns.forEach(btn => {
+        if (btn.dataset.view === state.viewScope) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function updateRouter() {
+    const scope = state.viewScope;
+    const date = state.currentDate;
+    if (!date) return;
+
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+
+    let hash = `#/${scope}`;
+    if (scope === 'day') hash += `/${y}-${m}-${d}`;
+    else if (scope === 'week') hash += `/${y}-${m}-${d}`;
+    else if (scope === 'month') hash += `/${y}-${m}`;
+    else if (scope === 'year') hash += `/${y}`;
+
+    if (window.location.hash !== hash) {
+        history.pushState({ scope, date: date.getTime() }, '', hash);
+    }
+}
+
+async function initRouter() {
+    const handleHash = async () => {
+        const hash = window.location.hash.replace('#/', '');
+        if (!hash) return false;
+
+        const parts = hash.split('/');
+        const scope = parts[0];
+        const dateStr = parts[1];
+
+        if (['day', 'week', 'month', 'year'].includes(scope)) {
+            state.viewScope = scope;
+            if (dateStr) {
+                let d;
+                if (scope === 'year') {
+                    d = new Date(parseInt(dateStr), 0, 1);
+                } else if (scope === 'month') {
+                    const [y, m] = dateStr.split('-');
+                    d = new Date(parseInt(y), parseInt(m) - 1, 1);
+                } else {
+                    const [y, m, day] = dateStr.split('-');
+                    d = new Date(parseInt(y), parseInt(m) - 1, parseInt(day));
+                }
+
+                if (!isNaN(d.getTime())) {
+                    await loadDate(d, true); // true = avoid pushing state again
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    window.addEventListener('popstate', (e) => {
+        if (e.state) {
+            state.viewScope = e.state.scope;
+            loadDate(new Date(e.state.date), true);
+        } else {
+            handleHash();
+        }
+    });
+
+    return await handleHash();
+}
+
 /**
  * Application Entry Point
  */
@@ -236,42 +315,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupDesign();
     setupTheme();
 
-    try {
-        const curRes = await fetch(`${state.basePath}current.json`);
-        if (!curRes.ok) throw new Error(`HTTP ${curRes.status} loading current.json`);
-
-        const curJson = await curRes.json();
-        state.currentData = parseWeeWXData(curJson);
-
-        // Fetch Today's data for context
-        try {
-            const todayRes = await fetch(`${state.basePath}today.json`);
-            if (todayRes.ok) {
-                state.todayData = parseWeeWXData(await todayRes.json());
-            }
-        } catch (e) {
-            console.warn("Could not load today.json for context");
-        }
-
-        // Set initial date from report time
-        state.currentDate = new Date(state.currentData.meta.time * 1000);
-
-        await loadDate(state.currentDate);
-
-    } catch (e) {
-        console.error("Initialization failed", e);
-        if (els.graphs) {
-            els.graphs.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:2rem; color:red">
-                <h3>Error loading weather data</h3>
-                <p>${e.message}</p>
-            </div>`;
-        }
-    }
-
     // Secondary setups
     setupNav();
     setupUnits();
     setupDateControls();
+    setupPullToRefresh();
+
+    // 1. ALWAYS load current data for the header dials
+    try {
+        const curRes = await fetch(`${state.basePath}current.json`);
+        if (curRes.ok) {
+            const curJson = await curRes.json();
+            state.currentData = parseWeeWXData(curJson);
+
+            // Set initial date from report time if not routed
+            state.currentDate = new Date(state.currentData.meta.time * 1000);
+        }
+
+        // Fetch Today's data for context (min/max markers)
+        const todayRes = await fetch(`${state.basePath}today.json`);
+        if (todayRes.ok) {
+            state.todayData = parseWeeWXData(await todayRes.json());
+        }
+    } catch (e) {
+        console.warn("Minor: Could not load live current data", e);
+    }
+
+    // 2. Router Initialization (History)
+    const routed = await initRouter();
+
+    if (!routed) {
+        // If not routed, we already have current data to show
+        if (state.currentDate) {
+            await loadDate(state.currentDate, true);
+        } else {
+            // Ultimate fallback
+            await loadDate(new Date(), true);
+        }
+    }
 
     if (window.lucide) window.lucide.createIcons();
 });

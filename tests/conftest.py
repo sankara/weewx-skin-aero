@@ -33,7 +33,7 @@ def generated_data(test_db_path):
     if not test_db_path.exists():
         print(f"Generating test database at {test_db_path}...")
         # Run the generator module
-        subprocess.run(["uv", "run", "aero-gen", "--output", str(test_db_path), "--days", "7"],
+        subprocess.run(["uv", "run", "aero-datagen", "--output", str(test_db_path), "--days", "7"],
                        cwd=ROOT_DIR, check=True)
     return test_db_path
 

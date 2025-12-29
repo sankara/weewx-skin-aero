@@ -1,3 +1,36 @@
+.home-link {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.2s;
+}
+
+.home-link:hover {
+    opacity: 0.8;
+}
+
+
+.history-section-header {
+    margin-bottom: 1.5rem;
+    text-align: left;
+    width: 100%;
+    padding-left: 4px;
+}
+
+.history-section-header .section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: capitalize;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.history-section-header .section-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0.25rem 0 0 0;
+}
+
 :root {
     /* Base Colors */
     --bg-gradient-start: #e0eafc;
@@ -147,6 +180,55 @@ body {
     line-height: 1.5;
     min-height: 100vh;
     padding-bottom: 2rem;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    /* Prevent native refresh if desired, or let it work? Usually we want custom for better feel */
+}
+
+/* Pull to Refresh */
+.ptr-indicator {
+    position: fixed;
+    top: -60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--card-border);
+    transition: transform 0.2s ease;
+    z-index: 1000;
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+
+.ptr-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+}
+
+.ptr-indicator.ptr-loading .ptr-icon {
+    animation: ptr-spin 1s linear infinite;
+}
+
+@keyframes ptr-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+body.ptr-active .app-container {
+    transition: transform 0.2s ease;
 }
 
 .app-container {
@@ -353,7 +435,7 @@ html.dark .nav-btn.active {
     border-radius: var(--card-radius);
     border: 1px solid var(--card-border);
     box-shadow: var(--shadow-card);
-    min-height: 250px;
+    min-height: 260px;
     justify-content: flex-start;
 }
 
@@ -529,11 +611,26 @@ input:checked+.slider:before {
 /* HISTORY SECTION STYLES */
 .section-history {
     background: var(--card-bg);
-    /* Use base card bg, not gradient, for cleaner look */
     backdrop-filter: var(--glass-blur);
-    padding: 1.5rem;
+    padding: 2rem;
     border-radius: var(--section-radius);
     border: 1px solid var(--card-border-color, rgba(255, 255, 255, 0.3));
+    position: relative;
+    /* Framed look for Summary */
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--shadow-card);
+}
+
+#history-summary {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border-color);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+html.dark #history-summary {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 
@@ -549,9 +646,10 @@ input:checked+.slider:before {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+    width: 100%;
 }
 
 .summary-card {
@@ -663,15 +761,19 @@ input:checked+.slider:before {
     /* Header adjustments for mobile */
     .main-header {
         flex-direction: row;
-        /* Keep as row on mobile */
         justify-content: space-between;
         align-items: center;
         padding: 0.75rem 1rem;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        flex-wrap: nowrap;
+        /* Prevent giant wrap that breaks icons */
     }
 
     .header-left {
-        width: auto;
+        flex: 1;
+        /* Take all available space */
+        min-width: 0;
+        /* Allow title to shrink/wrap */
         display: flex;
         flex-direction: column;
         align-items: flex-start;
@@ -680,20 +782,35 @@ input:checked+.slider:before {
 
     #station-title {
         font-size: 1.125rem;
-        /* Slightly smaller for mobile row */
+        line-height: 1.2;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        max-width: 100%;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .subtitle {
         font-size: 0.7rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 
     .header-controls {
+        flex-shrink: 0;
+        /* Don't let-icons shrink */
         width: auto;
         justify-content: flex-end;
+        align-items: center;
         padding-top: 0;
         border-top: none;
-        gap: 1.25rem;
-        /* Increased for better thumb usage */
+        gap: 0.5rem;
+        /* Tighter gap for mobile icons */
     }
 
     .btn-icon {

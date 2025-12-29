@@ -32,6 +32,10 @@
 </head>
 
 <body>
+    <div id="ptr-indicator" class="ptr-indicator">
+        <i data-lucide="refresh-cw" class="ptr-icon"></i>
+        <span class="ptr-text">Pull to refresh</span>
+    </div>
     <div class="app-container">
         <!-- FIXED TOP SECTION: Current Conditions -->
         <section id="current-section" class="section-current">
@@ -59,6 +63,9 @@
             </header>
 
             <!-- Dials Grid for Current Live Data -->
+            <div class="history-section-header" style="margin-top: 2rem; margin-bottom: 1rem;">
+                <h2 class="section-title">Current Observations</h2>
+            </div>
             <div id="current-dials" class="dials-container">
                 <!-- Dials injected here -->
             </div>
@@ -96,7 +103,7 @@
 
             <main id="content-area">
                 <!-- Summary of Selected History Period -->
-                <div id="history-summary" class="summary-grid">
+                <div id="history-summary">
                     <!-- Summary Cards injected here -->
                 </div>
 

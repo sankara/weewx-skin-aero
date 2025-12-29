@@ -1,6 +1,5 @@
-// charts.js
 import { els, state } from './state.js';
-import { THEME, convertItem, hexToRgbA, sampleData, degToCompass, aggregate, resolveThemeColor } from './utils.js';
+import { THEME, convertItem, hexToRgbA, sampleData, degToCompass, aggregate, resolveThemeColor, getAverage, interpolateColor } from './utils.js';
 
 let charts = {};
 
@@ -17,7 +16,7 @@ export function renderGraphs() {
         humidity: resolveThemeColor('--color-humidity', '#0ea5e9', '#0ea5e9'),
         windSpeed: resolveThemeColor('--color-wind', '#10b981', '#10b981'),
         pressure: resolveThemeColor('--color-pressure', '#8b5cf6', '#8b5cf6'),
-        rainRate: resolveThemeColor('--color-rain', '#2563eb', '#2563eb'),
+        rain: resolveThemeColor('--color-rain', '#2563eb', '#2563eb'),
         uv: resolveThemeColor('--color-uv', '#f43f5e', '#f43f5e')
     };
 
@@ -29,11 +28,17 @@ export function renderGraphs() {
         x: {
             type: 'time',
             grid: { display: false },
-            ticks: { maxTicksLimit: 9, font: { weight: 'bold' } }
+            ticks: {
+                maxTicksLimit: 9,
+                font: { weight: 'bold' },
+                includeBounds: true,
+                autoSkip: true
+            }
         },
         y: {
             grid: { color: 'rgba(0,0,0,0.05)' },
-            beginAtZero: false
+            beginAtZero: false,
+            grace: '5%' // Add some breathing room at top/bottom
         }
     };
 
@@ -85,9 +90,13 @@ export function renderGraphs() {
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setFullYear(eDate.getFullYear() + 1);
-        commonScales.x.max = eDate.getTime();
+        commonScales.x.max = eDate.getTime() - 1; // Subtract 1ms to end on Dec 31
         commonScales.x.time = { unit: 'month', displayFormats: { month: 'MMM' } };
     }
+
+    // Force Edge-to-Edge
+    commonScales.x.offset = false;
+    commonScales.x.grid = { ...commonScales.x.grid, offset: false };
 
     // Server Truth Override: Only override if it BROADENS the view or provides specific bounds
     // But we strictly want consistent axes as per user request: "consistent x-axis - day (12am to 12am), week (start to end of week), month (1st to last day of month), year (jan to dec)"
@@ -133,15 +142,40 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
 
     if (isDayView) {
         // Line Chart for Day
-        const dataPoints = tempItem.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
-        charts.temp = new Chart(ctx, {
+        let dataPoints = tempItem.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+
+        // Sampling for Mobile
+        if (window.innerWidth < 640) {
+            dataPoints = sampleData(dataPoints, 30);
+        }
+
+        const chart = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [{
                     label: `Temperature (${tempItem.unit})`,
                     data: dataPoints,
                     borderColor: chartTheme.outTemp,
-                    backgroundColor: hexToRgbA(chartTheme.outTemp, 0.1),
+                    backgroundColor: (ctx) => {
+                        const canvas = ctx.chart.ctx;
+                        const area = ctx.chart.chartArea;
+                        if (!area) return 'transparent';
+                        const gradient = canvas.createLinearGradient(0, area.bottom, 0, area.top);
+                        const isImperial = state.units === 'imperial';
+                        const stops = [
+                            { t: isImperial ? 20 : -10, c: '#3b82f6' },
+                            { t: isImperial ? 45 : 7, c: '#06b6d4' },
+                            { t: isImperial ? 70 : 21, c: '#10b981' },
+                            { t: isImperial ? 90 : 32, c: '#f59e0b' },
+                            { t: isImperial ? 110 : 43, c: '#ef4444' }
+                        ];
+                        stops.forEach(s => {
+                            const yPos = ctx.chart.scales.y.getPixelForValue(s.t);
+                            const pct = 1 - (yPos - area.top) / (area.bottom - area.top);
+                            if (pct >= 0 && pct <= 1) gradient.addColorStop(pct, hexToRgbA(s.c, 0.4));
+                        });
+                        return gradient;
+                    },
                     fill: true,
                     tension: 0.4,
                     pointRadius: 0,
@@ -150,6 +184,7 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
             },
             options: { ...getChartOptions(isDayView), scales: commonScales }
         });
+        charts.temp = chart;
     } else {
         // Floating Bar Chart (Min/Max) for History
         const aggData = aggregate(tempItem.graph, state.viewScope);
@@ -308,12 +343,17 @@ function renderWindChart(commonScales, isDayView, chartTheme) {
 
     } else if (isDayView) {
         // Fallback: Day View but NO Wind Direction -> Simple Line Chart for Speed
-        const dataPoints = windSpeed.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+        let dataPoints = windSpeed.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+
+        // Sampling for Mobile
+        if (window.innerWidth < 640) {
+            dataPoints = sampleData(dataPoints, 30);
+        }
 
         const opts = getChartOptions(true);
         opts.scales = commonScales;
         opts.plugins.tooltip.callbacks.label = (ctx) => {
-             return `Wind Speed: ${ctx.parsed.y.toFixed(1)} ${windSpeed.unit}`;
+            return `Wind Speed: ${ctx.parsed.y.toFixed(1)} ${windSpeed.unit}`;
         };
 
         charts.wind = new Chart(ctx, {
@@ -393,7 +433,7 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
     const ctx = document.getElementById('graph-rain').getContext('2d');
 
     let datasets = [];
-    
+
     // Prepare Options with Tooltip Formatting
     const options = getChartOptions(isDayView);
     options.scales = {
@@ -404,11 +444,11 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
             grid: { color: 'rgba(0,0,0,0.05)' },
             title: {
                 display: true,
-                text: `Rain (${rainSum.unit})`
+                text: `Precipitation (${rainSum.unit})`
             }
         }
     };
-    
+
     // Add Tooltip Callback for Rain (2 decimals)
     options.plugins.tooltip.callbacks.label = (context) => {
         let label = context.dataset.label || '';
@@ -426,10 +466,10 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
         // 1. Bar Dataset for Rain Amount
         datasets.push({
             type: 'bar',
-            label: `Rain (${rainSum.unit})`,
+            label: `Precip Total (${rainSum.unit})`,
             data: rainAmountData,
-            backgroundColor: chartTheme.rainRate,
-            borderColor: chartTheme.rainRate,
+            backgroundColor: chartTheme.rain,
+            borderColor: chartTheme.rain,
             borderWidth: 1,
             yAxisID: 'y'
         });
@@ -468,17 +508,19 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
         const aggData = aggregate(rainSum.graph, state.viewScope);
         const chartData = aggData.map(d => ({ x: d.x, y: d.sum }));
 
+        // Update Y axis title for history
+        options.scales.y.title.text = `Precip Total (${rainSum.unit})`;
+
         // 1. Bar Dataset (Daily/Weekly Sums)
         datasets.push({
             type: 'bar',
-            label: `Rain (${rainSum.unit})`,
+            label: `Precip Total (${rainSum.unit})`,
             data: chartData,
-            backgroundColor: chartTheme.rainRate,
-            borderColor: chartTheme.rainRate,
+            backgroundColor: chartTheme.rain,
+            borderColor: chartTheme.rain,
             borderWidth: 1,
             yAxisID: 'y'
         });
-
     }
 
     charts.rain = new Chart(ctx, {
@@ -501,7 +543,7 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     // cy = (h * 0.5) + (radius * 0.3) - (10 * s)
 
     // Relative Sizing Factors (Base: 280px width)
-    const s = Math.max(w / 280, 1.0); 
+    const s = Math.max(w / 280, 1.0);
     const radius = Math.min(w, h) * 0.38;
 
     const textY = h * 0.5;
@@ -531,29 +573,57 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     const rangeEnd = getAngle(rangeMax);
 
     if (Math.abs(rangeEnd - rangeStart) > 0.01) {
-        ctx.beginPath();
-        // Ensure accurate arc drawing
-        const sAngle = Math.min(rangeStart, rangeEnd);
-        const eAngle = Math.max(rangeStart, rangeEnd);
-
-        ctx.arc(cx, cy, radius, sAngle, eAngle);
-        ctx.lineWidth = 15 * s;
-
-        let strokeStyle = color + '66';
-
         if (title === 'Temperature') {
-            const grad = ctx.createLinearGradient(0, 0, w, 0);
-            grad.addColorStop(0.1, '#3b82f6'); // Blue (Cold)
-            grad.addColorStop(0.3, '#06b6d4'); // Cyan
-            grad.addColorStop(0.5, '#10b981'); // Green (Comfort)
-            grad.addColorStop(0.7, '#f59e0b'); // Orange
-            grad.addColorStop(0.9, '#ef4444'); // Red (Hot)
-            strokeStyle = grad;
-        }
+            // Temperature-aware multi-color arc
+            const isImp = state.units === 'imperial';
+            // Scale and colors
+            const stops = [
+                { t: isImp ? 20 : -10, c: '#3b82f6' },
+                { t: isImp ? 45 : 7, c: '#06b6d4' },
+                { t: isImp ? 70 : 21, c: '#10b981' },
+                { t: isImp ? 90 : 32, c: '#f59e0b' },
+                { t: isImp ? 110 : 43, c: '#ef4444' }
+            ];
 
-        ctx.strokeStyle = strokeStyle;
-        ctx.lineCap = 'round';
-        ctx.stroke();
+            const getTempColor = (temp) => {
+                if (temp <= stops[0].t) return stops[0].c;
+                if (temp >= stops[stops.length - 1].t) return stops[stops.length - 1].c;
+                for (let i = 0; i < stops.length - 1; i++) {
+                    if (temp >= stops[i].t && temp <= stops[i + 1].t) {
+                        const pct = (temp - stops[i].t) / (stops[i + 1].t - stops[i].t);
+                        return interpolateColor(stops[i].c, stops[i + 1].c, pct);
+                    }
+                }
+                return color;
+            };
+
+            // Draw arc in segments for smooth color transition
+            const segments = 60; // Higher segments for smoother gradient
+            const step = (rangeEnd - rangeStart) / segments;
+            const tempStep = (rangeMax - rangeMin) / segments;
+
+            for (let i = 0; i < segments; i++) {
+                const sAngle = rangeStart + i * step;
+                const eAngle = sAngle + step + 0.01; // Overlap slightly to prevent gaps
+                const currentTemp = rangeMin + i * tempStep;
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, sAngle, eAngle);
+                ctx.lineWidth = 15 * s;
+                ctx.strokeStyle = getTempColor(currentTemp);
+                ctx.lineCap = i === 0 || i === segments - 1 ? 'round' : 'butt';
+                ctx.stroke();
+            }
+        } else {
+            ctx.beginPath();
+            const sAngle = Math.min(rangeStart, rangeEnd);
+            const eAngle = Math.max(rangeStart, rangeEnd);
+            ctx.arc(cx, cy, radius, sAngle, eAngle);
+            ctx.lineWidth = 15 * s;
+            ctx.strokeStyle = color + '66';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
     }
 
     // 3. Indicator
@@ -611,7 +681,7 @@ function createGraphContainer(id, title, parentId, fullWidth = false) {
     const div = document.createElement('div');
     div.className = 'graph-card';
     div.id = id + '-container';
-    
+
     // On mobile, everything is full width. On desktop, honor fullWidth
     if (fullWidth || window.innerWidth < 640) {
         div.style.gridColumn = "span 2";
