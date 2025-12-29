@@ -34,7 +34,7 @@ weectl extension install https://github.com/sankara/weewx-skin-aero/releases/lat
 ### Manual Install (Versioned)
 Or install a specific version:
 ```bash
-weectl extension install https://github.com/sankara/weewx-skin-aero/releases/download/v2.2.2/weewx-aero-2.2.2.zip
+weectl extension install https://github.com/sankara/weewx-skin-aero/releases/latest/download/weewx-aero.zip
 ```
 2.  Restart WeeWX:
     ```bash
@@ -55,7 +55,7 @@ To run the skin locally for development:
     *   **Option B (Real Data)**: Copy your own `weewx.sdb` to `test-data/weewx.sdb` for realistic testing.
 3.  **Start Watch Server**:
     ```bash
-    uv run aero-watch
+    uv run aero-dev
     ```
     This will:
     *   Build the skin using the data in `test-data/weewx.sdb`.

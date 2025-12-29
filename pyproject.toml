@@ -15,12 +15,12 @@ dependencies = [
 ]
 
 [project.scripts]
-aero-gen = "aero_dev.data_generator:main"
+aero-datagen = "aero_dev.data_generator:main"
 aero-build = "aero_dev.report_builder:main"
 aero-package = "aero_dev.packaging:main"
-aero-bump = "aero_dev.versioning:main"
-aero-snap = "aero_dev.screenshots:main"
-aero-watch = "aero_dev.watch:main"
+aero-version = "aero_dev.versioning:main"
+aero-screenshots = "aero_dev.screenshots:main"
+aero-dev = "aero_dev.watch:main"
 aero-test = "aero_dev.test_runner:main"
 aero-clean = "aero_dev.clean:main"
 
