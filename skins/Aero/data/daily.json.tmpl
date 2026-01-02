@@ -43,6 +43,18 @@
     {
       "observation": "windDir",
       "graph": $day.windDir.series(time_unit='unix_epoch', aggregate_interval=None).json
+    },
+    {
+      "observation": "windGust",
+      "max": $day.windGust.max.json,
+      "unit": "$unit.label.windGust",
+      "graph": $day.windGust.series(time_unit='unix_epoch', aggregate_interval=None).json
+    },
+    {
+      "observation": "windGust",
+      "max": $day.windGust.max.json,
+      "unit": "$unit.label.windGust",
+      "graph": $day.windGust.series(time_unit='unix_epoch', aggregate_interval=None).json
     }
   ]
 }

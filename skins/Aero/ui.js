@@ -170,7 +170,8 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.minHeight = '320px';
+    div.className = 'card';
+    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -211,7 +212,8 @@ function createCombinedCard(container, item1, item2, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.minHeight = '320px';
+    div.className = 'card';
+    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -247,7 +249,8 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.minHeight = '320px';
+    div.className = 'card';
+    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -271,7 +274,7 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
                 ` : ''}
                 ${valRate !== null ? `
                 <div class="rain-stat-item">
-                    <span class="card-label-xs">Rain Rate</span>
+                    <span class="card-label-xs">Rate</span>
                     <div class="rain-stat-value">
                         ${valRate} <span class="rain-stat-unit">${rateItem.unit}</span>
                     </div>
@@ -297,7 +300,8 @@ function createSimpleCard(container, item, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.style.minHeight = '320px';
+    div.className = 'card';
+    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
     // Removed justifyContent center to fix alignment with other cards
 
     div.innerHTML = `
@@ -330,7 +334,7 @@ export function renderHistorySummary() {
 
     // Dynamic Title Logic
     let titleText = 'Summary';
-    const view = state.historyView;
+    const view = state.viewScope;
     if (view === 'day') titleText = 'Daily Summary';
     else if (view === 'week') titleText = 'Weekly Summary';
     else if (view === 'month') titleText = 'Monthly Summary';
@@ -370,7 +374,8 @@ export function renderHistorySummary() {
             min: temp.min,
             max: temp.max,
             unit: temp.unit,
-            label: 'Avg Obs Temp'
+            unit: temp.unit,
+            label: 'TEMPERATURE'
         };
 
         const limits = state.units === 'imperial' ? { min: 0, max: 120 } : { min: -20, max: 50 };
@@ -382,11 +387,11 @@ export function renderHistorySummary() {
     const rainRate = convertItem(obs.rainRate, state.units);
 
     if (rain && rain.sum !== undefined) {
-        const item1 = { current: rain.sum, unit: rain.unit, label: 'Total Rain' };
+        const item1 = { current: rain.sum, unit: rain.unit, label: 'TOTAL RAIN' };
         let item2 = null;
 
         if (rainRate && rainRate.max !== undefined) {
-            item2 = { current: rainRate.max, unit: rainRate.unit, label: 'Max Rate' };
+            item2 = { current: rainRate.max, unit: rainRate.unit, label: 'MAX RATE' };
         }
 
         createCombinedCard(summaryGrid, item1, item2, 'rain', cRain);
@@ -394,13 +399,20 @@ export function renderHistorySummary() {
 
     // 3. Wind (Combined Max Gust + Avg)
     const wind = convertItem(obs.windSpeed, state.units);
+    const gust = convertItem(obs.windGust, state.units);
+
     if (wind) {
-        const item1 = { current: wind.max, unit: wind.unit, label: 'Max Gust' };
+        let maxGustVal = wind.max;
+        if (gust && gust.max !== undefined) {
+            maxGustVal = gust.max;
+        }
+
+        const item1 = { current: maxGustVal, unit: wind.unit, label: 'MAX GUST' };
         let item2 = null;
 
         const avg = getAverage(wind);
         if (avg !== undefined) {
-            item2 = { current: avg, unit: wind.unit, label: 'Avg Wind' };
+            item2 = { current: avg, unit: wind.unit, label: 'AVG WIND' };
         }
 
         createCombinedCard(summaryGrid, item1, item2, 'wind', cWind);
@@ -416,7 +428,8 @@ export function renderHistorySummary() {
             min: hum.min,
             max: hum.max,
             unit: hum.unit,
-            label: 'Avg Humidity'
+            unit: hum.unit,
+            label: 'HUMIDITY'
         };
         createDialCard(summaryGrid, humSummary, 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
     }
@@ -428,7 +441,8 @@ export function renderHistorySummary() {
             min: press.min,
             max: press.max,
             unit: press.unit,
-            label: 'Avg Pressure'
+            unit: press.unit,
+            label: 'PRESSURE'
         };
         createGaugeCard(summaryGrid, pressSummary, 'Pressure', cPress, pressLimits.min, pressLimits.max, cTextPrimary, cTextSecondary);
     }

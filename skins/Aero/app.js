@@ -49,13 +49,9 @@ export async function loadDate(date, skipPushState = false) {
     if (state.viewScope === 'day') {
         activeFile = isToday ? 'today.json' : `day-${dateStr}.json`;
     } else if (state.viewScope === 'week') {
-        if (isToday) {
-            activeFile = 'week-to-date.json';
-        } else {
-            await loadWeeklyData(date);
-            render();
-            return;
-        }
+        await loadWeeklyData(date);
+        render();
+        return;
     } else if (state.viewScope === 'month') {
         activeFile = isToday ? 'month.json' : `month-${y}-${m}.json`;
     } else if (state.viewScope === 'year') {
@@ -130,16 +126,45 @@ async function loadWeeklyData(targetDate) {
             return combined;
         };
 
-        const obsList = ['outTemp', 'outHumidity', 'barometer', 'windSpeed', 'windDir', 'rain'];
+        const obsList = ['outTemp', 'outHumidity', 'barometer', 'windSpeed', 'windGust', 'windDir', 'rain'];
         obsList.forEach(name => {
             const series = mergeSeries(name);
             const entry = { observation: name, graph: series };
-            if (name === 'rain') {
-                entry.sum = results.reduce((acc, r) => {
-                    const o = r ? r.observations.find(x => x.observation === 'rain') : null;
-                    return acc + (o ? (parseFloat(o.sum) || 0) : 0);
-                }, 0);
+
+            // Extract unit from first available day
+            const sampleDay = results.find(day => day && day.observations.find(o => o.observation === name));
+            if (sampleDay) {
+                const sampleObs = sampleDay.observations.find(o => o.observation === name);
+                if (sampleObs && sampleObs.unit) {
+                    entry.unit = sampleObs.unit;
+                }
             }
+
+            // Calculate Stats for the Week (Min, Max, Sum, Avg)
+            if (series.length > 0) {
+                let min = Infinity;
+                let max = -Infinity;
+                let sum = 0;
+                let count = 0;
+
+                series.forEach(p => {
+                    const val = (p.length >= 3) ? p[2] : p[1];
+                    if (val !== null && val !== undefined) {
+                        if (val < min) min = val;
+                        if (val > max) max = val;
+                        sum += val;
+                        count++;
+                    }
+                });
+
+                if (count > 0) {
+                    entry.min = min;
+                    entry.max = max;
+                    entry.sum = sum;
+                    entry.avg = sum / count;
+                }
+            }
+
             weekData.observations.push(entry);
         });
 

@@ -120,6 +120,8 @@ export function renderGraphs() {
         }
     }
 
+
+
     // 1. Temperature Chart
     renderTempChart(commonScales, isDayView, CHART_THEME);
 
@@ -475,15 +477,21 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
         });
 
         // 2. Line Dataset for Rain Rate
-        if (rainRate && rainRate.graph) {
-            const rateData = rainRate.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
-            // Use consistent unit with rain sum - derive rate unit from rain unit
-            const rateUnit = rainSum.unit === 'mm' ? 'mm/hr' : 'in/hr';
+        // 2. Line Dataset for Cumulative Precip (Total)
+        if (rainSum && rainSum.graph) {
+            let runningTotal = 0;
+            const cumulativeData = rainAmountData.map(d => {
+                if (d.y !== null && !isNaN(d.y)) {
+                    runningTotal += d.y;
+                }
+                return { x: d.x, y: runningTotal };
+            });
+
             datasets.push({
                 type: 'line',
-                label: `Rain Rate (${rateUnit})`,
-                data: rateData,
-                borderColor: '#0891b2', // Cyan-700 (Distinct from Blue-600)
+                label: `Total Precip (${rainSum.unit})`,
+                data: cumulativeData,
+                borderColor: '#0891b2', // Cyan-700
                 backgroundColor: hexToRgbA('#0891b2', 0.1),
                 borderWidth: 2,
                 tension: 0.4,
@@ -492,14 +500,14 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
                 yAxisID: 'y1'
             });
 
-            // Configure Secondary Axis for Rate
+            // Configure Secondary Axis for Total
             options.scales.y1 = {
                 beginAtZero: true,
                 position: 'right',
                 grid: { display: false },
                 title: {
                     display: true,
-                    text: `Rate (${rateUnit})`
+                    text: `Total (${rainSum.unit})`
                 }
             };
         }
