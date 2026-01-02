@@ -468,7 +468,7 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
         // 1. Bar Dataset for Rain Amount
         datasets.push({
             type: 'bar',
-            label: `Precip Total (${rainSum.unit})`,
+            label: `Rainfall (${rainSum.unit})`,
             data: rainAmountData,
             backgroundColor: chartTheme.rain,
             borderColor: chartTheme.rain,
@@ -476,7 +476,6 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
             yAxisID: 'y'
         });
 
-        // 2. Line Dataset for Rain Rate
         // 2. Line Dataset for Cumulative Precip (Total)
         if (rainSum && rainSum.graph) {
             let runningTotal = 0;
@@ -489,7 +488,7 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
 
             datasets.push({
                 type: 'line',
-                label: `Total Precip (${rainSum.unit})`,
+                label: `Cumulative (${rainSum.unit})`,
                 data: cumulativeData,
                 borderColor: '#0891b2', // Cyan-700
                 backgroundColor: hexToRgbA('#0891b2', 0.1),
