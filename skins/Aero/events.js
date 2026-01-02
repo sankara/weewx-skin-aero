@@ -55,6 +55,7 @@ export function setupUnits() {
 
     btn.addEventListener('click', () => {
         state.units = state.units === 'metric' ? 'imperial' : 'metric';
+        localStorage.setItem('aero_units', state.units);
         updateLabel();
         renderHeader();
         renderHistorySummary();

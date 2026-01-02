@@ -4,7 +4,7 @@ export const state = {
     activeData: null,
     view: 'overview',
     viewScope: 'day',
-    units: 'metric',
+    units: localStorage.getItem('aero_units') || 'metric',
     design: 'simple',
     currentDate: null,
     basePath: 'data/'
