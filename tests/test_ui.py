@@ -7,21 +7,20 @@ from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
 
-DEV_DIR = Path(__file__).parent.parent
-REPORT_OUT = DEV_DIR / "public_html"
+
 
 @pytest.fixture(scope="session")
 def report_server(report_output):
-    server_address = ('localhost', 0)
+    server_address = ('127.0.0.1', 0)
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=str(REPORT_OUT), **kwargs)
+            super().__init__(*args, directory=str(report_output), **kwargs)
     httpd = HTTPServer(server_address, Handler)
     port = httpd.server_port
     thread = threading.Thread(target=httpd.serve_forever)
     thread.daemon = True
     thread.start()
-    yield f"http://localhost:{port}"
+    yield f"http://127.0.0.1:{port}"
     httpd.shutdown()
 
 def test_homepage_loads(page: Page, report_server):

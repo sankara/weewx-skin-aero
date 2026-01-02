@@ -108,7 +108,13 @@ def main() -> None:
     skin_dir = os.path.join(build_root, skin_name) # build/dev_skin/Aero
     
     logger.info("Creating temporary build skin at %s", skin_dir)
-    shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('node_modules', '.*'))
+    # Check if node_modules exists in source to avoid redundant installs
+    src_node_modules = os.path.join(src_skin, 'node_modules')
+    if os.path.exists(src_node_modules):
+        logger.info("Found existing node_modules in source. Copying...")
+        shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('.*'))
+    else:
+        shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('node_modules', '.*'))
     
     # Run Bundler on the copy
     try:
