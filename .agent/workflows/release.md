@@ -21,7 +21,13 @@ description: Auto-infer version bump (Minor/Patch), update changelog, and push r
         * Otherwise (fix, chore, docs, etc.) -> **PATCH** bump.
     * **Calculate**: Compute the new version number based on the current version and the inferred bump type.
 
-4. **Execute Release**:
+4. **Run Tests**:
+    * Ensure all tests pass before proceeding:
+      ```bash
+      uv run pytest
+      ```
+
+5. **Execute Release**:
     * **Bump**: Run `uv run aero-version <new_version>` (updates `pyproject.toml`).
     * **Lock**: Run `uv lock` to synchronize `uv.lock` with the new version.
     * **Summarize**: Create a concise, categorized release note from the git log (e.g., "## Features", "## Fixes").

@@ -11,26 +11,7 @@ PROJECT_ROOT = DEV_DIR.parent
 TEST_DATA_DB = DEV_DIR / "weewx.sdb"
 REPORT_OUT = DEV_DIR / "public_html"
 
-@pytest.fixture(scope="session")
-def generated_data():
-    """Generates the test database if it doesn't exist."""
-    if not TEST_DATA_DB.exists():
-        print("Generating test database...")
-        # Run the generator module
-        subprocess.run(["uv", "run", "aero-gen", "--output", str(TEST_DATA_DB), "--days", "7"],
-                       cwd=DEV_DIR, check=True)
-    return TEST_DATA_DB
-
-@pytest.fixture(scope="session")
-def report_output(generated_data):
-    """Builds the report if it doesn't exist or is empty."""
-    # We check if data exists
-    data_dir = REPORT_OUT / "data"
-    if not data_dir.exists() or not any(data_dir.iterdir()):
-        print("Building report...")
-        subprocess.run(["uv", "run", "aero-build", "--db", str(generated_data), "--output", str(REPORT_OUT)],
-                       cwd=DEV_DIR, check=True)
-    return REPORT_OUT
+# We rely on fixtures from conftest.py: generated_data and report_output
 
 def test_json_files_exist(report_output):
     """Verify that key JSON files are generated."""

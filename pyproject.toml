@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-aero-datagen = "aero_dev.data_generator:main"
+aero-gen = "aero_dev.data_generator:main"
 aero-build = "aero_dev.report_builder:main"
 aero-package = "aero_dev.packaging:main"
 aero-version = "aero_dev.versioning:main"
