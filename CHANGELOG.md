@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.3.0] - 2026-01-01
+## [2.3.1] - 2026-01-01
+### Fixed
+- **Build & Tests**: Resolved test failures in GitHub Actions by renaming script identifiers and cleaning up redundant fixtures. Standardized test output to `build/` directory.
+
+## [2.3.0] - 2026-01-01 (Internal)
 ### Features
 - **Unit Persistence**: User unit preference (Metric/Imperial) is now saved to local storage and persists across reloads.
 - **Cumulative Precip Graph**: Day view rain chart now displays a cumulative total line instead of rate.
