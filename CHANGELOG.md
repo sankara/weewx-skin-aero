@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.3] - 2026-01-01
+### Fixed
+- **UI**: Improved rain chart tooltip clarity by renaming labels to "Rainfall" and "Cumulative".
+
 ## [2.3.2] - 2026-01-01
 ### Fixed
 - **CI/CD**: Resolved UI test timeout issues in GitHub Actions by fixing report path logic and optimizing the build server.
