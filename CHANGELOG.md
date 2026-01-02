@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-01-01
+### Features
+- **Unit Persistence**: User unit preference (Metric/Imperial) is now saved to local storage and persists across reloads.
+- **Cumulative Precip Graph**: Day view rain chart now displays a cumulative total line instead of rate.
+
+### Fixes
+- **Max Gust**: Fixed missing "Max Gust" value in Weekly Summary (updated aggregation, templates, and UI).
+- **UI Improvements**: Standardized History Summary grid layout and fixed alignment issues.
+- **Documentation**: Updated debug workflow documentation to prioritize `aero-dev`.
+
 ## [2.2.2] - 2025-12-27
 ### Fixed
 - **Historical Wind Data**: Resolved issue where wind data was missing from Month and Year views due to outdated templates.
