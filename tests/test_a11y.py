@@ -2,19 +2,14 @@ from playwright.sync_api import Page
 import pytest
 import os
 
-# Inject axe-core script
-AXE_CORE_URL = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.7.2/axe.min.js"
-
-@pytest.fixture
-def axe_script(page: Page):
-    # Try to fetch from CDN, fallback if not available (not implemented here, assuming internet access or local file)
-    # Since we can't easily download in fixture without requests/etc, we'll let page.add_script_tag handle it
-    # But for a robust test we might want to bundle it.
-    # For now, we'll use the URL.
-    return AXE_CORE_URL
+# Inject axe-core script from local node_modules
+AXE_CORE_PATH = os.path.join(os.path.dirname(__file__), "../skins/Aero/node_modules/axe-core/axe.min.js")
 
 def run_axe(page: Page):
-    page.add_script_tag(url=AXE_CORE_URL)
+    if not os.path.exists(AXE_CORE_PATH):
+        pytest.fail(f"axe-core not found at {AXE_CORE_PATH}. Run 'npm install' in skins/Aero/")
+
+    page.add_script_tag(path=AXE_CORE_PATH)
     results = page.evaluate("""
         () => {
             return new Promise((resolve, reject) => {

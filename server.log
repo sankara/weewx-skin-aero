@@ -1,5 +1,0 @@
-127.0.0.1 - - [03/Jan/2026 16:44:30] "GET /public_html/index.html HTTP/1.1" 200 -
-127.0.0.1 - - [03/Jan/2026 16:44:30] "GET /public_html/dist/aero.c77e8327ffa57346b211.bundle.css HTTP/1.1" 200 -
-127.0.0.1 - - [03/Jan/2026 16:44:30] "GET /public_html/dist/aero.758d09430ec4691916a5.bundle.js HTTP/1.1" 200 -
-127.0.0.1 - - [03/Jan/2026 16:44:30] "GET /public_html/data/current.json HTTP/1.1" 200 -
-127.0.0.1 - - [03/Jan/2026 16:44:30] "GET /public_html/data/today.json HTTP/1.1" 200 -

@@ -135,6 +135,64 @@ html.theme-aero.dark {
     --shadow-card: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
+html.high-contrast {
+    --bg-gradient-start: #ffffff;
+    --bg-gradient-end: #ffffff;
+    --card-bg: #ffffff;
+    --card-border: #000000;
+    --text-primary: #000000;
+    --text-secondary: #000000;
+    --accent-color: #0000ed; /* Standard Link Blue */
+    --glass-blur: none;
+    --shadow-card: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+
+    /* Graph Colors - High Contrast */
+    --color-temp: #d32f2f; /* Red */
+    --color-humidity: #1976d2; /* Blue */
+    --color-wind: #388e3c; /* Green */
+    --color-pressure: #7b1fa2; /* Purple */
+    --color-rain: #304ffe; /* Deep Blue */
+    --color-uv: #c2185b; /* Pink */
+
+    --color-compass-tick-cardinal: #000000;
+    --color-compass-tick-major: #000000;
+    --color-compass-tick-minor: #000000;
+    --color-compass-arrow: #000000;
+}
+
+html.high-contrast.dark {
+    --bg-gradient-start: #000000;
+    --bg-gradient-end: #000000;
+    --card-bg: #000000;
+    --card-border: #ffffff;
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
+    --accent-color: #ffff00; /* Yellow */
+
+    --color-compass-tick-cardinal: #ffffff;
+    --color-compass-tick-major: #ffffff;
+    --color-compass-tick-minor: #ffffff;
+    --color-compass-arrow: #ffffff;
+}
+
+/* Ensure borders are visible in high contrast */
+html.high-contrast .card,
+html.high-contrast .nav-btn,
+html.high-contrast .main-header,
+html.high-contrast .date-controls,
+html.high-contrast .summary-card {
+    border: 2px solid var(--card-border) !important;
+    box-shadow: none !important;
+}
+
+html.high-contrast .nav-btn.active {
+    background-color: var(--text-primary);
+    color: var(--card-bg);
+    border: 2px solid var(--text-primary) !important;
+}
+
 /* Update Card to use new Aero variables */
 .card {
     display: flex;

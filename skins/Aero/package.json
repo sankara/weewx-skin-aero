@@ -6,6 +6,7 @@
         "build": "webpack --mode production"
     },
     "devDependencies": {
+        "axe-core": "^4.11.0",
         "css-loader": "^6.10.0",
         "mini-css-extract-plugin": "^2.8.0",
         "terser-webpack-plugin": "^5.3.10",

@@ -136,29 +136,58 @@ export function setupTheme() {
 
 export function setupDesign() {
     const btn = document.getElementById('design-toggle');
-    if (!btn) return;
+    const contrastBtn = document.getElementById('contrast-toggle');
 
-    const updateIcon = (isAero) => {
-        const iconName = isAero ? 'layout-template' : 'sparkles';
-        btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
-        if (window.lucide) window.lucide.createIcons();
-    };
+    // 1. Aero Design Toggle
+    if (btn) {
+        const updateIcon = (isAero) => {
+            const iconName = isAero ? 'layout-template' : 'sparkles';
+            btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+            if (window.lucide) window.lucide.createIcons();
+        };
 
-    const saved = localStorage.getItem('design');
-    if (saved === 'aero') {
-        document.documentElement.classList.add('theme-aero');
-        state.design = 'aero';
-    } else {
-        state.design = 'simple';
+        const saved = localStorage.getItem('design');
+        if (saved === 'aero') {
+            document.documentElement.classList.add('theme-aero');
+            state.design = 'aero';
+        } else {
+            state.design = 'simple';
+        }
+        updateIcon(state.design === 'aero');
+
+        btn.addEventListener('click', () => {
+            const isAero = document.documentElement.classList.toggle('theme-aero');
+            state.design = isAero ? 'aero' : 'simple';
+            localStorage.setItem('design', state.design);
+            updateIcon(isAero);
+        });
     }
-    updateIcon(state.design === 'aero');
 
-    btn.addEventListener('click', () => {
-        const isAero = document.documentElement.classList.toggle('theme-aero');
-        state.design = isAero ? 'aero' : 'simple';
-        localStorage.setItem('design', state.design);
-        updateIcon(isAero);
-    });
+    // 2. High Contrast Toggle
+    if (contrastBtn) {
+        const updateContrastIcon = (isHigh) => {
+            // Icon already set in HTML (eye), could toggle strikethrough eye if wanted
+            // but standard 'eye' is fine. Active state might be better shown via CSS/class on button
+            contrastBtn.classList.toggle('active', isHigh);
+        };
+
+        const savedContrast = localStorage.getItem('contrast');
+        if (savedContrast === 'high') {
+            document.documentElement.classList.add('high-contrast');
+            updateContrastIcon(true);
+        }
+
+        contrastBtn.addEventListener('click', () => {
+            const isHigh = document.documentElement.classList.toggle('high-contrast');
+            localStorage.setItem('contrast', isHigh ? 'high' : 'standard');
+            updateContrastIcon(isHigh);
+
+            // Re-render graphs to pick up new colors
+            renderHeader();
+            renderHistorySummary();
+            renderGraphs();
+        });
+    }
 }
 export function setupPullToRefresh() {
     const ptr = document.getElementById('ptr-indicator');
