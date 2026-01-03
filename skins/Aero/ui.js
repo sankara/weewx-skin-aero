@@ -136,6 +136,8 @@ function createGaugeCard(container, item, title, color, absMin, absMax, textPrim
     container.appendChild(div);
 
     const canvas = div.querySelector('canvas');
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `${title}: ${item.current} ${item.unit}`);
     drawGauge(canvas, absMin, absMax, item.current, item.unit, color, null, textPrimary, textSecondary);
 }
 
@@ -159,6 +161,8 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
     container.appendChild(div);
 
     const canvas = div.querySelector('canvas');
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `${item.label || title}: ${item.current} ${item.unit}`);
     const dailyMin = item.min !== undefined && item.min !== null ? item.min : item.current;
     const dailyMax = item.max !== undefined && item.max !== null ? item.max : item.current;
 
@@ -188,6 +192,9 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
     const gust = gustItem ? gustItem.current : null;
     const dir = dirItem ? dirItem.current : null;
     const unit = speedItem.unit;
+
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `Wind: ${speed} ${unit}${dir !== null ? ', Direction: ' + dir + '°' : ''}`);
 
     // Pass null for title
     drawCompass(canvas, speed, gust, dir, unit, color, null, textPrimary, textSecondary, theme);

@@ -32,13 +32,14 @@
 </head>
 
 <body>
-    <div id="ptr-indicator" class="ptr-indicator">
+    <div id="ptr-indicator" class="ptr-indicator" role="status" aria-hidden="true">
         <i data-lucide="refresh-cw" class="ptr-icon"></i>
         <span class="ptr-text">Pull to refresh</span>
     </div>
     <div class="app-container">
+        <main>
         <!-- FIXED TOP SECTION: Current Conditions -->
-        <section id="current-section" class="section-current">
+        <section id="current-section" class="section-current" aria-label="Current Conditions">
             <header class="main-header">
                 <div class="header-left">
                     <h1 id="station-title">$station.location</h1>
@@ -66,18 +67,18 @@
             <div class="history-section-header" style="margin-top: 2rem; margin-bottom: 1rem;">
                 <h2 class="section-title">Current Observations</h2>
             </div>
-            <div id="current-dials" class="dials-container">
+            <div id="current-dials" class="dials-container" role="region" aria-label="Current Observations Dials">
                 <!-- Dials injected here -->
             </div>
         </section>
 
         <!-- SCROLLABLE BOTTOM SECTION: History Explorer -->
-        <section id="history-section" class="section-history">
-            <nav class="history-nav">
+        <section id="history-section" class="section-history" aria-label="Historical Data">
+            <nav class="history-nav" aria-label="History Navigation">
                 <!-- Title moved to content area -->
                 <div class="nav-extra">
                     <i data-lucide="calendar" class="nav-icon"></i>
-                    <select id="mobile-view-select" class="mobile-select">
+                    <select id="mobile-view-select" class="mobile-select" aria-label="Select View Period">
                         <option value="day">Day</option>
                         <option value="week">Week</option>
                         <option value="month">Month</option>
@@ -102,7 +103,7 @@
                 </div>
             </nav>
 
-            <main id="content-area">
+            <div id="content-area">
                 <div class="history-section-header" style="margin-bottom: 1rem;">
                      <h2 id="history-title" class="section-title">Summary</h2>
                 </div>
@@ -115,8 +116,9 @@
                 <div id="graphs-container" class="graphs-section">
                     <!-- Graphs injected here -->
                 </div>
-            </main>
+            </div>
         </section>
+        </main>
     </div>
 
     <script type="module" src="app.js"></script>

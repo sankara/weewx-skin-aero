@@ -8,6 +8,17 @@
     opacity: 0.8;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 
 .history-section-header {
     margin-bottom: 1.5rem;
@@ -335,8 +346,8 @@ body.ptr-active .app-container {
 
 .nav-btn.active {
     color: #fff;
-    background-color: var(--accent-color);
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    background-color: #2563eb; /* Darker blue for better contrast */
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
 }
 
 /* Specific Dark Mode overrides if needed for deeper contrast */
