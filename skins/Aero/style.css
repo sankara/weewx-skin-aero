@@ -1024,3 +1024,172 @@ html.dark #history-summary {
     color: var(--text-secondary);
     font-weight: 500;
 }
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal {
+    background: var(--card-bg);
+    /* backdrop-filter handled by overlay or card-bg? */
+    /* Using solid bg for modal usually safer, but let's stick to theme */
+    background: #fff; /* Force solid for modal readability */
+    width: 90%;
+    max-width: 480px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    padding: 1.5rem;
+    transform: translateY(0);
+    transition: transform 0.2s ease;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+html.dark .modal {
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-overlay.hidden .modal {
+    transform: translateY(20px);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+/* Segment Control (Presets) */
+.segment-control {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+html.dark .segment-control {
+    background: #0f172a;
+}
+
+.segment-btn {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.segment-btn.active {
+    background: #fff;
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+html.dark .segment-btn.active {
+    background: #334155;
+}
+
+.segment-btn.disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Settings List */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-item span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Small Segment Control (Toggles) */
+.segment-control-sm {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 999px;
+    padding: 2px;
+}
+
+html.dark .segment-control-sm {
+    background: #0f172a;
+}
+
+.segment-control-sm button {
+    border: none;
+    background: none;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 999px;
+    cursor: pointer;
+    min-width: 48px;
+}
+
+.segment-control-sm button.active {
+    background: #fff;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+html.dark .segment-control-sm button.active {
+    background: #334155;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.divider {
+    height: 1px;
+    background: var(--card-border);
+    margin: 0.5rem 0;
+}

@@ -48,9 +48,12 @@ function renderCurrentObservations() {
         return convertItem(item, state.units);
     };
 
+    const tempUnit = state.units.temp;
+    const pressUnit = state.units.pressure;
+
     const limits = {
-        temp: state.units === 'imperial' ? { min: 0, max: 120 } : { min: -20, max: 50 },
-        pressure: state.units === 'imperial' ? { min: 28, max: 31 } : { min: 950, max: 1050 }
+        temp: (tempUnit === '°F' || tempUnit === 'F') ? { min: 0, max: 120 } : { min: -20, max: 50 },
+        pressure: (pressUnit === 'inHg') ? { min: 28, max: 31 } : { min: 950, max: 1050 }
     };
 
     // 1. Dials & Compass
@@ -385,7 +388,7 @@ export function renderHistorySummary() {
             label: 'TEMPERATURE'
         };
 
-        const limits = state.units === 'imperial' ? { min: 0, max: 120 } : { min: -20, max: 50 };
+        const limits = (state.units.temp === '°F' || state.units.temp === 'F') ? { min: 0, max: 120 } : { min: -20, max: 50 };
         createDialCard(summaryGrid, tempSummaryItem, 'Temperature', cTemp, limits.min, limits.max, cTextPrimary, cTextSecondary);
     }
 
@@ -442,7 +445,7 @@ export function renderHistorySummary() {
     }
 
     if (press) {
-        const pressLimits = state.units === 'imperial' ? { min: 28, max: 31 } : { min: 950, max: 1050 };
+        const pressLimits = (state.units.pressure === 'inHg') ? { min: 28, max: 31 } : { min: 950, max: 1050 };
         const pressSummary = {
             current: getAverage(press),
             min: press.min,

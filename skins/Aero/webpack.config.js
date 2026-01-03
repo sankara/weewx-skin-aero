@@ -3,7 +3,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
-    entry: './app.js',
+    entry: ['./app.js', './style.css'],
     output: {
         filename: 'aero.[contenthash].bundle.js',
         path: path.resolve(__dirname, 'dist'),

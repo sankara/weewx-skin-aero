@@ -20,6 +20,19 @@
                     document.documentElement.classList.remove('dark');
                     if (meta) meta.setAttribute('content', '#e0eafc');
                 }
+
+                // Design
+                 var design = localStorage.getItem('design'); // Stored as 'aero' or 'simple'
+                 // Check checking specific class logic if needed, usually handled by css var overrides or specific class
+                 if (design === 'aero') {
+                     document.documentElement.classList.add('theme-aero');
+                 }
+
+                 // Contrast
+                 var contrast = localStorage.getItem('contrast');
+                 if (contrast === 'high') {
+                     document.documentElement.classList.add('high-contrast');
+                 }
             } catch (e) {}
         })();
     </script>
@@ -46,19 +59,9 @@
                     <span id="last-updated" class="subtitle">Updating...</span>
                 </div>
                 <div class="header-controls">
-                    <!-- Design Toggle (Simple <-> Aero) -->
-                    <button id="design-toggle" class="btn-icon" aria-label="Toggle Design Style" title="Toggle Design Style">
-                        <i data-lucide="layout-template"></i>
-                    </button>
-
-                    <!-- Theme Toggle (Light <-> Dark) -->
-                    <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
-                        <i data-lucide="moon"></i>
-                    </button>
-
-                    <!-- Unit Toggle (Metric <-> Imperial) -->
-                    <button id="unit-toggle" class="btn-icon" aria-label="Toggle Units" title="Toggle Units">
-                        <span class="unit-text" style="font-weight: 700; font-size: 0.9rem;">°C</span>
+                    <!-- Settings Button -->
+                    <button id="settings-btn" class="btn-icon" aria-label="Settings" title="Settings">
+                        <i data-lucide="settings"></i>
                     </button>
                 </div>
             </header>
@@ -119,6 +122,85 @@
             </div>
         </section>
         </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+            <header class="modal-header">
+                <h2 id="settings-title">Unit Settings</h2>
+                <button id="close-modal-btn" class="btn-icon" aria-label="Close Settings"><i data-lucide="x"></i></button>
+            </header>
+
+            <div class="modal-body">
+                <p class="modal-desc">Select the unit you want to display for each measurement below.</p>
+
+                <!-- Presets -->
+                <div class="segment-control preset-control">
+                    <button data-preset="imperial" class="segment-btn">IMPERIAL</button>
+                    <button data-preset="metric" class="segment-btn">METRIC</button>
+                    <button data-preset="custom" class="segment-btn disabled" disabled>CUSTOM</button>
+                </div>
+
+                <!-- Unit Toggles -->
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <span>TEMP</span>
+                        <div class="segment-control-sm" data-type="temp">
+                            <button data-val="°F">°F</button>
+                            <button data-val="°C">°C</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <span>SPEED/WIND</span>
+                        <div class="segment-control-sm" data-type="speed">
+                            <button data-val="mph">MPH</button>
+                            <button data-val="km/h">KM/H</button>
+                            <button data-val="kts">KTS</button>
+                            <button data-val="m/s">M/S</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <span>PRESSURE</span>
+                        <div class="segment-control-sm" data-type="pressure">
+                            <button data-val="inHg">IN</button>
+                            <button data-val="hPa">MB</button>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <span>RAINFALL</span>
+                        <div class="segment-control-sm" data-type="rain">
+                            <button data-val="in">IN</button>
+                            <button data-val="mm">MM</button>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="setting-item">
+                        <span>THEME</span>
+                        <div class="segment-control-sm" data-type="theme">
+                            <button data-val="light">LIGHT</button>
+                            <button data-val="dark">DARK</button>
+                        </div>
+                    </div>
+                     <div class="setting-item">
+                        <span>DESIGN</span>
+                        <div class="segment-control-sm" data-type="design">
+                            <button data-val="simple">SIMPLE</button>
+                            <button data-val="aero">AERO</button>
+                        </div>
+                    </div>
+                     <div class="setting-item">
+                        <span>CONTRAST</span>
+                        <div class="segment-control-sm" data-type="contrast">
+                            <button data-val="standard">STD</button>
+                            <button data-val="high">HIGH</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="app.js"></script>

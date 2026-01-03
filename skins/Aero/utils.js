@@ -67,31 +67,41 @@ const CONVERSIONS = {
     ]
 };
 
-const TARGET_UNITS = {
-    metric: {
-        temp: '°C',
-        speed: 'km/h',
-        pressure: 'hPa',
-        rain: 'mm',
-        rainRate: 'mm/h'
-    },
-    imperial: {
-        temp: '°F',
-        speed: 'mph',
-        pressure: 'inHg',
-        rain: 'in',
-        rainRate: 'in/h'
-    }
+// Also define speed -> other units just in case we need direct map
+const SPEED_EXT = {
+    'm/s': { target: 'km/h', func: v => v * 3.6, type: 'speed' },
+    'kts': { target: 'km/h', func: v => v * 1.852, type: 'speed' },
+    'mph': [
+        { target: 'm/s', func: v => v / 2.23694, type: 'speed' },
+        { target: 'kts', func: v => v / 1.15078, type: 'speed' }
+    ],
+    'km/h': [
+        { target: 'm/s', func: v => v / 3.6, type: 'speed' },
+        { target: 'kts', func: v => v / 1.852, type: 'speed' }
+    ]
 };
+// Merge extra speed conversions
+Object.keys(SPEED_EXT).forEach(k => {
+    if (CONVERSIONS[k]) {
+        if (Array.isArray(CONVERSIONS[k])) {
+            CONVERSIONS[k] = CONVERSIONS[k].concat(Array.isArray(SPEED_EXT[k]) ? SPEED_EXT[k] : [SPEED_EXT[k]]);
+        } else {
+            CONVERSIONS[k] = [CONVERSIONS[k]].concat(Array.isArray(SPEED_EXT[k]) ? SPEED_EXT[k] : [SPEED_EXT[k]]);
+        }
+    } else {
+        CONVERSIONS[k] = SPEED_EXT[k];
+    }
+});
+
 
 /**
  * Converts a WeeWX data item (e.g., observation or summary) to the target unit system.
  * 
  * @param {Object} item - The data item with .unit and values like .current, .min, .max.
- * @param {'metric'|'imperial'} unitSystem - The target unit system.
+ * @param {Object} unitState - The current state.units configuration object (e.g. { temp: '°C', ... }).
  * @returns {Object} - A new item with converted units and values.
  */
-export function convertItem(item, unitSystem) {
+export function convertItem(item, unitState) {
     if (!item || !item.unit) return item;
 
     // Clean unit (remove spaces)
@@ -107,8 +117,11 @@ export function convertItem(item, unitSystem) {
 
     if (!type) return item;
 
-    const targetUnit = TARGET_UNITS[unitSystem][type];
-    if (unit === targetUnit) return item;
+    // Determine target unit from state object
+    // Fallback to unit itself if type not in state (though it should be)
+    const targetUnit = unitState[type];
+
+    if (!targetUnit || unit === targetUnit) return item;
 
     let conv = CONVERSIONS[unit];
     if (Array.isArray(conv)) {
@@ -116,6 +129,8 @@ export function convertItem(item, unitSystem) {
     }
 
     if (!conv || conv.target !== targetUnit) {
+        // No direct conversion found, try to pivot?
+        // For now, return original if no conversion map exists.
         return item;
     }
 
