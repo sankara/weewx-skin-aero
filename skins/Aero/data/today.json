@@ -1,1 +1,0 @@
-{"title": "Test Station", "time": "1767459630", "meta": {"time": 1767459630}, "observations": [{"observation": "outTemp", "current": 20.5, "min": 15.0, "max": 25.0, "unit": "\u00b0C"}, {"observation": "barometer", "current": 1013, "min": 1010, "max": 1015, "unit": "hPa"}]}
