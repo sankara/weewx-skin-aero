@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "description": "Asset bundling for Aero skin",
     "scripts": {
-        "build": "webpack --mode production"
+        "build": "webpack --mode production",
+        "test": "vitest"
     },
     "devDependencies": {
         "axe-core": "^4.11.0",

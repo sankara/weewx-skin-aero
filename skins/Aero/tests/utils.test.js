@@ -1,6 +1,6 @@
 // utils.test.js
 import { describe, it, expect } from 'vitest';
-import { convertItem, getAverage, degToCompass } from './utils.js';
+import { convertItem, getAverage, degToCompass } from '../utils.js';
 
 describe('utils.js', () => {
     describe('convertItem', () => {
