@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
-
+import re
 
 
 @pytest.fixture(scope="session")
@@ -45,18 +45,39 @@ def test_charts_render(page: Page, report_server):
 
 def test_theme_toggle(page: Page, report_server):
     page.goto(report_server)
-    # Check if dark class exists (default might be light or dark based on system)
+
+    # Open settings modal
+    page.locator("#settings-btn").click()
+    expect(page.locator("#settings-modal")).to_be_visible()
+
+    # Get initial theme
     initial_is_dark = page.evaluate("document.documentElement.classList.contains('dark')")
     
-    page.locator("#theme-toggle").click()
+    # Click the *other* theme button
+    target_theme = "light" if initial_is_dark else "dark"
+    page.locator(f".segment-control-sm[data-type='theme'] button[data-val='{target_theme}']").click()
+
+    # Verify change
     new_is_dark = page.evaluate("document.documentElement.classList.contains('dark')")
     assert new_is_dark != initial_is_dark
 
 def test_unit_toggle(page: Page, report_server):
     page.goto(report_server)
-    # Get initial unit text from the toggle button or a dial
-    initial_text = page.locator("#unit-toggle").inner_text()
     
-    page.locator("#unit-toggle").click()
-    new_text = page.locator("#unit-toggle").inner_text()
-    assert new_text != initial_text
+    # Open settings modal
+    page.locator("#settings-btn").click()
+    expect(page.locator("#settings-modal")).to_be_visible()
+
+    # Toggle temp unit
+    # First, see what's active (we assume one has class 'active' or similar, but for now just click the opposite)
+    # Let's force click '°F' then '°C' and verify state changes or at least UI updates
+
+    btn_f = page.locator(".segment-control-sm[data-type='temp'] button[data-val='°F']")
+    btn_c = page.locator(".segment-control-sm[data-type='temp'] button[data-val='°C']")
+
+    # Ensure one is clicked
+    btn_c.click()
+    expect(btn_c).to_have_class(re.compile(r"active"))
+
+    btn_f.click()
+    expect(btn_f).to_have_class(re.compile(r"active"))

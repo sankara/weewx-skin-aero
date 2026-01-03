@@ -5,7 +5,7 @@ export const state = {
     view: 'overview',
     viewScope: 'day',
     units: loadUnits(),
-    design: localStorage.getItem('theme') === 'aero' ? 'aero' : 'simple',
+    design: localStorage.getItem('design') === 'aero' ? 'aero' : 'simple',
     currentDate: null,
     basePath: 'data/'
 };
