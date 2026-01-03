@@ -1,11 +1,11 @@
 // app.js
 
-import './style.css';
+// import './style.css'; // REMOVED: CSS imported in HTML
 import { state, els } from './state.js';
 import { renderHeader, renderHistorySummary } from './ui.js';
-import { renderGraphs, initWebglIfNeeded } from './charts.js';
+import { renderGraphs } from './charts.js';
 import { isSameDay } from './utils.js';
-import { setupNav, setupUnits, setupDateControls, setupTheme, setupDesign, setupPullToRefresh } from './events.js';
+import { setupEvents } from './events.js';
 
 /**
  * Parses WeeWX JSON data into a standard internal format.
@@ -336,15 +336,8 @@ async function initRouter() {
 document.addEventListener('DOMContentLoaded', async () => {
     state.basePath = 'data/';
 
-    // Initial theme/design load
-    setupDesign();
-    setupTheme();
-
-    // Secondary setups
-    setupNav();
-    setupUnits();
-    setupDateControls();
-    setupPullToRefresh();
+    // Setup Events (Modal, Nav, etc.)
+    setupEvents();
 
     // 1. ALWAYS load current data for the header dials
     try {
