@@ -479,3 +479,237 @@ function createSummaryCard(container, label, value, unit, color) {
     // div.style.justifyContent = 'center'; // Removed
     container.appendChild(div);
 }
+
+/**
+ * Renders forecast view (hourly, daily, and alerts)
+ */
+export function renderForecast() {
+    const container = els.graphs;
+    if (!container) return;
+
+    // Check if forecast data exists
+    if (!state.forecastData || !state.forecastData.meta || !state.forecastData.meta.enabled) {
+        container.innerHTML = `
+            <div class="card forecast-unavailable" style="grid-column: 1/-1; text-align:center; padding:2rem;">
+                <i data-lucide="cloud-off" style="width:48px; height:48px; margin:0 auto 1rem; opacity:0.5;"></i>
+                <p style="margin:0; opacity:0.7;">Forecast data is unavailable</p>
+                <p style="margin:0.5rem 0 0; font-size:0.875rem; opacity:0.5;">
+                    Enable forecast in skin.conf or check your configuration
+                </p>
+            </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+    }
+
+    container.innerHTML = '';
+
+    // Render alerts if any
+    if (state.forecastData.alerts && state.forecastData.alerts.length > 0) {
+        renderWeatherAlerts(container, state.forecastData.alerts);
+    }
+
+    // Render hourly forecast
+    if (state.forecastData.hourly && state.forecastData.hourly.length > 0) {
+        renderHourlyForecast(container, state.forecastData.hourly);
+    }
+
+    // Render daily forecast
+    if (state.forecastData.daily && state.forecastData.daily.length > 0) {
+        renderDailyForecast(container, state.forecastData.daily);
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+/**
+ * Renders weather alerts
+ */
+function renderWeatherAlerts(container, alerts) {
+    const alertsContainer = document.createElement('div');
+    alertsContainer.className = 'forecast-alerts';
+    alertsContainer.style.cssText = 'grid-column: 1/-1; margin-bottom: 1rem;';
+
+    alerts.forEach(alert => {
+        const severity = alert.severity?.toLowerCase() || 'unknown';
+        const severityColor = {
+            'extreme': '#ef4444',
+            'severe': '#f97316',
+            'moderate': '#eab308',
+            'minor': '#3b82f6',
+            'unknown': '#6b7280'
+        }[severity] || '#6b7280';
+
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'card forecast-alert';
+        alertDiv.style.borderLeft = `4px solid ${severityColor}`;
+
+        alertDiv.innerHTML = `
+            <div style="display:flex; align-items:start; gap:0.75rem;">
+                <i data-lucide="alert-triangle" style="color:${severityColor}; min-width:24px; margin-top:0.25rem;"></i>
+                <div style="flex:1;">
+                    <div style="font-weight:600; margin-bottom:0.25rem; color:${severityColor};">
+                        ${alert.event || 'Weather Alert'}
+                    </div>
+                    <div style="font-size:0.875rem; opacity:0.9; margin-bottom:0.5rem;">
+                        ${alert.headline || ''}
+                    </div>
+                    ${alert.instruction ? `
+                        <div style="font-size:0.875rem; opacity:0.7; font-style:italic;">
+                            ${alert.instruction}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        alertsContainer.appendChild(alertDiv);
+    });
+
+    container.appendChild(alertsContainer);
+}
+
+/**
+ * Renders hourly forecast (next 48 hours, show first 24)
+ */
+function renderHourlyForecast(container, hourlyData) {
+    const section = document.createElement('div');
+    section.className = 'forecast-section';
+    section.style.cssText = 'grid-column: 1/-1; margin-bottom: 2rem;';
+
+    const header = document.createElement('h3');
+    header.className = 'forecast-section-title';
+    header.textContent = 'Hourly Forecast';
+    section.appendChild(header);
+
+    const hourlyContainer = document.createElement('div');
+    hourlyContainer.className = 'hourly-forecast';
+
+    // Show first 24 hours
+    const hoursToShow = Math.min(24, hourlyData.length);
+
+    for (let i = 0; i < hoursToShow; i++) {
+        const hour = hourlyData[i];
+        const timestamp = new Date(hour.timestamp);
+        const hourStr = timestamp.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
+        const dayStr = i === 0 ? 'Now' : (i < 12 ? '' : timestamp.toLocaleDateString(undefined, { weekday: 'short' }));
+
+        // Convert temperature to selected unit
+        let temp = hour.temp;
+        const targetUnit = state.units.temp;
+        const sourceUnit = hour.tempUnit;
+
+        if (sourceUnit !== targetUnit) {
+            if (targetUnit === '°C' && (sourceUnit === '°F' || sourceUnit === 'F')) {
+                temp = (temp - 32) * 5/9;
+            } else if ((targetUnit === '°F' || targetUnit === 'F') && sourceUnit === '°C') {
+                temp = temp * 9/5 + 32;
+            }
+        }
+
+        const card = document.createElement('div');
+        card.className = 'card hourly-card';
+
+        card.innerHTML = `
+            <div class="hourly-time">
+                ${dayStr ? `<div style="font-size:0.75rem; opacity:0.6; margin-bottom:0.25rem;">${dayStr}</div>` : ''}
+                <div style="font-weight:500;">${hourStr}</div>
+            </div>
+            <i data-lucide="${hour.icon}" class="hourly-icon" style="width:32px; height:32px; margin:0.5rem 0;"></i>
+            <div class="hourly-temp">${Math.round(temp)}${targetUnit}</div>
+            ${hour.precipProb !== null ? `
+                <div class="hourly-precip">
+                    <i data-lucide="droplets" style="width:14px; height:14px; opacity:0.6;"></i>
+                    <span style="font-size:0.75rem; opacity:0.7;">${hour.precipProb}%</span>
+                </div>
+            ` : ''}
+        `;
+
+        hourlyContainer.appendChild(card);
+    }
+
+    section.appendChild(hourlyContainer);
+    container.appendChild(section);
+}
+
+/**
+ * Renders daily forecast (7 days)
+ */
+function renderDailyForecast(container, dailyData) {
+    const section = document.createElement('div');
+    section.className = 'forecast-section';
+    section.style.cssText = 'grid-column: 1/-1;';
+
+    const header = document.createElement('h3');
+    header.className = 'forecast-section-title';
+    header.textContent = '7-Day Forecast';
+    section.appendChild(header);
+
+    const dailyContainer = document.createElement('div');
+    dailyContainer.className = 'daily-forecast';
+
+    dailyData.forEach((day, index) => {
+        const date = new Date(day.date);
+        const dayName = index === 0 ? 'Today' : date.toLocaleDateString(undefined, { weekday: 'long' });
+        const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+        // Convert temperatures to selected unit
+        let tempHigh = day.tempHigh;
+        let tempLow = day.tempLow;
+        const targetUnit = state.units.temp;
+        const sourceUnit = day.tempUnit;
+
+        if (sourceUnit !== targetUnit) {
+            if (targetUnit === '°C' && (sourceUnit === '°F' || sourceUnit === 'F')) {
+                tempHigh = (tempHigh - 32) * 5/9;
+                tempLow = (tempLow - 32) * 5/9;
+            } else if ((targetUnit === '°F' || targetUnit === 'F') && sourceUnit === '°C') {
+                tempHigh = tempHigh * 9/5 + 32;
+                tempLow = tempLow * 9/5 + 32;
+            }
+        }
+
+        const card = document.createElement('div');
+        card.className = 'card daily-card';
+
+        card.innerHTML = `
+            <div class="daily-header">
+                <div class="daily-day">${dayName}</div>
+                <div class="daily-date">${dateStr}</div>
+            </div>
+            <i data-lucide="${day.icon}" class="daily-icon" style="width:48px; height:48px; margin:1rem 0;"></i>
+            <div class="daily-temps">
+                <div class="daily-temp-high">
+                    <i data-lucide="arrow-up" style="width:14px; height:14px; opacity:0.6;"></i>
+                    ${Math.round(tempHigh)}${targetUnit}
+                </div>
+                <div class="daily-temp-low">
+                    <i data-lucide="arrow-down" style="width:14px; height:14px; opacity:0.6;"></i>
+                    ${Math.round(tempLow)}${targetUnit}
+                </div>
+            </div>
+            ${day.precipProb !== null ? `
+                <div class="daily-precip">
+                    <i data-lucide="droplets" style="width:16px; height:16px; opacity:0.6;"></i>
+                    <span>${day.precipProb}%</span>
+                </div>
+            ` : ''}
+        `;
+
+        dailyContainer.appendChild(card);
+    });
+
+    section.appendChild(dailyContainer);
+    container.appendChild(section);
+
+    // Add provider attribution if using Open-Meteo
+    if (state.forecastData.meta.provider === 'openmeteo') {
+        const attribution = document.createElement('div');
+        attribution.className = 'forecast-attribution';
+        attribution.style.cssText = 'grid-column: 1/-1; text-align:center; margin-top:2rem; font-size:0.75rem; opacity:0.5;';
+        attribution.innerHTML = `
+            Forecast data provided by <a href="https://open-meteo.com/" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Open-Meteo</a>
+        `;
+        container.appendChild(attribution);
+    }
+}

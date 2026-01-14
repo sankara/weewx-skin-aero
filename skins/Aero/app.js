@@ -2,7 +2,7 @@
 
 // import './style.css'; // REMOVED: CSS imported in HTML
 import { state, els } from './state.js';
-import { renderHeader, renderHistorySummary } from './ui.js';
+import { renderHeader, renderHistorySummary, renderForecast } from './ui.js';
 import { renderGraphs } from './charts.js';
 import { isSameDay } from './utils.js';
 import { setupEvents } from './events.js';
@@ -30,6 +30,29 @@ function parseWeeWXData(json) {
 }
 
 /**
+ * Loads forecast data from the server.
+ */
+async function loadForecast() {
+    try {
+        const res = await fetch(`${state.basePath}forecast.json`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Check if forecast is enabled and has data
+        if (data.meta && data.meta.enabled && (data.hourly?.length > 0 || data.daily?.length > 0)) {
+            state.forecastData = data;
+            console.log('Forecast data loaded:', data.meta.provider);
+        } else {
+            state.forecastData = null;
+            console.log('Forecast feature is disabled or no data available');
+        }
+    } catch (e) {
+        console.warn("Could not load forecast data", e);
+        state.forecastData = null;
+    }
+}
+
+/**
  * Loads and renders data for a specific date.
  */
 export async function loadDate(date, skipPushState = false) {
@@ -43,6 +66,12 @@ export async function loadDate(date, skipPushState = false) {
 
     if (!skipPushState) {
         updateRouter();
+    }
+
+    // Handle forecast view - no date-based loading needed
+    if (state.viewScope === 'forecast') {
+        render();
+        return;
     }
 
     let activeFile;
@@ -179,6 +208,15 @@ async function loadWeeklyData(targetDate) {
  * Updates UI controls based on current state.
  */
 function updateNavControls() {
+    // Disable date navigation for forecast view
+    if (state.viewScope === 'forecast') {
+        els.datePrev.disabled = true;
+        els.dateNext.disabled = true;
+        els.datePrev.style.opacity = '0.3';
+        els.dateNext.style.opacity = '0.3';
+        return;
+    }
+
     els.datePrev.disabled = false;
     els.datePrev.style.opacity = '1';
 
@@ -213,7 +251,9 @@ function updateNavControls() {
  */
 function updateDateDisplay() {
     const date = state.currentDate;
-    if (state.viewScope === 'day') {
+    if (state.viewScope === 'forecast') {
+        els.dateDisplay.textContent = 'Forecast';
+    } else if (state.viewScope === 'day') {
         els.dateDisplay.textContent = date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
     } else if (state.viewScope === 'month') {
         els.dateDisplay.textContent = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -240,6 +280,17 @@ function render() {
     updateNavControls();
     updateNavButtons();
 
+    // Handle forecast view
+    if (state.viewScope === 'forecast') {
+        if (document.getElementById('history-summary')) {
+            document.getElementById('history-summary').innerHTML = '';
+        }
+        renderForecast();
+        renderHeader();
+        return;
+    }
+
+    // Handle historical data views
     if (!state.activeData) {
         if (els.graphs) {
             els.graphs.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:2rem;">
@@ -269,13 +320,23 @@ function updateNavButtons() {
 function updateRouter() {
     const scope = state.viewScope;
     const date = state.currentDate;
+
+    let hash = `#/${scope}`;
+
+    // Forecast doesn't need date
+    if (scope === 'forecast') {
+        if (window.location.hash !== hash) {
+            history.pushState({ scope }, '', hash);
+        }
+        return;
+    }
+
     if (!date) return;
 
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
 
-    let hash = `#/${scope}`;
     if (scope === 'day') hash += `/${y}-${m}-${d}`;
     else if (scope === 'week') hash += `/${y}-${m}-${d}`;
     else if (scope === 'month') hash += `/${y}-${m}`;
@@ -294,6 +355,13 @@ async function initRouter() {
         const parts = hash.split('/');
         const scope = parts[0];
         const dateStr = parts[1];
+
+        // Handle forecast view
+        if (scope === 'forecast') {
+            state.viewScope = 'forecast';
+            render();
+            return true;
+        }
 
         if (['day', 'week', 'month', 'year'].includes(scope)) {
             state.viewScope = scope;
@@ -321,7 +389,11 @@ async function initRouter() {
     window.addEventListener('popstate', (e) => {
         if (e.state) {
             state.viewScope = e.state.scope;
-            loadDate(new Date(e.state.date), true);
+            if (e.state.scope === 'forecast') {
+                render();
+            } else if (e.state.date) {
+                loadDate(new Date(e.state.date), true);
+            }
         } else {
             handleHash();
         }
@@ -358,6 +430,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
         console.warn("Minor: Could not load live current data", e);
     }
+
+    // Load forecast data
+    await loadForecast();
 
     // 2. Router Initialization (History)
     const routed = await initRouter();

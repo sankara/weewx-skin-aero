@@ -2,6 +2,7 @@
 export const state = {
     currentData: null,
     activeData: null,
+    forecastData: null,
     view: 'overview',
     viewScope: 'day',
     units: loadUnits(),

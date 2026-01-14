@@ -1,0 +1,80 @@
+#errorCatcher Echo
+## forecast.json.tmpl
+##
+## This template generates JSON forecast data for the Aero skin.
+## It uses the $aero_forecast variable provided by the AeroForecast Search List Extension.
+##
+#if $aero_forecast is not None
+{
+  "meta": {
+    "time": $current.dateTime.raw,
+    "provider": "$aero_forecast.provider",
+    "updated": $aero_forecast.updated,
+    "enabled": true
+  },
+  "hourly": [
+#for $hour in $aero_forecast.hourly
+    {
+      "timestamp": "$hour.timestamp",
+      "temp": $hour.temp,
+      "tempUnit": "$unit.label.outTemp",
+      "humidity": $hour.humidity,
+      "precipProb": #if $hour.precipProb is not None then $hour.precipProb else 'null'#,
+      "precip": #if $hour.precip is not None then $hour.precip else 'null'#,
+      "precipUnit": "$unit.label.rain",
+      "weatherCode": #if $hour.weatherCode is not None then $hour.weatherCode else 'null'#,
+      "icon": "$hour.icon",
+      "windSpeed": #if $hour.windSpeed is not None then $hour.windSpeed else 'null'#,
+      "windSpeedUnit": "$unit.label.windSpeed",
+      "windDir": #if $hour.windDir is not None then $hour.windDir else 'null'#
+    }#if not $loop.last then ',' else ''#
+#end for
+  ],
+  "daily": [
+#for $day in $aero_forecast.daily
+    {
+      "date": "$day.date",
+      "tempHigh": $day.tempHigh,
+      "tempLow": $day.tempLow,
+      "tempUnit": "$unit.label.outTemp",
+      "precip": #if $day.precip is not None then $day.precip else 'null'#,
+      "precipProb": #if $day.precipProb is not None then $day.precipProb else 'null'#,
+      "precipUnit": "$unit.label.rain",
+      "weatherCode": #if $day.weatherCode is not None then $day.weatherCode else 'null'#,
+      "icon": "$day.icon",
+      "windSpeed": #if $day.windSpeed is not None then $day.windSpeed else 'null'#,
+      "windSpeedUnit": "$unit.label.windSpeed"
+    }#if not $loop.last then ',' else ''#
+#end for
+  ],
+  "alerts": [
+#if hasattr($aero_forecast, 'alerts')
+#for $alert in $aero_forecast.alerts
+    {
+      "event": "$alert.event",
+      "headline": "$alert.headline",
+      "description": "$alert.description",
+      "severity": "$alert.severity",
+      "urgency": "$alert.urgency",
+      "onset": "$alert.onset",
+      "expires": "$alert.expires",
+      "instruction": "$alert.instruction"
+    }#if not $loop.last then ',' else ''#
+#end for
+#end if
+  ]
+}
+#else
+## Forecast is disabled or unavailable
+{
+  "meta": {
+    "time": $current.dateTime.raw,
+    "provider": null,
+    "updated": null,
+    "enabled": false
+  },
+  "hourly": [],
+  "daily": [],
+  "alerts": []
+}
+#end if

@@ -1,6 +1,6 @@
 // events.js
 import { state, els } from './state.js';
-import { renderHeader, renderHistorySummary } from './ui.js';
+import { renderHeader, renderHistorySummary, renderForecast } from './ui.js';
 import { renderGraphs } from './charts.js';
 import { loadDate } from './app.js';
 
@@ -235,7 +235,9 @@ function triggerDateLoad() {
 
 function refreshAll() {
     renderHeader();
-    if (state.activeData) {
+    if (state.viewScope === 'forecast') {
+        renderForecast();
+    } else if (state.activeData) {
         renderHistorySummary();
         renderGraphs();
     }
