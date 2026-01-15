@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-01-15
+### Features
+- **Weather Forecast**: Added comprehensive 7-day forecast feature powered by Open-Meteo API with hourly and daily forecasts, weather icons, and precipitation probability.
+- **Granular Unit Settings**: New settings modal with granular control over temperature, wind speed, pressure, and rainfall units.
+
+### Fixed
+- **Forecast Performance**: Implemented instance-level caching in forecast Search List Extension to avoid repeated API calls during report generation (~90% faster builds).
+- **Dev Environment**: Forecast feature now works correctly in development and test environments with graceful fallback.
+
+### Tests
+- **Forecast Tests**: Added comprehensive template tests for forecast.json structure and UI tests for forecast view navigation.
+
 ## [2.3.3] - 2026-01-01
 ### Fixed
 - **UI**: Improved rain chart tooltip clarity by renaming labels to "Rainfall" and "Cumulative".
