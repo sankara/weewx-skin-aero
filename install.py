@@ -36,12 +36,17 @@ class AeroInstaller(ExtensionInstaller):
                     'skins/Aero/data/trends.json.tmpl',
                     'skins/Aero/data/week-to-date.json.tmpl',
                     'skins/Aero/data/week.json.tmpl',
+                    'skins/Aero/data/forecast.json.tmpl',
+                    'skins/Aero/data/weatherplus.json.tmpl',
                     'skins/Aero/index.html',
                     'skins/Aero/skin.conf',
                     'skins/Aero/state.js',
                     'skins/Aero/style.css',
                     'skins/Aero/ui.js',
                     'skins/Aero/utils.js',
+                ]),
+                ('bin/user', [
+                    'bin/user/aero_forecast.py',
                 ]),
             ]
         )

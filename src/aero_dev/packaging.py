@@ -42,13 +42,26 @@ def update_install_py(install_py_path, file_list):
     # Construct new files block
     # Maintain indentation
     indent = "                "
+
+    # Separate files by destination
+    skin_files = [f for f in file_list if f.startswith('skins/')]
+    user_files = [f for f in file_list if f.startswith('bin/user/')]
+
     files_block = "files=[\n"
     files_block += indent + "('skins/Aero', [\n"
 
-    for f in sorted(file_list):
+    for f in sorted(skin_files):
         files_block += indent + "    '" + f + "',\n"
 
     files_block += indent + "]),\n"
+
+    # Add bin/user section if there are user extension files
+    if user_files:
+        files_block += indent + "('bin/user', [\n"
+        for f in sorted(user_files):
+            files_block += indent + "    '" + f + "',\n"
+        files_block += indent + "]),\n"
+
     files_block += "            ]"
 
     new_content = content[:start_idx] + files_block + content[end_idx:]
@@ -94,9 +107,16 @@ def main():
 
     print(f"Preparing package in {pkg_root}...")
 
-    # Copy skins/Aero
+    # Copy skins/Aero (excluding bin/user which goes to a separate location)
     target_skin_dir = os.path.join(pkg_root, "skins/Aero")
-    shutil.copytree(skin_dir, target_skin_dir, ignore=shutil.ignore_patterns('.*', 'node_modules'))
+    shutil.copytree(skin_dir, target_skin_dir, ignore=shutil.ignore_patterns('.*', 'node_modules', 'bin'))
+
+    # Copy bin/user (Search List Extensions)
+    src_bin_user = os.path.join(skin_dir, "bin/user")
+    if os.path.exists(src_bin_user):
+        target_bin_user = os.path.join(pkg_root, "bin/user")
+        shutil.copytree(src_bin_user, target_bin_user, ignore=shutil.ignore_patterns('.*', '__pycache__'))
+        print(f"Copied bin/user extensions to package")
 
     # Copy root files (README, LICENSE) to skins/Aero
     extra_files = ['README.md', 'LICENSE']
@@ -167,18 +187,31 @@ def main():
             os.remove(p)
 
     # Gather files for install.py list
-    # We want to list all files in skins/Aero relative to the package root (inside the zip root)
+    # We want to list all files relative to the package root (inside the zip root)
     file_list = []
+
+    # Gather skin files
     for root, dirs, files in os.walk(target_skin_dir):
         for file in files:
             if file.startswith('.'): continue
             # Exclude node_modules if they were copied or created (bundler installs them)
-            # Actually bundler installs them in target_skin_dir. We should exclude them from the zip list.
             if 'node_modules' in root: continue
-            
+
             abs_path = os.path.join(root, file)
             rel_path = os.path.relpath(abs_path, pkg_root) # e.g. skins/Aero/index.html
             file_list.append(rel_path)
+
+    # Gather bin/user files
+    target_bin_user = os.path.join(pkg_root, "bin/user")
+    if os.path.exists(target_bin_user):
+        for root, dirs, files in os.walk(target_bin_user):
+            for file in files:
+                if file.startswith('.'): continue
+                if '__pycache__' in root: continue
+
+                abs_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_path, pkg_root) # e.g. bin/user/aero_forecast.py
+                file_list.append(rel_path)
 
     # Update install.py in the pkg_root
     update_install_py(dst_install, file_list)
