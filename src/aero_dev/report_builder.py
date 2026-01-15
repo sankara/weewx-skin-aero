@@ -154,6 +154,12 @@ def main() -> None:
         with weewx.manager.open_manager(manager_dict) as db_manager:
             record = db_manager.getRecord(last_ts)
 
+        # Add skin's bin directory to Python path for Search List Extensions
+        skin_bin_dir = os.path.join(skin_dir, 'bin')
+        if os.path.exists(skin_bin_dir) and skin_bin_dir not in sys.path:
+            sys.path.insert(0, skin_bin_dir)
+            logger.debug("Added %s to Python path for Search List Extensions", skin_bin_dir)
+
         logger.info("Starting Report Engine...")
         engine = StdReportEngine(config, stn_info, record=record, gen_ts=last_ts, first_run=True)
         engine.run()

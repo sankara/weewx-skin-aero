@@ -4,6 +4,7 @@
 ## This template generates JSON forecast data for the Aero skin.
 ## It uses the $aero_forecast variable provided by the AeroForecast Search List Extension.
 ##
+#try
 #if $aero_forecast is not None
 {
   "meta": {
@@ -78,3 +79,17 @@
   "alerts": []
 }
 #end if
+#except
+## If Search List Extension is not available, return disabled forecast
+{
+  "meta": {
+    "time": $current.dateTime.raw,
+    "provider": null,
+    "updated": null,
+    "enabled": false
+  },
+  "hourly": [],
+  "daily": [],
+  "alerts": []
+}
+#end try
