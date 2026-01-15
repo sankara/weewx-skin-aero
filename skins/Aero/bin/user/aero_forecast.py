@@ -53,6 +53,10 @@ class AeroForecast(SearchList):
         self.cache_duration = 3600  # 1 hour in seconds
         self.cache_db_path = extras.get('forecast_cache_db', '/var/tmp/aero_forecast_cache.db')
 
+        # Instance cache - persists for this report run only
+        # Prevents repeated processing for each template
+        self._forecast_result = None
+
         # Initialize cache database
         self._init_cache_db()
 
@@ -467,12 +471,17 @@ class AeroForecast(SearchList):
         Required method for SearchList extensions.
         Returns a list of dictionaries to add to the search list.
 
-        This method is called by WeeWX's CheetahGenerator to get additional
-        variables to make available to templates.
+        This method is called by WeeWX's CheetahGenerator for every template.
+        We use instance-level caching to avoid repeated processing.
         """
+        # Return cached result if already fetched this report run
+        if self._forecast_result is not None:
+            return self._forecast_result
+
         if not self.enable_forecast:
-            log.info("Forecast feature is disabled in configuration")
-            return [{'aero_forecast': None}]
+            log.debug("Forecast feature is disabled in configuration")
+            self._forecast_result = [{'aero_forecast': None}]
+            return self._forecast_result
 
         # Get latitude and longitude
         lat = self.forecast_latitude
@@ -483,15 +492,17 @@ class AeroForecast(SearchList):
             try:
                 lat = float(self.generator.config_dict['Station'].get('latitude', 0))
                 lon = float(self.generator.config_dict['Station'].get('longitude', 0))
-                log.info(f"Using station location: lat={lat}, lon={lon}")
+                log.info(f"Using station location for forecast: lat={lat}, lon={lon}")
             except (KeyError, ValueError) as e:
                 log.error(f"Could not determine location for forecast: {e}")
-                return [{'aero_forecast': None}]
+                self._forecast_result = [{'aero_forecast': None}]
+                return self._forecast_result
 
         # Validate coordinates
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
             log.error(f"Invalid coordinates: lat={lat}, lon={lon}")
-            return [{'aero_forecast': None}]
+            self._forecast_result = [{'aero_forecast': None}]
+            return self._forecast_result
 
         # Try to get forecast from WeeWX first
         forecast_data = self._check_weewx_forecast()
@@ -506,9 +517,9 @@ class AeroForecast(SearchList):
             alerts = self._fetch_openmeteo_alerts(lat, lon)
             forecast_data['alerts'] = alerts
 
-        # Return the forecast data for use in templates
-        # Templates can access this via $aero_forecast variable
-        return [{'aero_forecast': forecast_data}]
+        # Cache and return the forecast data
+        self._forecast_result = [{'aero_forecast': forecast_data}]
+        return self._forecast_result
 
 
 def get_extension_list(config_dict, skin_dict):

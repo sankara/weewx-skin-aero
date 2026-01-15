@@ -4,65 +4,72 @@
 ## This template generates JSON forecast data for the Aero skin.
 ## It uses the $aero_forecast variable provided by the AeroForecast Search List Extension.
 ##
+#set $has_forecast = False
 #try
-#if $aero_forecast is not None
+  #set $has_forecast = $aero_forecast is not None and 'hourly' in $aero_forecast
+#except
+  #set $has_forecast = False
+#end try
+##
+#if $has_forecast
 {
   "meta": {
     "time": $current.dateTime.raw,
-    "provider": "$aero_forecast.provider",
-    "updated": $aero_forecast.updated,
+    "provider": "$aero_forecast['provider']",
+    "updated": $aero_forecast['updated'],
     "enabled": true
   },
   "hourly": [
-#for $hour in $aero_forecast.hourly
+#set $hourly_items = $aero_forecast['hourly']
+#for $i, $hour in enumerate($hourly_items)
     {
-      "timestamp": "$hour.timestamp",
-      "temp": $hour.temp,
+      "timestamp": "$hour.get('timestamp', '')",
+      "temp": $hour.get('temp', 'null'),
       "tempUnit": "$unit.label.outTemp",
-      "humidity": $hour.humidity,
-      "precipProb": #if $hour.precipProb is not None then $hour.precipProb else 'null'#,
-      "precip": #if $hour.precip is not None then $hour.precip else 'null'#,
+      "humidity": $hour.get('humidity', 'null'),
+      "precipProb": #echo $hour.get('precipProb', 'null')#,
+      "precip": #echo $hour.get('precip', 'null')#,
       "precipUnit": "$unit.label.rain",
-      "weatherCode": #if $hour.weatherCode is not None then $hour.weatherCode else 'null'#,
-      "icon": "$hour.icon",
-      "windSpeed": #if $hour.windSpeed is not None then $hour.windSpeed else 'null'#,
+      "weatherCode": #echo $hour.get('weatherCode', 'null')#,
+      "icon": "$hour.get('icon', 'cloud')",
+      "windSpeed": #echo $hour.get('windSpeed', 'null')#,
       "windSpeedUnit": "$unit.label.windSpeed",
-      "windDir": #if $hour.windDir is not None then $hour.windDir else 'null'#
-    }#if not $loop.last then ',' else ''#
+      "windDir": #echo $hour.get('windDir', 'null')#
+    }#if $i < len($hourly_items) - 1 then ',' else ''#
 #end for
   ],
   "daily": [
-#for $day in $aero_forecast.daily
+#set $daily_items = $aero_forecast.get('daily', [])
+#for $i, $day in enumerate($daily_items)
     {
-      "date": "$day.date",
-      "tempHigh": $day.tempHigh,
-      "tempLow": $day.tempLow,
+      "date": "$day.get('date', '')",
+      "tempHigh": $day.get('tempHigh', 'null'),
+      "tempLow": $day.get('tempLow', 'null'),
       "tempUnit": "$unit.label.outTemp",
-      "precip": #if $day.precip is not None then $day.precip else 'null'#,
-      "precipProb": #if $day.precipProb is not None then $day.precipProb else 'null'#,
+      "precip": #echo $day.get('precip', 'null')#,
+      "precipProb": #echo $day.get('precipProb', 'null')#,
       "precipUnit": "$unit.label.rain",
-      "weatherCode": #if $day.weatherCode is not None then $day.weatherCode else 'null'#,
-      "icon": "$day.icon",
-      "windSpeed": #if $day.windSpeed is not None then $day.windSpeed else 'null'#,
+      "weatherCode": #echo $day.get('weatherCode', 'null')#,
+      "icon": "$day.get('icon', 'cloud')",
+      "windSpeed": #echo $day.get('windSpeed', 'null')#,
       "windSpeedUnit": "$unit.label.windSpeed"
-    }#if not $loop.last then ',' else ''#
+    }#if $i < len($daily_items) - 1 then ',' else ''#
 #end for
   ],
   "alerts": [
-#if hasattr($aero_forecast, 'alerts')
-#for $alert in $aero_forecast.alerts
+#set $alert_items = $aero_forecast.get('alerts', [])
+#for $i, $alert in enumerate($alert_items)
     {
-      "event": "$alert.event",
-      "headline": "$alert.headline",
-      "description": "$alert.description",
-      "severity": "$alert.severity",
-      "urgency": "$alert.urgency",
-      "onset": "$alert.onset",
-      "expires": "$alert.expires",
-      "instruction": "$alert.instruction"
-    }#if not $loop.last then ',' else ''#
+      "event": "$alert.get('event', '')",
+      "headline": "$alert.get('headline', '')",
+      "description": "$alert.get('description', '')",
+      "severity": "$alert.get('severity', '')",
+      "urgency": "$alert.get('urgency', '')",
+      "onset": "$alert.get('onset', '')",
+      "expires": "$alert.get('expires', '')",
+      "instruction": "$alert.get('instruction', '')"
+    }#if $i < len($alert_items) - 1 then ',' else ''#
 #end for
-#end if
   ]
 }
 #else
@@ -79,17 +86,3 @@
   "alerts": []
 }
 #end if
-#except
-## If Search List Extension is not available, return disabled forecast
-{
-  "meta": {
-    "time": $current.dateTime.raw,
-    "provider": null,
-    "updated": null,
-    "enabled": false
-  },
-  "hourly": [],
-  "daily": [],
-  "alerts": []
-}
-#end try

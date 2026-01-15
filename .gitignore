@@ -79,3 +79,4 @@ public_html/
 test-data/
 .output.txt
 .agent/
+.claude/
