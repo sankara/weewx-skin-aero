@@ -25,7 +25,7 @@
     {
       "timestamp": "$hour.get('timestamp', '')",
       "temp": $hour.get('temp', 'null'),
-      "tempUnit": "$unit.label.outTemp",
+      "tempUnit": "°F",
       "humidity": $hour.get('humidity', 'null'),
       "precipProb": #echo $hour.get('precipProb', 'null')#,
       "precip": #echo $hour.get('precip', 'null')#,
@@ -45,7 +45,7 @@
       "date": "$day.get('date', '')",
       "tempHigh": $day.get('tempHigh', 'null'),
       "tempLow": $day.get('tempLow', 'null'),
-      "tempUnit": "$unit.label.outTemp",
+      "tempUnit": "°F",
       "precip": #echo $day.get('precip', 'null')#,
       "precipProb": #echo $day.get('precipProb', 'null')#,
       "precipUnit": "$unit.label.rain",
