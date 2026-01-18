@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.3] - 2026-01-18
+### Fixed
+- **Forecast**: Corrected forecast temperature unit metadata in `forecast.json` to accurately reflect the Fahrenheit values returned by the API.
+
 ## [2.5.2] - 2026-01-18
 ### Fixed
 - **UI**: Corrected temperature color gradient mapping for Fahrenheit units to ensure accurate visual representation of thermal conditions.
