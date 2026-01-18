@@ -1,5 +1,13 @@
-import { els, state } from './state.js';
-import { THEME, convertItem, hexToRgbA, sampleData, degToCompass, aggregate, resolveThemeColor, getAverage, interpolateColor } from './utils.js';
+import {els, state} from './state.js';
+import {
+    aggregate,
+    convertItem,
+    degToCompass,
+    hexToRgbA,
+    interpolateColor,
+    resolveThemeColor,
+    sampleData
+} from './utils.js';
 
 let charts = {};
 
@@ -59,8 +67,8 @@ export function renderGraphs() {
         // WeeWX usually considers week-to-date from the start of the week.
         // Let's force a consistent 7-day view.
         // If state.activeData has start/end, use that to align the grid.
-        let startTime = sDate.getTime();
-        let endTime = sDate.getTime() + 7 * 24 * 60 * 60 * 1000;
+        let startTime;
+        let endTime;
 
         if (state.activeData && state.activeData.meta && state.activeData.meta.startTimestamp) {
             startTime = state.activeData.meta.startTimestamp * 1000;
@@ -83,7 +91,7 @@ export function renderGraphs() {
         commonScales.x.min = sDate.getTime();
         const eDate = new Date(sDate);
         eDate.setMonth(eDate.getMonth() + 1);
-        commonScales.x.max = eDate.getTime();
+        commonScales.x.max = eDate.getTime() - 1; // Subtract 1ms to avoid overlap
         commonScales.x.time = { unit: 'day', displayFormats: { day: 'd' } };
     } else if (state.viewScope === 'year') {
         sDate.setMonth(0, 1);
@@ -120,8 +128,6 @@ export function renderGraphs() {
         }
     }
 
-
-
     // 1. Temperature Chart
     renderTempChart(commonScales, isDayView, CHART_THEME);
 
@@ -151,7 +157,7 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
             dataPoints = sampleData(dataPoints, 30);
         }
 
-        const chart = new Chart(ctx, {
+        charts.temp = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [{
@@ -164,13 +170,8 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
                         if (!area) return 'transparent';
                         const gradient = canvas.createLinearGradient(0, area.bottom, 0, area.top);
                         const isImperial = state.units === 'imperial';
-                        const stops = [
-                            { t: isImperial ? 20 : -10, c: '#3b82f6' },
-                            { t: isImperial ? 45 : 7, c: '#06b6d4' },
-                            { t: isImperial ? 70 : 21, c: '#10b981' },
-                            { t: isImperial ? 90 : 32, c: '#f59e0b' },
-                            { t: isImperial ? 110 : 43, c: '#ef4444' }
-                        ];
+                        const stops = getTempColorStops(isImperial);
+                        
                         stops.forEach(s => {
                             const yPos = ctx.chart.scales.y.getPixelForValue(s.t);
                             const pct = 1 - (yPos - area.top) / (area.bottom - area.top);
@@ -184,9 +185,8 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
                     hitRadius: 10
                 }]
             },
-            options: { ...getChartOptions(isDayView), scales: commonScales }
+            options: {...getChartOptions(isDayView), scales: commonScales}
         });
-        charts.temp = chart;
     } else {
         // Floating Bar Chart (Min/Max) for History
         const aggData = aggregate(tempItem.graph, state.viewScope);
@@ -581,28 +581,9 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
 
     if (Math.abs(rangeEnd - rangeStart) > 0.01) {
         if (title === 'Temperature') {
-            // Temperature-aware multi-color arc
+            // Temperature-aware multi-color arc based on human tolerance zones
             const isImp = state.units === 'imperial';
-            // Scale and colors
-            const stops = [
-                { t: isImp ? 20 : -10, c: '#3b82f6' },
-                { t: isImp ? 45 : 7, c: '#06b6d4' },
-                { t: isImp ? 70 : 21, c: '#10b981' },
-                { t: isImp ? 90 : 32, c: '#f59e0b' },
-                { t: isImp ? 110 : 43, c: '#ef4444' }
-            ];
-
-            const getTempColor = (temp) => {
-                if (temp <= stops[0].t) return stops[0].c;
-                if (temp >= stops[stops.length - 1].t) return stops[stops.length - 1].c;
-                for (let i = 0; i < stops.length - 1; i++) {
-                    if (temp >= stops[i].t && temp <= stops[i + 1].t) {
-                        const pct = (temp - stops[i].t) / (stops[i + 1].t - stops[i].t);
-                        return interpolateColor(stops[i].c, stops[i + 1].c, pct);
-                    }
-                }
-                return color;
-            };
+            const stops = getTempColorStops(isImp);
 
             // Draw arc in segments for smooth color transition
             const segments = 60; // Higher segments for smoother gradient
@@ -617,7 +598,7 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
                 ctx.beginPath();
                 ctx.arc(cx, cy, radius, sAngle, eAngle);
                 ctx.lineWidth = 15 * s;
-                ctx.strokeStyle = getTempColor(currentTemp);
+                ctx.strokeStyle = getTempColor(currentTemp, stops);
                 ctx.lineCap = i === 0 || i === segments - 1 ? 'round' : 'butt';
                 ctx.stroke();
             }
@@ -650,8 +631,6 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
 
     // 4. Text
     ctx.textAlign = 'center';
-
-    const tPrimary = textPrimary || '#1e293b';
     const tSecondary = textSecondary || '#64748b';
 
     // Value
@@ -688,6 +667,8 @@ function createGraphContainer(id, title, parentId, fullWidth = false) {
     const div = document.createElement('div');
     div.className = 'graph-card';
     div.id = id + '-container';
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', title);
 
     // On mobile, everything is full width. On desktop, honor fullWidth
     if (fullWidth || window.innerWidth < 640) {
@@ -695,9 +676,9 @@ function createGraphContainer(id, title, parentId, fullWidth = false) {
     }
 
     div.innerHTML = `
-        <h3 class="card-label" style="margin-bottom:1rem">${title}</h3>
-        <div class="chart-responsive-wrapper" style="position: relative; width: 100%; min-height: 250px;">
-            <canvas id="${id}"></canvas>
+        <h3 class=\"card-label\" style=\"margin-bottom:1rem\">${title}</h3>
+        <div class=\"chart-responsive-wrapper\" style=\"position: relative; width: 100%; min-height: 250px;\">
+            <canvas id=\"${id}\" role=\"img\" aria-label=\"${title} Graph\"></canvas>
         </div>
     `;
     section.appendChild(div);
@@ -709,8 +690,8 @@ function createNoDataContainer(title) {
     div.className = 'graph-card';
     div.style.gridColumn = "span 2";
     div.innerHTML = `
-        <h3 class="card-label" style="margin-bottom:1rem">${title}</h3>
-        <div style="height: 320px; width: 100%; display:flex; align-items:center; justify-content:center; background:#f8fafc; border-radius:8px; color:#64748b">
+        <h3 class=\"card-label\" style=\"margin-bottom:1rem\">${title}</h3>
+        <div style=\"height: 320px; width: 100%; display:flex; align-items:center; justify-content:center; background:#f8fafc; border-radius:8px; color:#64748b\">
             <span>No Data Available</span>
         </div>
     `;
@@ -718,19 +699,19 @@ function createNoDataContainer(title) {
 }
 
 function getChartOptions(isDayView) {
-    const opts = {
+    return {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false },
+            legend: {display: false},
             tooltip: {
                 mode: 'index',
                 intersect: false,
                 backgroundColor: 'rgba(15, 23, 42, 0.9)',
                 titleColor: '#f8fafc',
                 bodyColor: '#e2e8f0',
-                titleFont: { family: 'Inter', size: 14, weight: '600' },
-                bodyFont: { family: 'Inter', size: 13 },
+                titleFont: {family: 'Inter', size: 14, weight: '600'},
+                bodyFont: {family: 'Inter', size: 13},
                 padding: 12,
                 cornerRadius: 8,
                 displayColors: true,
@@ -742,7 +723,12 @@ function getChartOptions(isDayView) {
 
                         // Different Date format for Month/Year tooltip vs Day
                         if (!isDayView) {
-                            return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                            return d.toLocaleDateString(undefined, {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                            });
                         }
 
                         return d.toLocaleString(undefined, {
@@ -762,7 +748,6 @@ function getChartOptions(isDayView) {
             intersect: false
         }
     };
-    return opts;
 }
 
 function drawWindBarb(ctx, x, y, speed, dir) {
@@ -873,7 +858,7 @@ export function drawCompass(canvas, speed, gust, direction, unit, color, title, 
             // Micro (every 2 degrees)
             ctx.strokeStyle = colTickm;
             ctx.globalAlpha = 0.3; // Very subtle
-            ctx.lineWidth = 1 * s;
+            ctx.lineWidth = s;
             ctx.moveTo(0, -radius);
             ctx.lineTo(0, -radius - (3 * s));
         }
@@ -1033,4 +1018,30 @@ export function drawGauge(canvas, min, max, current, unit, color, title, textPri
     ctx.textAlign = 'center';
     ctx.fillText((+min).toFixed(0), minX, minY);
     ctx.fillText((+max).toFixed(0), maxX, maxY);
+}
+
+function getTempColorStops(isImperial) {
+    return [
+        {t: isImperial ? 0 : -18, c: '#1e3a8a'},    // Extreme cold
+        {t: isImperial ? 32 : 0, c: '#3b82f6'},     // Freezing
+        {t: isImperial ? 50 : 10, c: '#06b6d4'},    // Cool
+        {t: isImperial ? 68 : 20, c: '#10b981'},    // Comfort zone
+        {t: isImperial ? 77 : 25, c: '#84cc16'},    // Ideal
+        {t: isImperial ? 85 : 30, c: '#f59e0b'},    // Warm
+        {t: isImperial ? 95 : 35, c: '#f97316'},    // Hot
+        {t: isImperial ? 105 : 41, c: '#ef4444'},   // Dangerous
+        {t: isImperial ? 115 : 46, c: '#991b1b'}    // Extreme heat
+    ];
+}
+
+function getTempColor(temp, stops) {
+    if (temp <= stops[0].t) return stops[0].c;
+    if (temp >= stops[stops.length - 1].t) return stops[stops.length - 1].c;
+    for (let i = 0; i < stops.length - 1; i++) {
+        if (temp >= stops[i].t && temp <= stops[i + 1].t) {
+            const pct = (temp - stops[i].t) / (stops[i + 1].t - stops[i].t);
+            return interpolateColor(stops[i].c, stops[i + 1].c, pct);
+        }
+    }
+    return stops[0].c;
 }

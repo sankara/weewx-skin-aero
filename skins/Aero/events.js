@@ -27,6 +27,13 @@ function setupModalEvents() {
         });
     }
 
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && els.modalOverlay && !els.modalOverlay.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+
     // 2. Preset Controls
     const presetBtns = document.querySelectorAll('.preset-control .segment-btn');
     presetBtns.forEach(btn => {

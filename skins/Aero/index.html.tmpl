@@ -39,6 +39,7 @@
 </head>
 
 <body>
+    <a href="#content-area" class="skip-link">Skip to main content</a>
     <div id="ptr-indicator" class="ptr-indicator">
         <i data-lucide="refresh-cw" class="ptr-icon"></i>
         <span class="ptr-text">Pull to refresh</span>
@@ -74,7 +75,7 @@
                 <!-- Title moved to content area -->
                 <div class="nav-extra">
                     <i data-lucide="calendar" class="nav-icon"></i>
-                    <select id="mobile-view-select" class="mobile-select">
+                    <select id="mobile-view-select" class="mobile-select" aria-label="Select time period">
                         <option value="day">Day</option>
                         <option value="week">Week</option>
                         <option value="month">Month</option>
@@ -110,9 +111,14 @@
                     <!-- Summary Cards injected here -->
                 </div>
 
-                <!-- Graphs -->
+                <!-- Graphs (Historical Data) -->
                 <div id="graphs-container" class="graphs-section">
                     <!-- Graphs injected here -->
+                </div>
+
+                <!-- Forecast (Separate from Historical) -->
+                <div id="forecast-container" class="forecast-section-wrapper" style="display: none;">
+                    <!-- Forecast content injected here -->
                 </div>
             </main>
         </section>
@@ -123,7 +129,7 @@
         <div id="settings-modal" class="modal">
             <header class="modal-header">
                 <h2>Unit Settings</h2>
-                <button id="close-modal-btn" class="btn-icon"><i data-lucide="x"></i></button>
+                <button id="close-modal-btn" class="btn-icon" aria-label="Close settings"><i data-lucide="x"></i></button>
             </header>
 
             <div class="modal-body">

@@ -1,7 +1,6 @@
-// ui.js
-import { els, state } from './state.js';
-import { THEME, convertItem, getAverage, resolveThemeColor, hexToRgbA } from './utils.js';
-import { drawDial, drawCompass, drawGauge } from './charts.js';
+import {els, state} from './state.js';
+import {convertItem, getAverage, hexToRgbA, resolveThemeColor} from './utils.js';
+import {drawCompass, drawDial, drawGauge} from './charts.js';
 
 /**
  * Renders the Fixed Top Section (Current Conditions)
@@ -39,7 +38,7 @@ function renderCurrentObservations() {
 
         if (!live) return null;
 
-        const item = { ...live }; // Start with live
+        const item = {...live}; // Start with live
         // Inject min/max from today if available
         if (day) {
             item.min = day.min;
@@ -52,8 +51,8 @@ function renderCurrentObservations() {
     const pressUnit = state.units.pressure;
 
     const limits = {
-        temp: (tempUnit === '°F' || tempUnit === 'F') ? { min: 0, max: 120 } : { min: -20, max: 50 },
-        pressure: (pressUnit === 'inHg') ? { min: 28, max: 31 } : { min: 950, max: 1050 }
+        temp: (tempUnit === '°F' || tempUnit === 'F') ? {min: 0, max: 120} : {min: -20, max: 50},
+        pressure: (pressUnit === 'inHg') ? {min: 28, max: 31} : {min: 950, max: 1050}
     };
 
     // 1. Dials & Compass
@@ -128,13 +127,16 @@ function createGaugeCard(container, item, title, color, absMin, absMax, textPrim
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', `${title}: ${item.current} ${item.unit}`);
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
             <span class="card-label">${title}</span>
             <i data-lucide="gauge" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <canvas width="280" height="260" class="dial-canvas"></canvas>
+        <canvas width="280" height="260" class="dial-canvas" role="img" aria-label="${title} gauge showing ${item.current} ${item.unit}"></canvas>
+        <span class="sr-only">${title}: ${item.current} ${item.unit}</span>
     `;
     container.appendChild(div);
 
@@ -147,17 +149,24 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
 
     const div = document.createElement('div');
     div.className = 'card';
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', `${title}: ${item.current} ${item.unit}`);
 
     let icon = 'thermometer';
     if (title.toLowerCase().includes('humidity')) icon = 'droplets';
     if (title.toLowerCase().includes('uv')) icon = 'sun';
+
+    const minMaxText = (item.min !== undefined && item.max !== undefined)
+        ? `, range ${item.min} to ${item.max} ${item.unit}`
+        : '';
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
             <span class="card-label">${item.label || title}</span>
             <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <canvas width="280" height="260" class="dial-canvas"></canvas>
+        <canvas width="280" height="260" class="dial-canvas" role="img" aria-label="${title} dial showing ${item.current} ${item.unit}${minMaxText}"></canvas>
+        <span class="sr-only">${title}: ${item.current} ${item.unit}${minMaxText}</span>
     `;
     container.appendChild(div);
 
@@ -173,25 +182,28 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.className = 'card';
-    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', `Wind: ${speedItem.current} ${speedItem.unit}`);
+
+    const speed = speedItem.current;
+    const gust = gustItem ? gustItem.current : null;
+    const dir = dirItem ? dirItem.current : null;
+    const unit = speedItem.unit;
+
+    const gustText = gust !== null ? `, gusting to ${gust} ${unit}` : '';
+    const dirText = dir !== null ? ` from ${dir}°` : '';
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
             <span class="card-label">Wind</span>
             <i data-lucide="wind" class="card-icon-sm" style="color:${color}"></i>
         </div>
-        <canvas width="280" height="260" class="dial-canvas"></canvas>
+        <canvas width="280" height="260" class="dial-canvas" role="img" aria-label="Wind compass showing ${speed} ${unit}${gustText}${dirText}"></canvas>
+        <span class="sr-only">Wind: ${speed} ${unit}${gustText}${dirText}</span>
     `;
     container.appendChild(div);
 
     const canvas = div.querySelector('canvas');
-    // current values
-    const speed = speedItem.current;
-    const gust = gustItem ? gustItem.current : null;
-    const dir = dirItem ? dirItem.current : null;
-    const unit = speedItem.unit;
-
     // Pass null for title
     drawCompass(canvas, speed, gust, dir, unit, color, null, textPrimary, textSecondary, theme);
 }
@@ -200,8 +212,12 @@ function createCombinedCard(container, item1, item2, type, color) {
     if (!item1) return;
 
     let icon = 'activity';
-    if (type === 'wind') { icon = 'wind'; }
-    if (type === 'rain') { icon = 'cloud-rain'; }
+    if (type === 'wind') {
+        icon = 'wind';
+    }
+    if (type === 'rain') {
+        icon = 'cloud-rain';
+    }
 
     // Labels
     const label1 = item1.label || (type === 'wind' ? 'Wind Speed' : 'Rain');
@@ -215,8 +231,8 @@ function createCombinedCard(container, item1, item2, type, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.className = 'card';
-    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', `${label1}: ${val1} ${item1.unit}`);
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -252,8 +268,8 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
 
     const div = document.createElement('div');
     div.className = 'card';
-    div.className = 'card';
-    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', `Rain total: ${valTotal} ${totalItem.unit}`);
 
     div.innerHTML = `
         <div class="card-header card-header-centered">
@@ -289,40 +305,6 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
     container.appendChild(div);
 }
 
-function createSimpleCard(container, item, type, color) {
-    if (!item) return;
-
-    let icon = 'activity';
-    if (type === 'wind') { icon = 'wind'; }
-    if (type === 'rain') { icon = 'cloud-rain'; }
-
-    // Fallback label
-    const label = item.label || (type === 'wind' ? 'Wind Speed' : 'Rain');
-    const precision = type === 'rain' ? 2 : 1;
-    const val = item.current !== undefined ? (+item.current).toFixed(precision) : '-';
-
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.className = 'card';
-    // div.style.minHeight = '320px'; // Removed to fix aspect ratio
-    // Removed justifyContent center to fix alignment with other cards
-
-    div.innerHTML = `
-        <div class="card-header card-header-centered">
-            <span class="card-label">${label}</span>
-            <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
-        </div>
-        <div class="rain-content">
-            <div class="card-value value-display-lg" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
-                ${val}
-            </div>
-            <div class="card-unit unit-display-md">${item.unit}</div>
-        </div>
-    `;
-    container.appendChild(div);
-}
-
-
 /**
  * Renders the Middle Section (History Summary)
  * Uses `state.activeData` (History File)
@@ -331,7 +313,6 @@ export function renderHistorySummary() {
     const container = document.getElementById('history-summary');
     if (!container) return;
     container.innerHTML = '';
-    container.innerHTML = ''; // Clear only the card container
 
     if (!state.activeData || !state.activeData.obs) return;
 
@@ -377,11 +358,13 @@ export function renderHistorySummary() {
             min: temp.min,
             max: temp.max,
             unit: temp.unit,
-            unit: temp.unit,
             label: 'TEMPERATURE'
         };
 
-        const limits = (state.units.temp === '°F' || state.units.temp === 'F') ? { min: 0, max: 120 } : { min: -20, max: 50 };
+        const limits = (state.units.temp === '°F' || state.units.temp === 'F') ? {
+            min: 0,
+            max: 120
+        } : {min: -20, max: 50};
         createDialCard(summaryGrid, tempSummaryItem, 'Temperature', cTemp, limits.min, limits.max, cTextPrimary, cTextSecondary);
     }
 
@@ -390,11 +373,11 @@ export function renderHistorySummary() {
     const rainRate = convertItem(obs.rainRate, state.units);
 
     if (rain && rain.sum !== undefined) {
-        const item1 = { current: rain.sum, unit: rain.unit, label: 'TOTAL RAIN' };
+        const item1 = {current: rain.sum, unit: rain.unit, label: 'TOTAL RAIN'};
         let item2 = null;
 
         if (rainRate && rainRate.max !== undefined) {
-            item2 = { current: rainRate.max, unit: rainRate.unit, label: 'MAX RATE' };
+            item2 = {current: rainRate.max, unit: rainRate.unit, label: 'MAX RATE'};
         }
 
         createCombinedCard(summaryGrid, item1, item2, 'rain', cRain);
@@ -410,12 +393,12 @@ export function renderHistorySummary() {
             maxGustVal = gust.max;
         }
 
-        const item1 = { current: maxGustVal, unit: wind.unit, label: 'MAX GUST' };
+        const item1 = {current: maxGustVal, unit: wind.unit, label: 'MAX GUST'};
         let item2 = null;
 
         const avg = getAverage(wind);
         if (avg !== undefined) {
-            item2 = { current: avg, unit: wind.unit, label: 'AVG WIND' };
+            item2 = {current: avg, unit: wind.unit, label: 'AVG WIND'};
         }
 
         createCombinedCard(summaryGrid, item1, item2, 'wind', cWind);
@@ -431,19 +414,17 @@ export function renderHistorySummary() {
             min: hum.min,
             max: hum.max,
             unit: hum.unit,
-            unit: hum.unit,
             label: 'HUMIDITY'
         };
         createDialCard(summaryGrid, humSummary, 'Humidity', cHum, 0, 100, cTextPrimary, cTextSecondary);
     }
 
     if (press) {
-        const pressLimits = (state.units.pressure === 'inHg') ? { min: 28, max: 31 } : { min: 950, max: 1050 };
+        const pressLimits = (state.units.pressure === 'inHg') ? {min: 28, max: 31} : {min: 950, max: 1050};
         const pressSummary = {
             current: getAverage(press),
             min: press.min,
             max: press.max,
-            unit: press.unit,
             unit: press.unit,
             label: 'PRESSURE'
         };
@@ -453,38 +434,11 @@ export function renderHistorySummary() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-function createSummaryCard(container, label, value, unit, color) {
-    const div = document.createElement('div');
-    div.className = 'card';
-
-    let icon = 'activity';
-    const lowLabel = label.toLowerCase();
-    if (lowLabel.includes('rain')) icon = 'cloud-rain';
-    if (lowLabel.includes('wind') || lowLabel.includes('gust')) icon = 'wind';
-    if (lowLabel.includes('temp')) icon = 'thermometer';
-    if (lowLabel.includes('pressure')) icon = 'gauge';
-    if (lowLabel.includes('uv')) icon = 'sun';
-
-    div.innerHTML = `
-        <div class="card-header card-header-centered">
-             <span class="card-label" style="color:${color}">${label}</span>
-             <i data-lucide="${icon}" class="card-icon-sm" style="color:${color}"></i>
-        </div>
-        <div class="card-content-centered">
-            <div class="card-value value-display-md" style="background-image: linear-gradient(180deg, ${color}, ${hexToRgbA(color, 0.7)});">
-                ${(+value).toFixed(label.toLowerCase().includes('rain') ? 2 : 1)}<span class="card-unit unit-inline-sm">${unit}</span>
-            </div>
-        </div>
-    `;
-    // div.style.justifyContent = 'center'; // Removed
-    container.appendChild(div);
-}
-
 /**
  * Renders forecast view (hourly, daily, and alerts)
  */
 export function renderForecast() {
-    const container = els.graphs;
+    const container = els.forecast;
     if (!container) return;
 
     // Check if forecast data exists
@@ -591,21 +545,12 @@ function renderHourlyForecast(container, hourlyData) {
     for (let i = 0; i < hoursToShow; i++) {
         const hour = hourlyData[i];
         const timestamp = new Date(hour.timestamp);
-        const hourStr = timestamp.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
-        const dayStr = i === 0 ? 'Now' : (i < 12 ? '' : timestamp.toLocaleDateString(undefined, { weekday: 'short' }));
+        const hourStr = timestamp.toLocaleTimeString(undefined, {hour: 'numeric', hour12: true});
+        const dayStr = i === 0 ? 'Now' : (i < 12 ? '' : timestamp.toLocaleDateString(undefined, {weekday: 'short'}));
 
         // Convert temperature to selected unit
-        let temp = hour.temp;
+        const temp = convertForecastTemp(hour.temp, hour.tempUnit, state.units.temp);
         const targetUnit = state.units.temp;
-        const sourceUnit = hour.tempUnit;
-
-        if (sourceUnit !== targetUnit) {
-            if (targetUnit === '°C' && (sourceUnit === '°F' || sourceUnit === 'F')) {
-                temp = (temp - 32) * 5/9;
-            } else if ((targetUnit === '°F' || targetUnit === 'F') && sourceUnit === '°C') {
-                temp = temp * 9/5 + 32;
-            }
-        }
 
         const card = document.createElement('div');
         card.className = 'card hourly-card';
@@ -650,24 +595,13 @@ function renderDailyForecast(container, dailyData) {
 
     dailyData.forEach((day, index) => {
         const date = new Date(day.date);
-        const dayName = index === 0 ? 'Today' : date.toLocaleDateString(undefined, { weekday: 'long' });
-        const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        const dayName = index === 0 ? 'Today' : date.toLocaleDateString(undefined, {weekday: 'long'});
+        const dateStr = date.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
 
         // Convert temperatures to selected unit
-        let tempHigh = day.tempHigh;
-        let tempLow = day.tempLow;
+        const tempHigh = convertForecastTemp(day.tempHigh, day.tempUnit, state.units.temp);
+        const tempLow = convertForecastTemp(day.tempLow, day.tempUnit, state.units.temp);
         const targetUnit = state.units.temp;
-        const sourceUnit = day.tempUnit;
-
-        if (sourceUnit !== targetUnit) {
-            if (targetUnit === '°C' && (sourceUnit === '°F' || sourceUnit === 'F')) {
-                tempHigh = (tempHigh - 32) * 5/9;
-                tempLow = (tempLow - 32) * 5/9;
-            } else if ((targetUnit === '°F' || targetUnit === 'F') && sourceUnit === '°C') {
-                tempHigh = tempHigh * 9/5 + 32;
-                tempLow = tempLow * 9/5 + 32;
-            }
-        }
 
         const card = document.createElement('div');
         card.className = 'card daily-card';
@@ -712,4 +646,14 @@ function renderDailyForecast(container, dailyData) {
         `;
         container.appendChild(attribution);
     }
+}
+
+function convertForecastTemp(val, sourceUnit, targetUnit) {
+    if (sourceUnit === targetUnit) return val;
+    if (targetUnit === '°C' && (sourceUnit === '°F' || sourceUnit === 'F')) {
+        return (val - 32) * 5 / 9;
+    } else if ((targetUnit === '°F' || targetUnit === 'F') && sourceUnit === '°C') {
+        return val * 9 / 5 + 32;
+    }
+    return val;
 }

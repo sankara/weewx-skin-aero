@@ -11,6 +11,6 @@
         "terser-webpack-plugin": "^5.3.10",
         "vitest": "^4.0.16",
         "webpack": "^5.90.0",
-        "webpack-cli": "^5.1.0"
+        "webpack-cli": "^5.1.4"
     }
 }

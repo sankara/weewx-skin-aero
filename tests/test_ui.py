@@ -1,27 +1,7 @@
 import pytest
 from playwright.sync_api import Page, expect
-import subprocess
-import time
-import sys
-from pathlib import Path
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-import threading
 import re
 
-
-@pytest.fixture(scope="session")
-def report_server(report_output):
-    server_address = ('127.0.0.1', 0)
-    class Handler(SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=str(report_output), **kwargs)
-    httpd = HTTPServer(server_address, Handler)
-    port = httpd.server_port
-    thread = threading.Thread(target=httpd.serve_forever)
-    thread.daemon = True
-    thread.start()
-    yield f"http://127.0.0.1:{port}"
-    httpd.shutdown()
 
 def test_homepage_loads(page: Page, report_server):
     page.goto(report_server)

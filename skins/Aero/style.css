@@ -864,6 +864,57 @@ html.dark #history-summary {
     height: auto;
 }
 
+/* Screen reader only - visually hidden but accessible */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus indicators for accessibility */
+:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.btn-icon:focus-visible,
+.nav-btn:focus-visible,
+.date-btn:focus-visible,
+.segment-btn:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.card:focus-within {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Skip to content link for keyboard users */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--accent-color);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    z-index: 9999;
+    border-radius: 0 0 8px 0;
+    font-weight: 600;
+    transition: top 0.2s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
 .rain-content {
     display: flex;
     flex-direction: column;
@@ -969,12 +1020,14 @@ html.dark #history-summary {
     align-items: center;
     z-index: 2000;
     opacity: 1;
-    transition: opacity 0.2s ease;
+    visibility: visible;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .modal-overlay.hidden {
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
 }
 
 .modal {
@@ -1129,6 +1182,13 @@ html.dark .segment-control-sm button.active {
    FORECAST STYLES
    ======================================== */
 
+/* Forecast Container Wrapper */
+.forecast-section-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
 /* Forecast Section Headers */
 .forecast-section-title {
     font-size: 1.25rem;
@@ -1163,7 +1223,7 @@ html.dark .segment-control-sm button.active {
 /* Hourly Forecast */
 .hourly-forecast {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding-bottom: 0.5rem;
@@ -1171,17 +1231,17 @@ html.dark .segment-control-sm button.active {
 }
 
 .hourly-forecast::-webkit-scrollbar {
-    height: 8px;
+    height: 6px;
 }
 
 .hourly-forecast::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .hourly-forecast::-webkit-scrollbar-thumb {
     background: var(--accent-color);
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 html.dark .hourly-forecast::-webkit-scrollbar-track {
@@ -1189,19 +1249,19 @@ html.dark .hourly-forecast::-webkit-scrollbar-track {
 }
 
 .hourly-card {
-    min-width: 90px;
-    max-width: 90px;
+    min-width: 72px;
+    max-width: 72px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 1rem 0.75rem;
+    padding: 0.75rem 0.5rem;
     scroll-snap-align: start;
     background: var(--card-bg);
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--card-border);
-    border-radius: var(--card-radius);
+    border-radius: 16px;
     box-shadow: var(--shadow-md);
     transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
 }
@@ -1212,9 +1272,9 @@ html.dark .hourly-forecast::-webkit-scrollbar-track {
 }
 
 .hourly-time {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .hourly-icon {
@@ -1222,18 +1282,18 @@ html.dark .hourly-forecast::-webkit-scrollbar-track {
 }
 
 .hourly-temp {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0.5rem 0;
+    margin: 0.25rem 0;
 }
 
 .hourly-precip {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.125rem;
     color: var(--color-rain);
-    margin-top: 0.25rem;
+    margin-top: 0.125rem;
 }
 
 /* Daily Forecast */
@@ -1342,17 +1402,18 @@ html.dark .hourly-forecast::-webkit-scrollbar-track {
 /* Responsive adjustments */
 @media (max-width: 640px) {
     .hourly-card {
-        min-width: 80px;
-        max-width: 80px;
-        padding: 0.75rem 0.5rem;
+        min-width: 64px;
+        max-width: 64px;
+        padding: 0.5rem 0.375rem;
+        border-radius: 12px;
     }
 
     .hourly-time {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     .hourly-temp {
-        font-size: 1rem;
+        font-size: 0.875rem;
     }
 
     .forecast-section-title {

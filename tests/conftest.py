@@ -2,6 +2,8 @@ import pytest
 import subprocess
 import os
 from pathlib import Path
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import threading
 
 # Paths are now relative to the root, since tests is at root level
 ROOT_DIR = Path(__file__).parent.parent
@@ -50,3 +52,20 @@ def report_output(generated_data):
         subprocess.run(["uv", "run", "aero-build", "--db", str(generated_data), "--output", str(REPORT_OUT)],
                        cwd=ROOT_DIR, check=True)
     return REPORT_OUT
+
+@pytest.fixture(scope="session")
+def report_server(report_output):
+    """Start a local HTTP server serving the report output."""
+    server_address = ('127.0.0.1', 0)
+    class Handler(SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(report_output), **kwargs)
+        def log_message(self, format, *args):
+            pass  # Suppress logging
+    httpd = HTTPServer(server_address, Handler)
+    port = httpd.server_port
+    thread = threading.Thread(target=httpd.serve_forever)
+    thread.daemon = True
+    thread.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()

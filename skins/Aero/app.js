@@ -31,24 +31,59 @@ function parseWeeWXData(json) {
 
 /**
  * Loads forecast data from the server.
+ * Returns true if data was updated, false otherwise.
  */
-async function loadForecast() {
+async function loadForecast(silent = false) {
     try {
-        const res = await fetch(`${state.basePath}forecast.json`);
+        const res = await fetch(`${state.basePath}forecast.json`, {
+            cache: 'no-cache' // Always fetch fresh to check server-side cache
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
         // Check if forecast is enabled and has data
         if (data.meta && data.meta.enabled && (data.hourly?.length > 0 || data.daily?.length > 0)) {
+            const wasUpdated = !state.forecastData ||
+                state.forecastData.meta?.timestamp !== data.meta?.timestamp;
             state.forecastData = data;
-            console.log('Forecast data loaded:', data.meta.provider);
+            if (!silent) console.log('Forecast data loaded:', data.meta.provider);
+            return wasUpdated;
         } else {
             state.forecastData = null;
-            console.log('Forecast feature is disabled or no data available');
+            if (!silent) console.log('Forecast feature is disabled or no data available');
+            return false;
         }
     } catch (e) {
-        console.warn("Could not load forecast data", e);
+        if (!silent) console.warn("Could not load forecast data", e);
         state.forecastData = null;
+        return false;
+    }
+}
+
+/**
+ * Periodically refresh forecast data (every 15 minutes).
+ * The backend caches for 1 hour, but we check more often to pick up new data.
+ */
+let forecastRefreshInterval = null;
+const FORECAST_REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
+
+function startForecastRefresh() {
+    if (forecastRefreshInterval) return;
+
+    forecastRefreshInterval = setInterval(async () => {
+        const wasUpdated = await loadForecast(true);
+        // If viewing forecast and data was updated, re-render
+        if (wasUpdated && state.viewScope === 'forecast') {
+            renderForecast();
+            console.log('Forecast data refreshed and view updated');
+        }
+    }, FORECAST_REFRESH_INTERVAL);
+}
+
+function stopForecastRefresh() {
+    if (forecastRefreshInterval) {
+        clearInterval(forecastRefreshInterval);
+        forecastRefreshInterval = null;
     }
 }
 
@@ -280,14 +315,29 @@ function render() {
     updateNavControls();
     updateNavButtons();
 
-    // Handle forecast view
+    // Handle forecast view - separate from historical
     if (state.viewScope === 'forecast') {
+        // Hide historical containers, show forecast
         if (document.getElementById('history-summary')) {
             document.getElementById('history-summary').innerHTML = '';
+        }
+        if (els.graphs) {
+            els.graphs.style.display = 'none';
+        }
+        if (els.forecast) {
+            els.forecast.style.display = 'grid';
         }
         renderForecast();
         renderHeader();
         return;
+    }
+
+    // Show historical containers, hide forecast
+    if (els.graphs) {
+        els.graphs.style.display = 'grid';
+    }
+    if (els.forecast) {
+        els.forecast.style.display = 'none';
     }
 
     // Handle historical data views
@@ -431,8 +481,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn("Minor: Could not load live current data", e);
     }
 
-    // Load forecast data
+    // Load forecast data and start periodic refresh
     await loadForecast();
+    startForecastRefresh();
 
     // 2. Router Initialization (History)
     const routed = await initRouter();
@@ -455,4 +506,19 @@ let resizeTimer;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(render, 200);
+});
+
+// Pause/resume forecast refresh when page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopForecastRefresh();
+    } else {
+        // Resume refresh and immediately check for updates
+        startForecastRefresh();
+        loadForecast(true).then(wasUpdated => {
+            if (wasUpdated && state.viewScope === 'forecast') {
+                renderForecast();
+            }
+        });
+    }
 });

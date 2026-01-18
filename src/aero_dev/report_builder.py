@@ -110,9 +110,18 @@ def main() -> None:
     logger.info("Creating temporary build skin at %s", skin_dir)
     # Check if node_modules exists in source to avoid redundant installs
     src_node_modules = os.path.join(src_skin, 'node_modules')
+
+    # Custom ignore function that excludes dotfiles at root level but preserves .bin in node_modules
+    def ignore_dotfiles_except_bin(directory, files):
+        # Check if we're inside node_modules - if so, don't ignore anything
+        if 'node_modules' in directory:
+            return []
+        # At root level, ignore dotfiles/dotdirs (but not .bin since we're not in node_modules)
+        return [f for f in files if f.startswith('.')]
+
     if os.path.exists(src_node_modules):
         logger.info("Found existing node_modules in source. Copying...")
-        shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('.*'))
+        shutil.copytree(src_skin, skin_dir, ignore=ignore_dotfiles_except_bin, symlinks=True)
     else:
         shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('node_modules', '.*'))
     
