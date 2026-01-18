@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.2] - 2026-01-18
+### Fixed
+- **UI**: Corrected temperature color gradient mapping for Fahrenheit units to ensure accurate visual representation of thermal conditions.
+
 ## [2.5.1] - 2026-01-17
 ### Fixed
 - **Tests**: Updated forecast UI tests to align with the decoupled forecast navigation logic, ensuring consistent navigation and accessibility validation.
