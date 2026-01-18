@@ -169,8 +169,8 @@ function renderTempChart(commonScales, isDayView, chartTheme) {
                         const area = ctx.chart.chartArea;
                         if (!area) return 'transparent';
                         const gradient = canvas.createLinearGradient(0, area.bottom, 0, area.top);
-                        const isImperial = state.units === 'imperial';
-                        const stops = getTempColorStops(isImperial);
+                        const isFahrenheit = state.units.temp === '°F' || state.units.temp === 'F';
+                        const stops = getTempColorStops(isFahrenheit);
                         
                         stops.forEach(s => {
                             const yPos = ctx.chart.scales.y.getPixelForValue(s.t);
@@ -582,8 +582,8 @@ export function drawDial(canvas, min, max, current, rangeMin, rangeMax, unit, co
     if (Math.abs(rangeEnd - rangeStart) > 0.01) {
         if (title === 'Temperature') {
             // Temperature-aware multi-color arc based on human tolerance zones
-            const isImp = state.units === 'imperial';
-            const stops = getTempColorStops(isImp);
+            const isFahrenheit = state.units.temp === '°F' || state.units.temp === 'F';
+            const stops = getTempColorStops(isFahrenheit);
 
             // Draw arc in segments for smooth color transition
             const segments = 60; // Higher segments for smoother gradient
