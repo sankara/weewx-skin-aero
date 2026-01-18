@@ -17,6 +17,7 @@ export const els = {
     grid: document.getElementById('observations-grid'),
     graphs: document.getElementById('graphs-container'),
     forecast: document.getElementById('forecast-container'),
+    forecastSection: document.getElementById('forecast-section'),
     navBtns: document.querySelectorAll('.nav-btn'),
     settingsBtn: document.getElementById('settings-btn'),
     dateDisplay: document.getElementById('current-date-display'),

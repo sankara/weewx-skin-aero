@@ -69,6 +69,16 @@
             </div>
         </section>
 
+        <!-- FORECAST SECTION -->
+        <section id="forecast-section" class="section-forecast" style="display: none;">
+             <div class="history-section-header" style="margin-bottom: 1rem;">
+                <h2 class="section-title">Forecast</h2>
+            </div>
+            <div id="forecast-container" class="forecast-container">
+                <!-- Forecast content injected here -->
+            </div>
+        </section>
+
         <!-- SCROLLABLE BOTTOM SECTION: History Explorer -->
         <section id="history-section" class="section-history">
             <nav class="history-nav">
@@ -80,7 +90,6 @@
                         <option value="week">Week</option>
                         <option value="month">Month</option>
                         <option value="year">Year</option>
-                        <option value="forecast">Forecast</option>
                     </select>
                 </div>
                 <div class="nav-tabs">
@@ -88,7 +97,6 @@
                     <button class="nav-btn" data-view="week">Week</button>
                     <button class="nav-btn" data-view="month">Month</button>
                     <button class="nav-btn" data-view="year">Year</button>
-                    <button class="nav-btn" data-view="forecast">Forecast</button>
                 </div>
 
                 <div class="date-controls">
@@ -115,13 +123,12 @@
                 <div id="graphs-container" class="graphs-section">
                     <!-- Graphs injected here -->
                 </div>
-
-                <!-- Forecast (Separate from Historical) -->
-                <div id="forecast-container" class="forecast-section-wrapper" style="display: none;">
-                    <!-- Forecast content injected here -->
-                </div>
             </main>
-        </section>
+        <!-- FOOTER: Attribution and Links -->
+        <footer class="app-footer">
+            <div id="footer-content"></div>
+            <p>&copy; $station.location</p>
+        </footer>
     </div>
 
     <!-- Settings Modal -->

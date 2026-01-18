@@ -73,7 +73,7 @@ function startForecastRefresh() {
     forecastRefreshInterval = setInterval(async () => {
         const wasUpdated = await loadForecast(true);
         // If viewing forecast and data was updated, re-render
-        if (wasUpdated && state.viewScope === 'forecast') {
+        if (wasUpdated) {
             renderForecast();
             console.log('Forecast data refreshed and view updated');
         }
@@ -101,12 +101,6 @@ export async function loadDate(date, skipPushState = false) {
 
     if (!skipPushState) {
         updateRouter();
-    }
-
-    // Handle forecast view - no date-based loading needed
-    if (state.viewScope === 'forecast') {
-        render();
-        return;
     }
 
     let activeFile;
@@ -243,15 +237,6 @@ async function loadWeeklyData(targetDate) {
  * Updates UI controls based on current state.
  */
 function updateNavControls() {
-    // Disable date navigation for forecast view
-    if (state.viewScope === 'forecast') {
-        els.datePrev.disabled = true;
-        els.dateNext.disabled = true;
-        els.datePrev.style.opacity = '0.3';
-        els.dateNext.style.opacity = '0.3';
-        return;
-    }
-
     els.datePrev.disabled = false;
     els.datePrev.style.opacity = '1';
 
@@ -260,7 +245,10 @@ function updateNavControls() {
     const isToday = isSameDay(date, now);
     const isFuture = (date > now);
 
-    if (state.viewScope === 'week') {
+    if (state.viewScope === 'forecast') {
+        els.datePrev.disabled = true;
+        els.dateNext.disabled = true;
+    } else if (state.viewScope === 'week') {
         const lastSunday = new Date(now);
         lastSunday.setDate(now.getDate() - now.getDay());
         lastSunday.setHours(0, 0, 0, 0);
@@ -278,6 +266,7 @@ function updateNavControls() {
         els.dateNext.disabled = (isToday || isFuture);
     }
 
+    els.datePrev.style.opacity = els.datePrev.disabled ? '0.3' : '1';
     els.dateNext.style.opacity = els.dateNext.disabled ? '0.3' : '1';
 }
 
@@ -286,9 +275,7 @@ function updateNavControls() {
  */
 function updateDateDisplay() {
     const date = state.currentDate;
-    if (state.viewScope === 'forecast') {
-        els.dateDisplay.textContent = 'Forecast';
-    } else if (state.viewScope === 'day') {
+    if (state.viewScope === 'day') {
         els.dateDisplay.textContent = date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
     } else if (state.viewScope === 'month') {
         els.dateDisplay.textContent = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -315,29 +302,17 @@ function render() {
     updateNavControls();
     updateNavButtons();
 
-    // Handle forecast view - separate from historical
-    if (state.viewScope === 'forecast') {
-        // Hide historical containers, show forecast
-        if (document.getElementById('history-summary')) {
-            document.getElementById('history-summary').innerHTML = '';
-        }
-        if (els.graphs) {
-            els.graphs.style.display = 'none';
-        }
-        if (els.forecast) {
-            els.forecast.style.display = 'grid';
+    // Always render forecast if available OR if in forecast view
+    const showForecast = !!state.forecastData || state.viewScope === 'forecast';
+    if (showForecast) {
+        if (els.forecastSection) {
+            els.forecastSection.style.display = 'block';
         }
         renderForecast();
-        renderHeader();
-        return;
-    }
-
-    // Show historical containers, hide forecast
-    if (els.graphs) {
-        els.graphs.style.display = 'grid';
-    }
-    if (els.forecast) {
-        els.forecast.style.display = 'none';
+    } else {
+        if (els.forecastSection) {
+            els.forecastSection.style.display = 'none';
+        }
     }
 
     // Handle historical data views
@@ -373,14 +348,6 @@ function updateRouter() {
 
     let hash = `#/${scope}`;
 
-    // Forecast doesn't need date
-    if (scope === 'forecast') {
-        if (window.location.hash !== hash) {
-            history.pushState({ scope }, '', hash);
-        }
-        return;
-    }
-
     if (!date) return;
 
     const y = date.getFullYear();
@@ -405,13 +372,6 @@ async function initRouter() {
         const parts = hash.split('/');
         const scope = parts[0];
         const dateStr = parts[1];
-
-        // Handle forecast view
-        if (scope === 'forecast') {
-            state.viewScope = 'forecast';
-            render();
-            return true;
-        }
 
         if (['day', 'week', 'month', 'year'].includes(scope)) {
             state.viewScope = scope;
@@ -439,9 +399,7 @@ async function initRouter() {
     window.addEventListener('popstate', (e) => {
         if (e.state) {
             state.viewScope = e.state.scope;
-            if (e.state.scope === 'forecast') {
-                render();
-            } else if (e.state.date) {
+            if (e.state.date) {
                 loadDate(new Date(e.state.date), true);
             }
         } else {
@@ -516,7 +474,7 @@ document.addEventListener('visibilitychange', () => {
         // Resume refresh and immediately check for updates
         startForecastRefresh();
         loadForecast(true).then(wasUpdated => {
-            if (wasUpdated && state.viewScope === 'forecast') {
+            if (wasUpdated) {
                 renderForecast();
             }
         });

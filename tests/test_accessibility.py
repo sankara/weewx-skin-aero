@@ -169,11 +169,12 @@ class TestAccessibility:
         unavailable_msg = page.locator('.forecast-unavailable')
 
         # Either forecast is shown or unavailable message
-        is_forecast_visible = forecast_container.is_visible()
+        daily_items = page.locator(".daily-item")
+        is_forecast_visible = daily_items.first.is_visible()
         is_unavailable_visible = unavailable_msg.is_visible()
 
         assert is_forecast_visible or is_unavailable_visible, (
-            "Forecast container or unavailable message should be visible"
+            "Forecast container data or unavailable message should be visible"
         )
 
     def test_responsive_accessibility(self, page: Page, report_server: str):
