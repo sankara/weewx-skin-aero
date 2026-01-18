@@ -63,29 +63,42 @@ def test_unit_toggle(page: Page, report_server):
     expect(btn_f).to_have_class(re.compile(r"active"))
 
 
-def test_forecast_view_navigation(page: Page, report_server):
-    """Test that clicking Forecast button navigates to forecast view."""
+def test_forecast_section_visible(page: Page, report_server):
+    """Test that the forecast section is visible on the main page."""
     page.goto(report_server)
-    page.get_by_role("button", name="Forecast").click()
-    page.wait_for_timeout(500)
-
-    # URL should include #/forecast
-    expect(page).to_have_url(re.compile(r"#/forecast"))
-
-
-def test_forecast_view_displays_content(page: Page, report_server):
-    """Test that forecast view displays the 7-day forecast."""
-    page.goto(f"{report_server}#/forecast")
     page.wait_for_timeout(1000)
 
-    # Check for forecast items instead of headings (which were removed for aesthetics)
+    # Forecast section should be visible (decoupled from historical navigation)
+    forecast_section = page.locator("#forecast-section")
     daily_items = page.locator(".daily-item")
     forecast_unavailable = page.locator(".forecast-unavailable")
 
-    is_daily_visible = daily_items.first.is_visible()
-    is_unavailable_visible = forecast_unavailable.is_visible()
+    # Either forecast is shown or unavailable message is displayed
+    is_section_visible = forecast_section.is_visible()
+    is_daily_visible = daily_items.first.is_visible() if daily_items.count() > 0 else False
+    is_unavailable_visible = forecast_unavailable.is_visible() if forecast_unavailable.count() > 0 else False
+
+    assert is_section_visible or is_daily_visible or is_unavailable_visible, \
+        "Forecast section should be visible on the main page"
+
+
+def test_forecast_displays_content(page: Page, report_server):
+    """Test that forecast section displays the 7-day forecast."""
+    page.goto(report_server)
+    page.wait_for_timeout(1000)
+
+    # Check for forecast items instead of headings (which were removed for aesthetics)
+    # Forecast is now a dedicated section on the main page (not a separate route)
+    daily_items = page.locator(".daily-item")
+    forecast_unavailable = page.locator(".forecast-unavailable")
+
+    has_daily_items = daily_items.count() > 0
+    has_unavailable_msg = forecast_unavailable.count() > 0
+
+    is_daily_visible = daily_items.first.is_visible() if has_daily_items else False
+    is_unavailable_visible = forecast_unavailable.is_visible() if has_unavailable_msg else False
 
     assert is_daily_visible or is_unavailable_visible, \
-        "Forecast view should show either forecast data items or unavailable message"
+        "Forecast section should show either forecast data items or unavailable message"
 
 

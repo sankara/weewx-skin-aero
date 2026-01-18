@@ -155,26 +155,26 @@ class TestAccessibility:
 
         assert sr_only_count > 0, "Expected screen reader text elements (sr-only class)"
 
-    def test_forecast_view_accessibility(self, page: Page, report_server: str):
-        """Test forecast view for accessibility."""
+    def test_forecast_section_accessibility(self, page: Page, report_server: str):
+        """Test forecast section for accessibility."""
         page.goto(report_server)
-        page.wait_for_selector('.nav-btn[data-view="forecast"]', timeout=10000)
-
-        # Navigate to forecast view
-        page.click('.nav-btn[data-view="forecast"]')
         page.wait_for_timeout(1000)
 
-        # Check forecast container is visible or unavailable message shows
+        # Forecast is now a dedicated section on the main page (decoupled from historical navigation)
+        forecast_section = page.locator('#forecast-section')
         forecast_container = page.locator('#forecast-container')
         unavailable_msg = page.locator('.forecast-unavailable')
 
         # Either forecast is shown or unavailable message
         daily_items = page.locator(".daily-item")
-        is_forecast_visible = daily_items.first.is_visible()
-        is_unavailable_visible = unavailable_msg.is_visible()
+        has_daily_items = daily_items.count() > 0
+        has_unavailable_msg = unavailable_msg.count() > 0
+
+        is_forecast_visible = daily_items.first.is_visible() if has_daily_items else False
+        is_unavailable_visible = unavailable_msg.is_visible() if has_unavailable_msg else False
 
         assert is_forecast_visible or is_unavailable_visible, (
-            "Forecast container data or unavailable message should be visible"
+            "Forecast section data or unavailable message should be visible"
         )
 
     def test_responsive_accessibility(self, page: Page, report_server: str):
