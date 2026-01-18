@@ -1,11 +1,12 @@
 import argparse
-import os
-import zipfile
-import shutil
-
 import hashlib
+import os
 import re
+import shutil
+import zipfile
+
 import aero_dev.bundler as bundler
+
 
 def update_install_py(install_py_path, file_list):
     if not os.path.exists(install_py_path):
@@ -69,6 +70,7 @@ def update_install_py(install_py_path, file_list):
     with open(install_py_path, "w") as f:
         f.write(new_content)
     print(f"Updated {install_py_path} with new file list.")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Package Aero Skin")
@@ -134,8 +136,6 @@ def main():
         print("Error: install.py not found in repo root.")
         return
 
-
-
     # Determine version from pyproject.toml
     if args.version:
         version = args.version
@@ -151,7 +151,7 @@ def main():
                         if len(parts) == 2:
                             version = parts[1].strip().strip('"').strip("'")
                         break
-    
+
     print(f"Packaging version: {version}")
 
     # Inject version into skin.conf in the target directory
@@ -164,7 +164,7 @@ def main():
         conf = re.sub(r'(version\s*=\s*)(.*)', fr'\g<1>{version}', conf)
         with open(skin_conf_path, 'w') as f:
             f.write(conf)
-    
+
     # Bundle Assets (CSS/JS)
     # This runs npm build, updates index.html and skin.conf in the target directory
     bundler.run_bundler(target_skin_dir)
@@ -174,7 +174,7 @@ def main():
     nm_dir = os.path.join(target_skin_dir, 'node_modules')
     if os.path.exists(nm_dir):
         shutil.rmtree(nm_dir)
-    
+
     # Remove source files that are now bundled
     # We keep index.html and skin.conf of course
     removals = [
@@ -198,7 +198,7 @@ def main():
             if 'node_modules' in root: continue
 
             abs_path = os.path.join(root, file)
-            rel_path = os.path.relpath(abs_path, pkg_root) # e.g. skins/Aero/index.html
+            rel_path = os.path.relpath(abs_path, pkg_root)  # e.g. skins/Aero/index.html
             file_list.append(rel_path)
 
     # Gather bin/user files
@@ -210,14 +210,13 @@ def main():
                 if '__pycache__' in root: continue
 
                 abs_path = os.path.join(root, file)
-                rel_path = os.path.relpath(abs_path, pkg_root) # e.g. bin/user/aero_forecast.py
+                rel_path = os.path.relpath(abs_path, pkg_root)  # e.g. bin/user/aero_forecast.py
                 file_list.append(rel_path)
 
     # Update install.py in the pkg_root
     update_install_py(dst_install, file_list)
 
     # Cleanup before zipping
-
 
     # Create Zip
     zip_filename = f"weewx-aero-{version}.zip"
@@ -250,6 +249,7 @@ def main():
 
     # Cleanup (optional, but good for local dev)
     # shutil.rmtree(build_dir)
+
 
 if __name__ == "__main__":
     main()

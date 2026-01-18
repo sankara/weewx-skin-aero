@@ -1,15 +1,15 @@
 import argparse
-import time
-import random
-import sys
-import sqlite3
 import logging
 import math
+import random
+import sqlite3
+import sys
+import time
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
-import weewx.units
 import weewx.manager
+import weewx.units
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -121,10 +121,12 @@ SCHEMA: List[tuple[str, str]] = [
     ('windSpeed', 'REAL'),
 ]
 
+
 def create_table(cursor: sqlite3.Cursor) -> None:
     """Creates the archive table if it doesn't exist."""
     cols = ", ".join([f"{name} {dtype}" for name, dtype in SCHEMA])
     cursor.execute(f"CREATE TABLE IF NOT EXISTS archive ({cols})")
+
 
 def generate_record(timestamp: int) -> Dict[str, Any]:
     """Generates a single weather record with semi-realistic values."""
@@ -135,11 +137,11 @@ def generate_record(timestamp: int) -> Dict[str, Any]:
     day_progress = (hour + dt.minute / 60) / 24.0
 
     # Simple sine wave for daily temperature cycle
-    temp_swing = 15.0 # degrees F swing
+    temp_swing = 15.0  # degrees F swing
     avg_temp = 65.0
 
     # Peak at 15:00
-    temp_offset = math.sin(2 * math.pi * (day_progress - 9.0/24.0)) * (temp_swing / 2.0)
+    temp_offset = math.sin(2 * math.pi * (day_progress - 9.0 / 24.0)) * (temp_swing / 2.0)
     out_temp = avg_temp + temp_offset
 
     # Random noise
@@ -147,22 +149,23 @@ def generate_record(timestamp: int) -> Dict[str, Any]:
 
     # Humidity inverse to temp usually
     out_humidity = 50.0 - (temp_offset * 1.5) + random.uniform(-5, 5)
-    out_humidity = max(10, min(100, out_humidity))
+    out_humidity = max(10.0, min(100.0, out_humidity))
 
     # Dewpoint approx: T - ((100 - RH)/5.0)
     dewpoint = out_temp - ((100.0 - out_humidity) / 5.0)
 
     # Wind
     wind_speed = random.uniform(0, 10)
-    if random.random() > 0.9: wind_speed += 10 # Gusts
+    if random.random() > 0.9: wind_speed += 10  # Gusts
 
     wind_gust = wind_speed * random.uniform(1.0, 1.5)
     wind_dir = random.uniform(0, 360)
 
-    # Rain (rarely)
+    # Rain (More frequent for testing)
+    # 15% chance of rain in any 5-min interval
     rain = 0.0
-    if random.random() > 0.95:
-        rain = random.uniform(0.01, 0.05)
+    if random.random() > 0.85:
+        rain = random.uniform(0.01, 0.10)
 
     return {
         'dateTime': timestamp,
@@ -176,10 +179,10 @@ def generate_record(timestamp: int) -> Dict[str, Any]:
         'windGust': wind_gust,
         'windDir': wind_dir,
         'rain': rain,
-        'rainRate': rain * 12.0, # hourly rate approx
-        'UV': max(0, math.sin(2 * math.pi * (day_progress - 0.5)) * 10) if 6 <= hour <= 18 else 0,
-        'radiation': max(0, math.sin(2 * math.pi * (day_progress - 0.5)) * 1000) if 6 <= hour <= 18 else 0,
+        'rainRate': rain * 12.0,  # hourly rate approx
+        'radiation': max(0.0, math.sin(2 * math.pi * (day_progress - 0.5)) * 1000) if 6 <= hour <= 18 else 0,
     }
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate WeeWX test data")
@@ -200,15 +203,16 @@ def main() -> None:
         end_time = int(time.time())
         start_time = end_time - (args.days * 86400)
 
-        # Snap to 5 minute boundary
+        # Snap to a 5-minute boundary
         start_time = start_time - (start_time % 300)
 
-        logger.info("Generating data from %s to %s", datetime.fromtimestamp(start_time), datetime.fromtimestamp(end_time))
+        logger.info("Generating data from %s to %s", datetime.fromtimestamp(start_time),
+                    datetime.fromtimestamp(end_time))
 
         current = start_time
         count = 0
         batch: List[List[Any]] = []
-        
+
         # We need to extract keys once to maintain order
         sample_rec = generate_record(current)
         keys = list(sample_rec.keys())
@@ -225,7 +229,7 @@ def main() -> None:
                 batch = []
                 logger.debug("Generated %d records...", count)
 
-            current += 300 # 5 minutes
+            current += 300  # 5 minutes
             count += 1
 
         if batch:
@@ -239,6 +243,7 @@ def main() -> None:
         sys.exit(1)
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     main()

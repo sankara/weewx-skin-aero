@@ -1,23 +1,23 @@
 import argparse
-import os
-import sys
-import shutil
-import time
 import logging
-from typing import Dict, Any, Optional
+import os
+import shutil
+import sys
+import time
 
 import configobj
-import weewx.manager
-from weewx.station import StationInfo
-from weewx.reportengine import StdReportEngine
-import schemas.wview_extended
-import weedb
-import aero_dev.bundler as bundler
 import weewx.cheetahgenerator
+import weewx.manager
+import weewx.schemas.wview_extended as schemas
+from weewx.reportengine import StdReportEngine
+from weewx.station import StationInfo
+
+import aero_dev.bundler as bundler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
+
 
 def get_mock_config(repo_root: str, db_path: str, skin_root: str, output_dir: str) -> configobj.ConfigObj:
     """Returns a mock WeeWX configuration dictionary."""
@@ -29,7 +29,7 @@ def get_mock_config(repo_root: str, db_path: str, skin_root: str, output_dir: st
             'longitude': -120.0,
             'altitude': [100, 'foot'],
             'station_type': 'Simulator',
-            'station_url': 'http://example.com',
+            'station_url': 'https://example.com',
             'week_start': 6,
         },
         'Simulator': {
@@ -66,10 +66,11 @@ def get_mock_config(repo_root: str, db_path: str, skin_root: str, output_dir: st
             }
         },
         'StdConvert': {
-             'target_unit': 'US',
+            'target_unit': 'US',
         }
     }
     return configobj.ConfigObj(config_dict)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build Aero Skin Report")
@@ -83,32 +84,34 @@ def main() -> None:
         logger.setLevel(logging.DEBUG)
         # Monkeypatch CheetahGenerator to debug
         original_run = weewx.cheetahgenerator.CheetahGenerator.run
+
         def debug_run(self):
             logger.debug("CheetahGenerator run invoked")
             return original_run(self)
+
         weewx.cheetahgenerator.CheetahGenerator.run = debug_run
 
     repo_root = os.getcwd()
     db_path = os.path.abspath(args.db)
     output_dir = os.path.abspath(args.output)
-    
+
     # Resolve skin path
     if os.path.isabs(args.skin):
         src_skin = args.skin
     else:
         src_skin = os.path.abspath(os.path.join(repo_root, args.skin))
 
-    # For local dev build with bundling, we must work on a copy to avoid checking in modified index.html
+    # For a local dev build with bundling, we must work on a copy to avoid checking in modified index.html
     build_root = os.path.join(repo_root, "build", "dev_skin")
     if os.path.exists(build_root):
         shutil.rmtree(build_root)
     os.makedirs(build_root)
-    
-    skin_name = os.path.basename(src_skin) # Aero
-    skin_dir = os.path.join(build_root, skin_name) # build/dev_skin/Aero
-    
+
+    skin_name = os.path.basename(src_skin)  # Aero
+    skin_dir = os.path.join(build_root, skin_name)  # build/dev_skin/Aero
+
     logger.info("Creating temporary build skin at %s", skin_dir)
-    # Check if node_modules exists in source to avoid redundant installs
+    # Check if node_modules exists in the source to avoid redundant installs
     src_node_modules = os.path.join(src_skin, 'node_modules')
 
     # Custom ignore function that excludes dotfiles at root level but preserves .bin in node_modules
@@ -124,7 +127,7 @@ def main() -> None:
         shutil.copytree(src_skin, skin_dir, ignore=ignore_dotfiles_except_bin, symlinks=True)
     else:
         shutil.copytree(src_skin, skin_dir, ignore=shutil.ignore_patterns('node_modules', '.*'))
-    
+
     # Run Bundler on the copy
     try:
         bundler.run_bundler(skin_dir)
@@ -144,7 +147,7 @@ def main() -> None:
         manager_dict = weewx.manager.get_manager_dict_from_config(config, 'wx_binding')
 
         if manager_dict.get('schema') is None:
-            manager_dict['schema'] = schemas.wview_extended.schema
+            manager_dict['schema'] = schemas.schema
 
         last_ts = None
         with weewx.manager.open_manager(manager_dict, initialize=True) as db_manager:
@@ -155,7 +158,8 @@ def main() -> None:
             logger.error("Database is empty!")
             sys.exit(1)
 
-        logger.info("Using generation timestamp: %d (%s)", last_ts, time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(last_ts)))
+        logger.info("Using generation timestamp: %d (%s)", last_ts,
+                    time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(last_ts)))
 
         stn_info = StationInfo(None, **config['Station'])
 
@@ -163,7 +167,7 @@ def main() -> None:
         with weewx.manager.open_manager(manager_dict) as db_manager:
             record = db_manager.getRecord(last_ts)
 
-        # Add skin's bin directory to Python path for Search List Extensions
+        # Add skin's bin directory to the Python path for Search List Extensions
         skin_bin_dir = os.path.join(skin_dir, 'bin')
         if os.path.exists(skin_bin_dir) and skin_bin_dir not in sys.path:
             sys.path.insert(0, skin_bin_dir)
@@ -179,8 +183,6 @@ def main() -> None:
         logger.exception("Error building report: %s", e)
         sys.exit(1)
 
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()

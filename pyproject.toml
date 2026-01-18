@@ -5,13 +5,13 @@ description = "Development tooling for the Aero WeeWX skin"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "weewx==5.1.0",
+    "weewx==5.2.0",
     "playwright>=1.40.0",
     "pytest>=7.0.0",
     "pytest-playwright>=0.4.0",
     "pytest-xdist>=3.0.0",
     "pywebpack>=1.0.0",
-    "ruff>=0.1.0",
+    "ruff>=0.14.13",
 ]
 
 [project.scripts]

@@ -1,26 +1,26 @@
-import os
-import subprocess
-import shutil
-import re
 import logging
-from typing import List
+import os
+import re
+import subprocess
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
 
 def update_html_references(html: str, js_bundle: str, css_bundle: str) -> str:
     """Updates CSS and JS references in HTML content."""
     # Replace CSS link
     # Pattern: <link rel="stylesheet" href="style.css">
-    html = re.sub(r'<link rel="stylesheet" href=["\']?style\.css["\']?>', 
+    html = re.sub(r'<link rel="stylesheet" href=["\']?style\.css["\']?>',
                   f'<link rel="stylesheet" href="dist/{css_bundle}">', html)
 
     # Replace JS script
     # Pattern: <script type="module" src="app.js"></script>
-    html = re.sub(r'<script (type="module" )?src=["\']?app\.js["\']?></script>', 
+    html = re.sub(r'<script (type="module" )?src=["\']?app\.js["\']?></script>',
                   f'<script src="dist/{js_bundle}"></script>', html)
-    
+
     return html
+
 
 def update_skin_conf(conf: str, js_bundle: str, css_bundle: str) -> str:
     """Updates copy_once list in skin.conf."""
@@ -28,20 +28,21 @@ def update_skin_conf(conf: str, js_bundle: str, css_bundle: str) -> str:
     additions = [f"dist/{js_bundle}", f"dist/{css_bundle}"]
 
     def replacer(match):
-        line = match.group(1) # content after =
+        line = match.group(1)  # content after =
         items = [x.strip() for x in line.split(',')]
-        
+
         # Filter out removals
         new_items = [x for x in items if x not in removals]
-        
+
         # Add additions
         for item in additions:
             if item not in new_items:
                 new_items.append(item)
-        
+
         return "copy_once = " + ", ".join(new_items)
 
     return re.sub(r'copy_once\s*=\s*(.*)', replacer, conf)
+
 
 def run_bundler(skin_dir: str) -> None:
     """
@@ -84,7 +85,7 @@ def run_bundler(skin_dir: str) -> None:
             js_bundle = f
         if f.endswith('.css') and 'bundle' in f:
             css_bundle = f
-    
+
     if not js_bundle or not css_bundle:
         raise RuntimeError(f"Could not find bundles in {dist_dir}. Found: {os.listdir(dist_dir)}")
 
@@ -94,7 +95,7 @@ def run_bundler(skin_dir: str) -> None:
     index_name = 'index.html'
     if not os.path.exists(os.path.join(skin_dir, index_name)):
         index_name = 'index.html.tmpl'
-    
+
     index_path = os.path.join(skin_dir, index_name)
     if not os.path.exists(index_path):
         raise FileNotFoundError(f"Could not find index.html or index.html.tmpl in {skin_dir}")
@@ -106,7 +107,7 @@ def run_bundler(skin_dir: str) -> None:
 
     with open(index_path, 'w') as f:
         f.write(html)
-    
+
     logger.info("Updated %s references.", index_name)
 
     # 5. Update skin.conf
