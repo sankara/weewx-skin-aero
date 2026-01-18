@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.1] - 2026-01-17
+### Fixed
+- **Tests**: Updated forecast UI tests to align with the decoupled forecast navigation logic, ensuring consistent navigation and accessibility validation.
+
 ## [2.4.0] - 2026-01-15
 ### Features
 - **Weather Forecast**: Added comprehensive 7-day forecast feature powered by Open-Meteo API with hourly and daily forecasts, weather icons, and precipitation probability.
