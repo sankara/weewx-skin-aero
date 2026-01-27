@@ -1,8 +1,34 @@
 // utils.test.js
 import { describe, it, expect } from 'vitest';
-import { convertItem, getAverage, degToCompass } from './utils.js';
+import { convertItem, getAverage, degToCompass, isSameDay } from './utils.js';
 
 describe('utils.js', () => {
+    describe('isSameDay', () => {
+        it('should return true for same day', () => {
+            const d1 = new Date(2023, 10, 15, 10, 0, 0);
+            const d2 = new Date(2023, 10, 15, 23, 59, 59);
+            expect(isSameDay(d1, d2)).toBe(true);
+        });
+
+        it('should return false for different days', () => {
+            const d1 = new Date(2023, 10, 15);
+            const d2 = new Date(2023, 10, 16);
+            expect(isSameDay(d1, d2)).toBe(false);
+        });
+
+        it('should return false for different months', () => {
+            const d1 = new Date(2023, 10, 15);
+            const d2 = new Date(2023, 11, 15);
+            expect(isSameDay(d1, d2)).toBe(false);
+        });
+
+        it('should return false for different years', () => {
+            const d1 = new Date(2023, 10, 15);
+            const d2 = new Date(2024, 10, 15);
+            expect(isSameDay(d1, d2)).toBe(false);
+        });
+    });
+
     describe('convertItem', () => {
         // Define granular state objects for testing
         const imperialState = {
