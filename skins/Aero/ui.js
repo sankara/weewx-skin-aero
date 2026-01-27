@@ -1,5 +1,5 @@
 import { els, state } from './state.js';
-import { convertItem, getAverage, hexToRgbA, resolveThemeColor } from './utils.js';
+import { convertItem, getAverage, hexToRgbA, resolveThemeColor, isSameDay } from './utils.js';
 import { drawCompass, drawDial, drawGauge } from './charts.js';
 
 /**
@@ -537,8 +537,13 @@ function renderDailyForecast(container, dailyData) {
     dailyCard.className = 'card daily-forecast-card';
 
     dailyData.forEach((day, index) => {
-        const date = new Date(day.date);
-        const dayName = index === 0 ? 'Today' : date.toLocaleDateString(undefined, { weekday: 'long' });
+        // Parse date manually to avoid UTC timezone shifts
+        // day.date is YYYY-MM-DD
+        const parts = day.date.split('-');
+        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+
+        const isToday = isSameDay(date, new Date());
+        const dayName = isToday ? 'Today' : date.toLocaleDateString(undefined, { weekday: 'long' });
         const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
         // Convert temperatures to selected unit
