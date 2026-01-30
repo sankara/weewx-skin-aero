@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-01-29
+### Features
+- **Screenshots**: Updated project screenshots to reflect the latest UI changes and forecast feature.
+
+### Fixed
+- **Forecast**: Improved date logic to correctly identify "Today" in the forecast view, ensuring accurate day labeling regardless of time zone or local time.
+- **Agents**: Fixed implementation of internal agent commands to ensure consistent behavior during development.
+
+### Others
+- **Maintenance**: General code formatting and housekeeping.
+
 ## [2.5.3] - 2026-01-18
 ### Fixed
 - **Forecast**: Corrected forecast temperature unit metadata in `forecast.json` to accurately reflect the Fahrenheit values returned by the API.
