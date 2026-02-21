@@ -9,6 +9,18 @@ export function setupEvents() {
     setupNavEvents();
     setupDateEvents();
     setupPullToRefresh();
+    setupThemeListener();
+}
+
+function setupThemeListener() {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', (e) => {
+        const storedTheme = localStorage.getItem('theme');
+        if (!storedTheme || storedTheme === 'auto') {
+            applyTheme(e.matches);
+            refreshAll();
+        }
+    });
 }
 
 // --- Modal & Settings ---
@@ -113,16 +125,26 @@ function saveUnits() {
 }
 
 function setTheme(val) {
-    const isDark = val === 'dark';
-    if (isDark) {
-        document.documentElement.classList.add('dark');
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
+    let isDark = false;
+    if (val === 'auto') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     } else {
-        document.documentElement.classList.remove('dark');
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#e0eafc');
+        isDark = val === 'dark';
     }
+
+    applyTheme(isDark);
     localStorage.setItem('theme', val);
     refreshAll();
+}
+
+function applyTheme(isDark) {
+    if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0f172a');
+    } else {
+        document.documentElement.classList.remove('dark');
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#e0eafc');
+    }
 }
 
 function setDesign(val) {
@@ -156,7 +178,7 @@ function updateModalUI() {
     updateToggle('pressure', state.units.pressure);
     updateToggle('rain', state.units.rain);
 
-    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    const currentTheme = localStorage.getItem('theme') || 'auto';
     updateToggle('theme', currentTheme);
 
     const currentDesign = document.documentElement.classList.contains('theme-aero') ? 'aero' : 'simple';
