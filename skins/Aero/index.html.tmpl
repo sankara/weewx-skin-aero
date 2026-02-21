@@ -13,7 +13,7 @@
                 var local = localStorage.getItem('theme');
                 var sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 var meta = document.querySelector('meta[name="theme-color"]');
-                if (local === 'dark' || (!local && sys)) {
+                if (local === 'dark' || ((!local || local === 'auto') && sys)) {
                     document.documentElement.classList.add('dark');
                     if (meta) meta.setAttribute('content', '#0f172a');
                 } else {
@@ -189,6 +189,7 @@
                         <div class="segment-control-sm" data-type="theme">
                             <button data-val="light">LIGHT</button>
                             <button data-val="dark">DARK</button>
+                            <button data-val="auto">AUTO</button>
                         </div>
                     </div>
                      <div class="setting-item">
