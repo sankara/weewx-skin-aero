@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-02-21
+### Features
+- **Theme**: Added "Auto" theme option to follow system color scheme preference.
+
 ## [2.6.0] - 2026-01-29
 ### Features
 - **Screenshots**: Updated project screenshots to reflect the latest UI changes and forecast feature.

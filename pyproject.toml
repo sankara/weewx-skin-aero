@@ -1,6 +1,6 @@
 [project]
 name = "aero-dev"
-version = "2.6.0"
+version = "2.7.0"
 description = "Development tooling for the Aero WeeWX skin"
 readme = "README.md"
 requires-python = ">=3.9"
