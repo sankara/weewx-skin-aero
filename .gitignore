@@ -80,3 +80,4 @@ test-data/
 .output.txt
 .agent/
 .claude/
+weewx-skin-aero.code-workspace
