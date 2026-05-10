@@ -1,4 +1,5 @@
 #errorCatcher Echo
+#import json
 ## forecast.json.tmpl
 ##
 ## This template generates JSON forecast data for the Aero skin.
@@ -60,14 +61,14 @@
 #set $alert_items = $aero_forecast.get('alerts', [])
 #for $i, $alert in enumerate($alert_items)
     {
-      "event": "$alert.get('event', '')",
-      "headline": "$alert.get('headline', '')",
-      "description": "$alert.get('description', '')",
-      "severity": "$alert.get('severity', '')",
-      "urgency": "$alert.get('urgency', '')",
-      "onset": "$alert.get('onset', '')",
-      "expires": "$alert.get('expires', '')",
-      "instruction": "$alert.get('instruction', '')"
+      "event": #echo json.dumps($alert.get('event', '').replace('\n', ' '))#,
+      "headline": #echo json.dumps($alert.get('headline', '').replace('\n', ' '))#,
+      "description": #echo json.dumps($alert.get('description', '').replace('\n', ' '))#,
+      "severity": #echo json.dumps($alert.get('severity', ''))#,
+      "urgency": #echo json.dumps($alert.get('urgency', ''))#,
+      "onset": #echo json.dumps($alert.get('onset', ''))#,
+      "expires": #echo json.dumps($alert.get('expires', ''))#,
+      "instruction": #echo json.dumps($alert.get('instruction', '').replace('\n', ' '))#
     }#if $i < len($alert_items) - 1 then ',' else ''#
 #end for
   ]

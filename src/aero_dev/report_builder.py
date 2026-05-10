@@ -172,6 +172,12 @@ def main() -> None:
         if os.path.exists(skin_bin_dir) and skin_bin_dir not in sys.path:
             sys.path.insert(0, skin_bin_dir)
             logger.debug("Added %s to Python path for Search List Extensions", skin_bin_dir)
+            
+        # Also add bin/user to support WeeWX 5 style imports (without user. prefix)
+        user_bin_dir = os.path.join(skin_bin_dir, 'user')
+        if os.path.exists(user_bin_dir) and user_bin_dir not in sys.path:
+            sys.path.insert(0, user_bin_dir)
+            logger.debug("Added %s to Python path for Search List Extensions", user_bin_dir)
 
         logger.info("Starting Report Engine...")
         engine = StdReportEngine(config, stn_info, record=record, gen_ts=last_ts, first_run=True)

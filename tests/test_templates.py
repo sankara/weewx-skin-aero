@@ -125,3 +125,69 @@ def test_forecast_json_enabled_with_data(report_output):
         assert "tempHigh" in day
         assert "tempLow" in day
         assert "icon" in day
+
+
+def test_forecast_json_with_dirty_alerts():
+    """Verify that forecast.json handles alerts with newlines and quotes correctly."""
+    from Cheetah.Template import Template
+    
+    template_path = Path(__file__).parent.parent / "skins" / "Aero" / "data" / "forecast.json.tmpl"
+    with open(template_path) as f:
+        template_content = f.read()
+        
+    # Mock data with exact snippet from issue
+    mock_forecast = {
+        'provider': 'test',
+        'updated': 12345,
+        'enabled': True,
+        'hourly': [],
+        'daily': [],
+        'alerts': [
+            {
+                'event': 'High Wind Watch',
+                'headline': 'High Wind Watch issued February 23 at 12:54PM MST until February 27 at 8:00AM MST by NWS Great Falls MT',
+                'description': """* WHAT...West winds 30 to 40 mph with gusts up to 70 mph possible.
+
+WHERE...Cascade County, including the Little Belt and Highwood
+Mountains, Judith Basin County and Judith Gap, Upper Blackfoot and
+MacDonald Pass, Gates of the Mountains, and Big Belt, Bridger and
+Castle Mountains.
+
+WHEN...From late Tuesday night through Friday morning.
+
+IMPACTS...High winds may move loose debris, damage property and
+cause power outages. Travel could be difficult, especially for
+high profile vehicles.""",
+                'severity': 'Severe',
+                'urgency': 'Future',
+                'onset': '2026-02-25T02:00:00-07:00',
+                'expires': '2026-02-24T04:00:00-07:00',
+                'instruction': """Monitor the latest forecasts and warnings for updates.
+
+Remember, a High Wind Watch means that there is at least a 50%
+chance of 40 mph sustained winds or 58 mph wind gusts occurring
+during the watch period."""
+            }
+        ]
+    }
+    
+    # Mock current object
+    class DummyObj:
+        pass
+    
+    current_obj = DummyObj()
+    current_obj.dateTime = DummyObj()
+    current_obj.dateTime.raw = 1768721100
+    
+    # Render the template
+    t = Template(template_content, searchList=[{'aero_forecast': mock_forecast, 'current': current_obj}])
+    
+    output = str(t)
+    
+    # Verify that the output is valid JSON
+    data = json.loads(output)
+    assert len(data['alerts']) == 1
+    assert data['alerts'][0]['event'] == 'High Wind Watch'
+    assert data['alerts'][0]['description'].startswith('* WHAT...West winds')
+    assert 'high profile vehicles.' in data['alerts'][0]['description']
+    assert data['alerts'][0]['instruction'].startswith('Monitor the latest')
