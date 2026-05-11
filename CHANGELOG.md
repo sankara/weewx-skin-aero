@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.2] - 2026-05-11
+### Fixed
+- **UI**: Removed card hover effect that turned borders white to avoid confusion about clickability.
+
 ## [2.8.1] - 2026-05-11
 ### Fixed
 - **Templates**: Restored `user.` prefix for search list extension in `skin.conf` to fix `ModuleNotFoundError` on system installations.
