@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-05-10
+### Features
+- **Charts**: Added pressure and humidity graphs to the Summary section.
+
+### Fixed
+- **Templates**: Fixed search list extension import and alerts JSON formatting for WeeWX 5 (#18).
+- **Templates**: Fixed encoding issue with degree symbol in forecast template.
+
+### Others
+- **Maintenance**: Ignore VS Code workspace file.
+
 ## [2.7.0] - 2026-02-21
 ### Features
 - **Theme**: Added "Auto" theme option to follow system color scheme preference.
