@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.1] - 2026-05-11
+### Fixed
+- **Templates**: Restored `user.` prefix for search list extension in `skin.conf` to fix `ModuleNotFoundError` on system installations.
+
+### Enhancements
+- **UI**: Added click handlers to cards in Current Observations and Daily Summary to scroll to the corresponding graphs.
+
 ## [2.8.0] - 2026-05-10
 ### Features
 - **Charts**: Added pressure and humidity graphs to the Summary section.
