@@ -140,16 +140,6 @@ function createGaugeCard(container, item, title, color, absMin, absMax, textPrim
     `;
     container.appendChild(div);
 
-    if (title === 'Pressure') {
-        div.style.cursor = 'pointer';
-        div.addEventListener('click', () => {
-            const target = document.getElementById('graph-pressure-container');
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    }
-
     const canvas = div.querySelector('canvas');
     drawGauge(canvas, absMin, absMax, item.current, item.unit, color, null, textPrimary, textSecondary);
 }
@@ -179,20 +169,6 @@ function createDialCard(container, item, title, color, absMin, absMax, textPrima
         <span class="sr-only">${title}: ${item.current} ${item.unit}${minMaxText}</span>
     `;
     container.appendChild(div);
-
-    let targetId = '';
-    if (title === 'Temperature') targetId = 'graph-temp-container';
-    if (title === 'Humidity') targetId = 'graph-humidity-container';
-    
-    if (targetId) {
-        div.style.cursor = 'pointer';
-        div.addEventListener('click', () => {
-            const target = document.getElementById(targetId);
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    }
 
     const canvas = div.querySelector('canvas');
     const dailyMin = item.min !== undefined && item.min !== null ? item.min : item.current;
@@ -226,14 +202,6 @@ function createCompassCard(container, speedItem, gustItem, dirItem, color, textP
         <span class="sr-only">Wind: ${speed} ${unit}${gustText}${dirText}</span>
     `;
     container.appendChild(div);
-
-    div.style.cursor = 'pointer';
-    div.addEventListener('click', () => {
-        const target = document.getElementById('graph-wind-container');
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
 
     const canvas = div.querySelector('canvas');
     // Pass null for title
@@ -288,18 +256,6 @@ function createCombinedCard(container, item1, item2, type, color) {
         </div>
     `;
     container.appendChild(div);
-
-    div.style.cursor = 'pointer';
-    div.addEventListener('click', () => {
-        let targetId = '';
-        if (type === 'wind') targetId = 'graph-wind-container';
-        if (type === 'rain') targetId = 'graph-rain-container';
-        
-        const target = document.getElementById(targetId);
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
 }
 
 function createRainCard(container, totalItem, hourItem, rateItem, color) {
@@ -347,14 +303,6 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
         </div>
     `;
     container.appendChild(div);
-
-    div.style.cursor = 'pointer';
-    div.addEventListener('click', () => {
-        const target = document.getElementById('graph-rain-container');
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
 }
 
 /**

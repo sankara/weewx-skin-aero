@@ -439,12 +439,6 @@ html.dark .nav-btn.active {
     justify-content: flex-start;
 }
 
-.card:hover {
-    box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.1);
-    border-color: rgba(255, 255, 255, 0.5);
-    /* Removed transform to prevent backdrop-filter artifacts */
-}
-
 .card-header {
     display: flex;
     justify-content: space-between;
