@@ -136,6 +136,12 @@ export function renderGraphs() {
 
     // 3. Rain Chart
     renderRainChart(commonScales, isDayView, CHART_THEME);
+
+    // 4. Pressure Chart
+    renderPressureChart(commonScales, isDayView, CHART_THEME);
+
+    // 5. Humidity Chart
+    renderHumidityChart(commonScales, isDayView, CHART_THEME);
 }
 
 function renderTempChart(commonScales, isDayView, chartTheme) {
@@ -535,6 +541,193 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
         data: { datasets },
         options: options
     });
+}
+
+function renderPressureChart(commonScales, isDayView, chartTheme) {
+    const pressureItem = convertItem(state.activeData.obs.barometer, state.units);
+    if (!pressureItem || !pressureItem.graph) {
+        createNoDataContainer('Barometric Pressure');
+        return;
+    }
+
+    createGraphContainer('graph-pressure', 'Barometric Pressure', 'graphs-container', true);
+    const ctx = document.getElementById('graph-pressure').getContext('2d');
+
+    if (isDayView) {
+        let dataPoints = pressureItem.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+        if (window.innerWidth < 640) {
+            dataPoints = sampleData(dataPoints, 30);
+        }
+
+        charts.pressure = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: `Pressure (${pressureItem.unit})`,
+                    data: dataPoints,
+                    borderColor: chartTheme.pressure,
+                    backgroundColor: hexToRgbA(chartTheme.pressure, 0.2),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    hitRadius: 10
+                }]
+            },
+            options: {...getChartOptions(isDayView), scales: commonScales}
+        });
+    } else {
+        const aggData = aggregate(pressureItem.graph, state.viewScope);
+        const dataPoints = aggData.map(d => ({ x: d.x, y: [d.min, d.max], avg: d.avg }));
+        const avgDataPoints = aggData.map(d => ({ x: d.x, y: d.avg }));
+
+        charts.pressure = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                datasets: [
+                    {
+                        label: `Pressure Range (${pressureItem.unit})`,
+                        data: dataPoints,
+                        backgroundColor: chartTheme.pressure,
+                        borderColor: chartTheme.pressure,
+                        borderRadius: 4,
+                        barThickness: 'flex',
+                        maxBarThickness: 30,
+                        order: 2
+                    },
+                    {
+                        label: `Average Pressure (${pressureItem.unit})`,
+                        data: avgDataPoints,
+                        type: 'line',
+                        borderColor: '#5b21b6',
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        tension: 0.3,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                ...getChartOptions(false),
+                scales: commonScales,
+                plugins: {
+                    ...getChartOptions(false).plugins,
+                    tooltip: {
+                        ...getChartOptions(false).plugins.tooltip,
+                        callbacks: {
+                            label: (ctx) => {
+                                const raw = ctx.raw;
+                                if (ctx.dataset.type === 'line') {
+                                    return `Avg: ${ctx.parsed.y.toFixed(2)} ${pressureItem.unit}`;
+                                }
+                                const min = raw.y[0].toFixed(2);
+                                const max = raw.y[1].toFixed(2);
+                                const avg = raw.avg ? raw.avg.toFixed(2) : '-';
+                                return `High: ${max} | Low: ${min} | Avg: ${avg} ${pressureItem.unit}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function renderHumidityChart(commonScales, isDayView, chartTheme) {
+    const humidityItem = convertItem(state.activeData.obs.outHumidity, state.units);
+    if (!humidityItem || !humidityItem.graph) {
+        createNoDataContainer('Humidity');
+        return;
+    }
+
+    createGraphContainer('graph-humidity', 'Humidity', 'graphs-container', true);
+    const ctx = document.getElementById('graph-humidity').getContext('2d');
+
+    if (isDayView) {
+        let dataPoints = humidityItem.graph.map(p => ({ x: p[0] * 1000, y: (p.length >= 3) ? p[2] : p[1] }));
+        if (window.innerWidth < 640) {
+            dataPoints = sampleData(dataPoints, 30);
+        }
+
+        charts.humidity = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: `Humidity (${humidityItem.unit})`,
+                    data: dataPoints,
+                    borderColor: chartTheme.humidity,
+                    backgroundColor: hexToRgbA(chartTheme.humidity, 0.2),
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    hitRadius: 10
+                }]
+            },
+            options: {
+                ...getChartOptions(isDayView),
+                scales: {
+                    ...commonScales,
+                    y: { ...commonScales.y, min: 0, max: 100 }
+                }
+            }
+        });
+    } else {
+        const aggData = aggregate(humidityItem.graph, state.viewScope);
+        const dataPoints = aggData.map(d => ({ x: d.x, y: [d.min, d.max], avg: d.avg }));
+        const avgDataPoints = aggData.map(d => ({ x: d.x, y: d.avg }));
+
+        charts.humidity = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                datasets: [
+                    {
+                        label: `Humidity Range (${humidityItem.unit})`,
+                        data: dataPoints,
+                        backgroundColor: chartTheme.humidity,
+                        borderColor: chartTheme.humidity,
+                        borderRadius: 4,
+                        barThickness: 'flex',
+                        maxBarThickness: 30,
+                        order: 2
+                    },
+                    {
+                        label: `Average Humidity (${humidityItem.unit})`,
+                        data: avgDataPoints,
+                        type: 'line',
+                        borderColor: '#0369a1',
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        tension: 0.3,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                ...getChartOptions(false),
+                scales: {
+                    ...commonScales,
+                    y: { ...commonScales.y, min: 0, max: 100 }
+                },
+                plugins: {
+                    ...getChartOptions(false).plugins,
+                    tooltip: {
+                        ...getChartOptions(false).plugins.tooltip,
+                        callbacks: {
+                            label: (ctx) => {
+                                const raw = ctx.raw;
+                                if (ctx.dataset.type === 'line') {
+                                    return `Avg: ${ctx.parsed.y.toFixed(1)} ${humidityItem.unit}`;
+                                }
+                                const min = raw.y[0].toFixed(1);
+                                const max = raw.y[1].toFixed(1);
+                                const avg = raw.avg ? raw.avg.toFixed(1) : '-';
+                                return `High: ${max} | Low: ${min} | Avg: ${avg} ${humidityItem.unit}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 
