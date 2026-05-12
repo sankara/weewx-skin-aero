@@ -3,7 +3,7 @@ name = "aero-dev"
 version = "2.8.2"
 description = "Development tooling for the Aero WeeWX skin"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "weewx==5.3.1",
     "playwright>=1.40.0",
