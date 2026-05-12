@@ -30,7 +30,7 @@ requires-dist = [
     { name = "pytest-xdist", specifier = ">=3.0.0" },
     { name = "pywebpack", specifier = ">=1.0.0" },
     { name = "ruff", specifier = ">=0.14.13" },
-    { name = "weewx", specifier = "==5.2.0" },
+    { name = "weewx", specifier = "==5.3.1" },
 ]
 
 [[package]]
@@ -1030,7 +1030,7 @@ wheels = [
 
 [[package]]
 name = "weewx"
-version = "5.2.0"
+version = "5.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "configobj" },
@@ -1042,7 +1042,7 @@ dependencies = [
     { name = "pyserial" },
     { name = "pyusb" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c3/c3/e0e9c4a83a882f6cd8fe9d84d6e3127728dde49f7a8edddf6ea6b20e5ff3/weewx-5.2.0.tar.gz", hash = "sha256:4459bb6806eea85248e9861108113aee769974c4788ae59bf3d649926062e20a", size = 1292654, upload-time = "2025-10-13T19:11:52.922Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/80/b25726baf19c5350f46fa4519c3c7c912874a8bd0159ab4507ef053979a7/weewx-5.3.1.tar.gz", hash = "sha256:42abb9bd623bf984c5190488cf5cf2ff24a139dcd157f4028d41f30a50c69835", size = 1297925, upload-time = "2026-03-03T13:43:03.485Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/d6/0e602d8496050bc3165ded9b1a3af12977cfa9cd7a76cc9d7a190d8a23eb/weewx-5.2.0-py3-none-any.whl", hash = "sha256:8e3262e6cd422bd4f559119d4ac2a8c77a1802a09eb43d65d3760285fcb8c32f", size = 1441390, upload-time = "2025-10-13T19:11:50.169Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/59/4dc82aad5c55f0a65a3382e293b62aff141c54d4309fc2a515d02f3f1e2e/weewx-5.3.1-py3-none-any.whl", hash = "sha256:ee3e0bda4bcbdfa366632c7a2f673589eeca443a8f9bb88e58532212481d6c7a", size = 1447687, upload-time = "2026-03-03T13:43:15.241Z" },
 ]
