@@ -25,19 +25,38 @@ def main():
         version = version[1:]
 
     print(f"Updating version to {version} in pyproject.toml...")
-
     with open(toml_path, "r") as f:
         content = f.read()
-
-    # Regex to find version = "..." in [project] section
-    # Simplified assumption: version = "..." is near the top
-    # We want to match `version = "1.0.0"`
     new_content = re.sub(r'(version\s*=\s*")([\d.]+)"', fr'\g<1>{version}"', content, count=1)
-
     with open(toml_path, "w") as f:
         f.write(new_content)
-
     print("pyproject.toml updated.")
+
+    install_py_path = os.path.join(repo_root, "install.py")
+    if os.path.exists(install_py_path):
+        print(f"Updating version to {version} in install.py...")
+        with open(install_py_path, "r") as f:
+            content = f.read()
+        new_content = re.sub(r'(version\s*=\s*")([\d.]+)"', fr'\g<1>{version}"', content, count=1)
+        with open(install_py_path, "w") as f:
+            f.write(new_content)
+        print("install.py updated.")
+
+    skin_conf_path = os.path.join(repo_root, "skins", "Aero", "skin.conf")
+    if os.path.exists(skin_conf_path):
+        print(f"Updating version to {version} in skin.conf...")
+        with open(skin_conf_path, "r") as f:
+            content = f.read()
+        new_content = re.sub(r'(version\s*=\s*)([\d.]+)', fr'\g<1>{version}', content, count=1)
+        with open(skin_conf_path, "w") as f:
+            f.write(new_content)
+        print("skin.conf updated.")
+
+    version_file_path = os.path.join(repo_root, "skins", "Aero", "VERSION")
+    print(f"Updating version to {version} in skins/Aero/VERSION...")
+    with open(version_file_path, "w") as f:
+        f.write(f"{version}\n")
+    print("skins/Aero/VERSION updated.")
 
 
 if __name__ == "__main__":
