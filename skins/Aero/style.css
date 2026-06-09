@@ -388,13 +388,6 @@ html.dark .nav-btn.active {
     justify-content: flex-start;
 }
 
-/* Subtle lift affordance on pointer devices only */
-@media (hover: hover) {
-    .card:hover {
-        transform: translateY(-2px);
-    }
-}
-
 .card-header {
     display: flex;
     justify-content: space-between;
