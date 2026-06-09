@@ -1,3 +1,5 @@
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-date-fns';
 import {els, state} from './state.js';
 import {
     aggregate,
