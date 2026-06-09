@@ -1,11 +1,18 @@
 // app.js
 
 // import './style.css'; // REMOVED: CSS imported in HTML
+import { createIcons, icons } from 'lucide';
 import { state, els } from './state.js';
 import { renderHeader, renderHistorySummary, renderForecast } from './ui.js';
 import { renderGraphs } from './charts.js';
 import { isSameDay } from './utils.js';
 import { setupEvents } from './events.js';
+
+// Lucide is bundled (no CDN). Keep the window.lucide shim so the existing
+// `window.lucide.createIcons()` call sites keep working, and render the
+// static icons (header, nav) immediately.
+window.lucide = { createIcons: () => createIcons({ icons }) };
+window.lucide.createIcons();
 
 /**
  * Parses WeeWX JSON data into a standard internal format.
