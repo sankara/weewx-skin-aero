@@ -61,7 +61,7 @@
             </header>
 
             <!-- Dials Grid for Current Live Data -->
-            <div class="history-section-header" style="margin-top: 2rem; margin-bottom: 1rem;">
+            <div class="history-section-header">
                 <h2 class="section-title">Current Observations</h2>
             </div>
             <div id="current-dials" class="dials-container">
@@ -71,7 +71,7 @@
 
         <!-- FORECAST SECTION -->
         <section id="forecast-section" class="section-forecast" style="display: none;">
-             <div class="history-section-header" style="margin-bottom: 1rem;">
+             <div class="history-section-header">
                 <h2 class="section-title">Forecast</h2>
             </div>
             <div id="forecast-container" class="forecast-container">
@@ -111,7 +111,7 @@
             </nav>
 
             <main id="content-area">
-                <div class="history-section-header" style="margin-bottom: 1rem;">
+                <div class="history-section-header">
                      <h2 id="history-title" class="section-title">Summary</h2>
                 </div>
                 <!-- Summary of Selected History Period -->
@@ -133,14 +133,14 @@
 
     <!-- Settings Modal -->
     <div id="modal-overlay" class="modal-overlay hidden">
-        <div id="settings-modal" class="modal">
+        <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
             <header class="modal-header">
-                <h2>Unit Settings</h2>
+                <h2 id="settings-modal-title">Settings</h2>
                 <button id="close-modal-btn" class="btn-icon" aria-label="Close settings"><i data-lucide="x"></i></button>
             </header>
 
             <div class="modal-body">
-                <p class="modal-desc">Select the unit you want to display for each measurement below.</p>
+                <p class="modal-desc">Choose your preferred units, theme, and design.</p>
 
                 <!-- Presets -->
                 <div class="segment-control preset-control">

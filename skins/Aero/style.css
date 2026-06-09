@@ -10,10 +10,14 @@
 
 
 .history-section-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     text-align: left;
     width: 100%;
     padding-left: 4px;
+}
+
+.section-current .history-section-header {
+    margin-top: 2rem;
 }
 
 .history-section-header .section-title {
@@ -122,45 +126,6 @@ html.theme-aero.dark {
     --card-gradient: linear-gradient(145deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.05) 100%);
     --card-border-color: rgba(255, 255, 255, 0.12);
     --shadow-card: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-/* Update Card to use new Aero variables */
-.card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    transition: transform 0.2s, box-shadow 0.2s;
-    background-color: var(--card-bg);
-    /* Fallback */
-    background: var(--card-gradient, var(--card-bg));
-    /* Use gradient if defined (Aero) */
-    backdrop-filter: var(--glass-blur);
-    padding: 1.5rem;
-    border-radius: var(--card-radius);
-    border: 1px solid var(--card-border-color, var(--card-border));
-    box-shadow: var(--shadow-card);
-}
-
-/* ... existing styles ... */
-
-.card-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    line-height: normal;
-    /* Fix height jumping? */
-    background: linear-gradient(180deg, var(--text-primary), var(--text-secondary));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-
-    /* Layout Stability Fixes */
-    font-variant-numeric: tabular-nums;
-    min-width: 0;
-    /* Flexbox safety */
-    white-space: nowrap;
-    /* Prevent wrapping */
-    text-align: center;
-    /* Ensure centered if width grows */
 }
 
 * {
@@ -292,16 +257,6 @@ body.ptr-active .app-container {
 }
 
 /* Nav */
-.main-nav {
-    display: flex;
-    justify-content: space-between;
-    /* Space out tabs and date controls */
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
 .nav-tabs {
     display: flex;
     gap: 0.5rem;
@@ -415,28 +370,29 @@ html.dark .nav-btn.active {
     text-align: center;
 }
 
-/* Grid */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    /* Slightly wider cards */
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-}
-
 .card {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     transition: transform 0.2s, box-shadow 0.2s;
     background-color: var(--card-bg);
+    /* Fallback */
+    background: var(--card-gradient, var(--card-bg));
+    /* Use gradient if defined (Aero) */
     backdrop-filter: var(--glass-blur);
     padding: 1rem;
     border-radius: var(--card-radius);
-    border: 1px solid var(--card-border);
+    border: 1px solid var(--card-border-color, var(--card-border));
     box-shadow: var(--shadow-card);
     min-height: 260px;
     justify-content: flex-start;
+}
+
+/* Subtle lift affordance on pointer devices only */
+@media (hover: hover) {
+    .card:hover {
+        transform: translateY(-2px);
+    }
 }
 
 .card-header {
@@ -461,6 +417,15 @@ html.dark .nav-btn.active {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+
+    /* Layout Stability Fixes */
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+    /* Flexbox safety */
+    white-space: nowrap;
+    /* Prevent wrapping */
+    text-align: center;
+    /* Ensure centered if width grows */
 }
 
 .card-unit {
@@ -527,69 +492,6 @@ html.dark .nav-btn.active {
     }
 }
 
-/* Toggle Switch */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 24px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cbd5e1;
-    /* Slate 300 */
-    transition: .4s;
-    border-radius: 34px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-input:checked+.slider {
-    background-color: var(--accent-color);
-}
-
-input:focus+.slider {
-    box-shadow: 0 0 1px var(--accent-color);
-}
-
-input:checked+.slider:before {
-    transform: translateX(24px);
-}
-
-/* Metric Label Styling */
-.unit-toggle-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-
-
 /* CURRENT SECTION STYLES */
 .section-current {
     margin-bottom: 2rem;
@@ -637,14 +539,6 @@ html.dark #history-summary {
     flex-wrap: wrap;
     /* Allow wrapping for mobile */
     gap: 1rem;
-}
-
-.history-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-primary);
-    white-space: nowrap;
 }
 
 .summary-grid {
@@ -721,15 +615,6 @@ html.dark #history-summary {
         gap: 0.5rem;
         flex-wrap: wrap;
         /* Allow wrapping to accommodate title */
-    }
-
-    .history-title {
-        font-size: 1.25rem;
-        /* Smaller title on mobile */
-        width: auto;
-        /* Allow it to wrap if really needed, but mostly flex container wraps */
-        margin-right: auto;
-        /* Push controls to right if wrapped */
     }
 
     /* Make date controls compact on mobile */
@@ -1354,16 +1239,6 @@ html.dark .segment-control-sm button.active {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .daily-row {
-        grid-template-columns: 120px 1fr 60px 100px;
-        padding: 1rem 1.25rem;
-        gap: 0.5rem;
-    }
-
-    .daily-col-temps {
-        gap: 0.75rem;
-    }
-
     .daily-temp-high,
     .daily-temp-low {
         font-size: 1rem;
@@ -1371,16 +1246,23 @@ html.dark .segment-control-sm button.active {
 }
 
 @media (max-width: 480px) {
-    .daily-row {
-        grid-template-columns: 100px 1fr 50px 80px;
-        padding: 0.75rem 1rem;
-    }
-
     .daily-day {
         font-size: 1rem;
     }
 
     .daily-date {
         font-size: 0.75rem;
+    }
+}
+
+/* Reduced motion: keep state changes instant for users who request it */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

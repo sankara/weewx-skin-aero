@@ -557,16 +557,26 @@ function renderDailyForecast(container, dailyData) {
         const item = document.createElement('div');
         item.className = 'daily-item';
 
+        // Visible temps use a bare degree sign; the full unit lives in the aria-label
+        const highText = tempHigh !== null ? `${Math.round(tempHigh)}°` : '--';
+        const lowText = tempLow !== null ? `${Math.round(tempLow)}°` : '--';
+        const ariaHigh = tempHigh !== null ? `high ${Math.round(tempHigh)}${targetUnit}` : 'high unavailable';
+        const ariaLow = tempLow !== null ? `low ${Math.round(tempLow)}${targetUnit}` : 'low unavailable';
+        const ariaPrecip = (day.precipProb !== null && day.precipProb !== undefined)
+            ? `, ${day.precipProb}% chance of precipitation` : '';
+        item.setAttribute('role', 'group');
+        item.setAttribute('aria-label', `${dayName} ${dateStr}: ${ariaHigh}, ${ariaLow}${ariaPrecip}`);
+
         item.innerHTML = `
             <div class="daily-day">${dayName}</div>
             <div class="daily-date">${dateStr}</div>
             <div class="daily-icon-container">
                 <i data-lucide="${day.icon || 'cloud'}" class="daily-icon"></i>
             </div>
-            <div class="daily-temps">
-                <span class="daily-temp-high">${tempHigh !== null ? Math.round(tempHigh) + targetUnit : '--'}</span>
+            <div class="daily-temps" aria-hidden="true">
+                <span class="daily-temp-high">${highText}</span>
                 <span class="daily-temp-sep">/</span>
-                <span class="daily-temp-low">${tempLow !== null ? Math.round(tempLow) + targetUnit : '--'}</span>
+                <span class="daily-temp-low">${lowText}</span>
             </div>
             <div class="daily-precip-container">
                 ${(day.precipProb !== null && day.precipProb !== undefined) ? `
