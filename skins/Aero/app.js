@@ -48,8 +48,8 @@ async function loadForecast(silent = false) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        // Check if forecast is enabled and has data
-        if (data.meta && data.meta.enabled && (data.hourly?.length > 0 || data.daily?.length > 0)) {
+        // Check if forecast is enabled
+        if (data.meta && data.meta.enabled) {
             const wasUpdated = !state.forecastData ||
                 state.forecastData.meta?.timestamp !== data.meta?.timestamp;
             state.forecastData = data;
@@ -57,7 +57,7 @@ async function loadForecast(silent = false) {
             return wasUpdated;
         } else {
             state.forecastData = null;
-            if (!silent) console.log('Forecast feature is disabled or no data available');
+            if (!silent) console.log('Forecast feature is disabled');
             return false;
         }
     } catch (e) {

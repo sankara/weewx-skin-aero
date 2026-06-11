@@ -516,6 +516,15 @@ class AeroForecast(SearchList):
         if forecast_data:
             alerts = self._fetch_openmeteo_alerts(lat, lon)
             forecast_data['alerts'] = alerts
+        else:
+            forecast_data = {
+                'enabled': True,
+                'hourly': [],
+                'daily': [],
+                'alerts': [],
+                'provider': '',
+                'updated': int(time.time())
+            }
 
         # Cache and return the forecast data
         self._forecast_result = [{'aero_forecast': forecast_data}]

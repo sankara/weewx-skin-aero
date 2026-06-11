@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.2] - 2026-06-11
+### Fixed
+- **Forecast**: Fixed forecast section visibility to gracefully show "unavailable" card instead of hiding the section when offline/in CI.
+
 ## [2.9.1] - 2026-06-11
 ### Fixed
 - **UI**: Restored light Aero card opacity lost in style consolidation.

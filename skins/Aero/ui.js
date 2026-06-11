@@ -441,8 +441,9 @@ export function renderForecast() {
     const container = els.forecast;
     if (!container) return;
 
-    // Check if forecast data exists
-    if (!state.forecastData || !state.forecastData.meta || !state.forecastData.meta.enabled) {
+    // Check if forecast data exists and has items
+    if (!state.forecastData || !state.forecastData.meta || !state.forecastData.meta.enabled ||
+        (!state.forecastData.hourly?.length && !state.forecastData.daily?.length)) {
         container.innerHTML = `
             <div class="card forecast-unavailable" style="grid-column: 1/-1; text-align:center; padding:2rem;">
                 <i data-lucide="cloud-off" style="width:48px; height:48px; margin:0 auto 1rem; opacity:0.5;"></i>
