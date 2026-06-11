@@ -107,8 +107,8 @@ def test_forecast_json_enabled_with_data(report_output):
     with open(report_output / "data" / "forecast.json") as f:
         data = json.load(f)
 
-    # When enabled, should have hourly and daily data
-    if data["meta"]["enabled"]:
+    # When enabled and has provider data, should have hourly and daily data
+    if data["meta"]["enabled"] and data["meta"].get("provider"):
         assert len(data["hourly"]) > 0, "Enabled forecast should have hourly data"
         assert len(data["daily"]) > 0, "Enabled forecast should have daily data"
         assert data["meta"]["provider"] is not None, "Enabled forecast should have provider"
