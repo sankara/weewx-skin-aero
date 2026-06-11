@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.1] - 2026-06-11
+### Fixed
+- **UI**: Restored light Aero card opacity lost in style consolidation.
+
 ## [2.9.0] - 2026-06-09
 ### Features
 - **Dependencies**: Vendored Chart.js and Lucide directly instead of loading them from CDNs, enabling the application to work smoothly without an internet connection.
