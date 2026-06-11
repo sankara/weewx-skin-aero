@@ -115,9 +115,12 @@ html.theme-aero {
     /* Softened depth with multi-layered shadow */
     --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 20px 40px -4px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 
-    /* Aero Specific Enhancements (Ultra-Soft Glass) */
-    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
-    --card-border-color: rgba(255, 255, 255, 0.4);
+    /* Aero Specific Enhancements (Frosted Glass)
+       Opacity matches the pre-consolidation composite of card base + gradient;
+       anything more transparent washes out against the light page gradient
+       and hides the slate-200 dial tracks. */
+    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.65) 100%);
+    --card-border-color: rgba(255, 255, 255, 0.6);
     --text-shadow-heading: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
