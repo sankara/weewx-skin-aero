@@ -68,8 +68,12 @@ def main():
 
     # 3. Playwright Captures (Automated & Full Page)
     print("📸 Capturing high-res full-page screenshots via Playwright...")
+    launch_kwargs = {}
+    chromium_executable = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+    if chromium_executable and os.path.exists(chromium_executable):
+        launch_kwargs["executable_path"] = chromium_executable
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(**launch_kwargs)
 
         # Desktop (MacBook Pro 14")
         desktop = browser.new_context(viewport={'width': 1512, 'height': 982}, device_scale_factor=2)

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.10.0] - 2026-07-15
+### Enhancements
+- **UI**: Dry periods now collapse the empty precipitation chart into a compact one-line "No rain recorded" card, saving ~250px of vertical space.
+- **UI**: "Updated X ago" header now ticks live and turns amber with a warning icon once the station hasn't reported in 30+ minutes; hover/long-press still shows the exact timestamp.
+- **UI**: Rain card is visually de-emphasized (muted) when totals, last-hour, and rate are all zero.
+- **UI**: Daily forecast row now shows edge fade hints and snaps to card boundaries when scrolled horizontally.
+
 ## [2.9.2] - 2026-06-11
 ### Fixed
 - **Forecast**: Fixed forecast section visibility to gracefully show "unavailable" card instead of hiding the section when offline/in CI.

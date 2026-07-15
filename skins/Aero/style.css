@@ -1262,3 +1262,84 @@ html.dark .segment-control-sm button.active {
         transition-duration: 0.01ms !important;
     }
 }
+/* ============================================
+   UX refinements: staleness, muted cards,
+   compact charts, scroll hints
+   ============================================ */
+
+/* "Updated X ago" turns amber when the station hasn't reported in 30+ min */
+#last-updated.is-stale {
+    color: #d97706;
+    font-weight: 600;
+}
+#last-updated.is-stale::before {
+    content: "⚠ ";
+}
+
+/* De-emphasized card for zero-value metrics (e.g. no rain) */
+.card-muted {
+    opacity: 0.6;
+    filter: saturate(0.5);
+    transition: opacity 0.3s var(--ease-spring), filter 0.3s var(--ease-spring);
+}
+.card-muted:hover {
+    opacity: 1;
+    filter: none;
+}
+
+/* Compact stand-in when a chart has nothing to plot */
+.graph-card-compact {
+    padding: 1rem 1.5rem;
+}
+.compact-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.compact-stat-message {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Horizontal scroll hints for the daily forecast row */
+.scroll-wrap {
+    position: relative;
+}
+.scroll-wrap::before,
+.scroll-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 2;
+    border-radius: var(--card-radius);
+}
+.scroll-wrap::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg-gradient-start), transparent);
+}
+.scroll-wrap::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg-gradient-end), transparent);
+}
+.scroll-wrap.can-scroll-left::before,
+.scroll-wrap.can-scroll-right::after {
+    opacity: 0.9;
+}
+
+/* Snap forecast items so a card never sits half-truncated after a fling */
+.daily-forecast-card {
+    scroll-snap-type: x proximity;
+}
+.daily-forecast-card .daily-item {
+    scroll-snap-align: start;
+}

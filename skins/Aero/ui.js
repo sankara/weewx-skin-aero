@@ -12,11 +12,39 @@ export function renderHeader() {
     const stationName = state.currentData.title || "Aero Weather";
     els.title.innerHTML = `<a href="#/day" class="home-link">${stationName}</a>`;
     document.title = stationName;
-    const date = new Date(state.currentData.meta.time * 1000);
-    els.lastUpdated.textContent = `Updated: ${date.toLocaleTimeString()}`;
+    renderLastUpdated(state.currentData.meta.time);
 
     // 2. Dials (Live Data)
     renderCurrentObservations();
+}
+
+/**
+ * Renders "Updated X ago" and keeps it ticking. Flags the station as
+ * stale (visually) once the last report is older than 30 minutes.
+ */
+let lastUpdatedTimer = null;
+function renderLastUpdated(epochSeconds) {
+    const absolute = new Date(epochSeconds * 1000).toLocaleString();
+    const render = () => {
+        const ageSec = Math.max(0, Math.floor(Date.now() / 1000 - epochSeconds));
+        let text;
+        if (ageSec < 60) {
+            text = 'Updated just now';
+        } else if (ageSec < 3600) {
+            text = `Updated ${Math.floor(ageSec / 60)} min ago`;
+        } else if (ageSec < 86400) {
+            const h = Math.floor(ageSec / 3600);
+            text = `Updated ${h} hr${h > 1 ? 's' : ''} ago`;
+        } else {
+            text = `Updated ${absolute}`;
+        }
+        els.lastUpdated.textContent = text;
+        els.lastUpdated.title = absolute; // exact time on hover/long-press
+        els.lastUpdated.classList.toggle('is-stale', ageSec > 1800);
+    };
+    render();
+    if (lastUpdatedTimer) clearInterval(lastUpdatedTimer);
+    lastUpdatedTimer = setInterval(render, 30000);
 }
 
 /**
@@ -266,8 +294,13 @@ function createRainCard(container, totalItem, hourItem, rateItem, color) {
     const valHour = hourItem ? (hourItem.current !== undefined ? (+hourItem.current).toFixed(2) : '-') : null;
     const valRate = rateItem ? (rateItem.current !== undefined ? (+rateItem.current).toFixed(2) : '-') : null;
 
+    // De-emphasize the card when there is genuinely nothing to report
+    const allZero = [valTotal, valHour, valRate]
+        .filter(v => v !== null && v !== '-')
+        .every(v => parseFloat(v) === 0);
+
     const div = document.createElement('div');
-    div.className = 'card';
+    div.className = 'card' + (allZero ? ' card-muted' : '');
     div.setAttribute('role', 'region');
     div.setAttribute('aria-label', `Rain total: ${valTotal} ${totalItem.unit}`);
 
@@ -592,8 +625,13 @@ function renderDailyForecast(container, dailyData) {
         dailyCard.appendChild(item);
     });
 
-    section.appendChild(dailyCard);
+    // Wrap the scroll container so edge fades / chevrons can sit on top of it
+    const scrollWrap = document.createElement('div');
+    scrollWrap.className = 'scroll-wrap';
+    scrollWrap.appendChild(dailyCard);
+    section.appendChild(scrollWrap);
     container.appendChild(section);
+    attachScrollHint(scrollWrap, dailyCard);
 
     // Add provider attribution to footer instead of inside forecast section
     const footerContent = document.getElementById('footer-content');
@@ -608,6 +646,22 @@ function renderDailyForecast(container, dailyData) {
             footerContent.appendChild(attribution);
         }
     }
+}
+
+/**
+ * Toggles .can-scroll-left / .can-scroll-right on a wrapper so CSS can
+ * render edge fades + chevrons hinting at hidden horizontal content.
+ */
+function attachScrollHint(wrap, scroller) {
+    const update = () => {
+        const maxScroll = scroller.scrollWidth - scroller.clientWidth;
+        wrap.classList.toggle('can-scroll-left', scroller.scrollLeft > 4);
+        wrap.classList.toggle('can-scroll-right', scroller.scrollLeft < maxScroll - 4);
+    };
+    scroller.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    // Run after layout settles
+    requestAnimationFrame(update);
 }
 
 function convertForecastTemp(val, sourceUnit, targetUnit) {
