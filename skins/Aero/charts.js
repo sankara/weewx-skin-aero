@@ -439,6 +439,19 @@ function renderRainChart(commonScales, isDayView, chartTheme) {
         return;
     }
 
+    // Completely dry period? Replace the empty 250px chart with a one-line card.
+    const totalRain = (rainSum && rainSum.graph)
+        ? rainSum.graph.reduce((acc, p) => {
+            const v = (p.length >= 3) ? p[2] : p[1];
+            return acc + ((v !== null && !isNaN(v)) ? v : 0);
+        }, 0)
+        : 0;
+    if (totalRain === 0) {
+        const scopeLabel = { day: 'today', week: 'this week', month: 'this month', year: 'this year' }[state.viewScope] || 'in this period';
+        createCompactStatCard('Precipitation', `No rain recorded ${scopeLabel}`, 'sun');
+        return;
+    }
+
     createGraphContainer('graph-rain', 'Precipitation', 'graphs-container', true);
     const ctx = document.getElementById('graph-rain').getContext('2d');
 
@@ -880,17 +893,28 @@ function createGraphContainer(id, title, parentId, fullWidth = false) {
 }
 
 function createNoDataContainer(title) {
+    createCompactStatCard(title, 'No data available', 'circle-off');
+}
+
+/**
+ * Compact stand-in for a full-height chart when there is nothing to plot
+ * (e.g. a dry day). Saves ~250px of vertical space per empty chart.
+ */
+function createCompactStatCard(title, message, icon = 'check-circle-2') {
     const section = els.graphs;
     const div = document.createElement('div');
-    div.className = 'graph-card';
+    div.className = 'graph-card graph-card-compact';
     div.style.gridColumn = "span 2";
     div.innerHTML = `
-        <h3 class=\"card-label\" style=\"margin-bottom:1rem\">${title}</h3>
-        <div style=\"height: 320px; width: 100%; display:flex; align-items:center; justify-content:center; background:#f8fafc; border-radius:8px; color:#64748b\">
-            <span>No Data Available</span>
+        <div class=\"compact-stat-row\">
+            <h3 class=\"card-label\" style=\"margin:0\">${title}</h3>
+            <span class=\"compact-stat-message\">
+                <i data-lucide=\"${icon}\" class=\"card-icon-sm\"></i>${message}
+            </span>
         </div>
     `;
     section.appendChild(div);
+    if (window.lucide) window.lucide.createIcons();
 }
 
 function getChartOptions(isDayView) {

@@ -5,6 +5,17 @@ from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import threading
 
+
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args):
+    """Allow pointing at a pre-installed Chromium binary via env var, for
+    sandboxes where `playwright install` can't download the revision the
+    pinned playwright package expects."""
+    executable = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+    if executable and Path(executable).exists():
+        return {**browser_type_launch_args, "executable_path": executable}
+    return browser_type_launch_args
+
 # Paths are now relative to the root, since tests is at root level
 ROOT_DIR = Path(__file__).parent.parent
 BUILD_DIR = ROOT_DIR / "build"
